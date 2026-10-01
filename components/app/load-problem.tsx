@@ -6,6 +6,7 @@ const HINTS: Record<string, string> = {
   "42501": "The database refused access. Its permission rules may be missing or incomplete.",
   PGRST301: "Your sign-in couldn't be verified by the database. Try logging out and in again.",
   PGRST002: "The database is starting up or unreachable. Try again in a minute.",
+  no_startup: "Set up your startup profile first.",
 };
 
 /** Shown instead of a page when its data couldn't be loaded. */

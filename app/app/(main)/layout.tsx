@@ -8,6 +8,7 @@ import { load } from "@/lib/data-errors";
 const NAV = [
   { href: "/app", label: "Dashboard" },
   { href: "/app/startup", label: "Startup" },
+  { href: "/app/documents", label: "Documents" },
 ];
 
 /** Signed-in pages that need onboarding to be finished first. */

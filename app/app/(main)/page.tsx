@@ -12,10 +12,11 @@ import { getMyStartup } from "@/lib/startups/service";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
-const NEXT_STEPS = [
+const NEXT_STEPS: { title: string; description: string; href?: string }[] = [
   {
     title: "Upload your pitch deck",
     description: "We turn it into a structured profile of your startup.",
+    href: "/app/documents",
   },
   {
     title: "Get your readiness score",
@@ -109,11 +110,21 @@ export default async function DashboardPage() {
             <li key={s.title} className="bg-card rounded-xl border p-5">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-muted-foreground text-sm">Step {i + 1}</span>
-                <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">
-                  Coming soon
-                </span>
+                {s.href ? null : (
+                  <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs">
+                    Coming soon
+                  </span>
+                )}
               </div>
-              <h3 className="mt-3 font-medium">{s.title}</h3>
+              <h3 className="mt-3 font-medium">
+                {s.href ? (
+                  <Link href={s.href} className="underline-offset-4 hover:underline">
+                    {s.title}
+                  </Link>
+                ) : (
+                  s.title
+                )}
+              </h3>
               <p className="text-muted-foreground mt-1 text-sm">{s.description}</p>
             </li>
           ))}

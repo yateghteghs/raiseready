@@ -204,6 +204,37 @@ export async function checkStorage(url: string, serviceKey: string): Promise<Che
   }
 }
 
+/** Confirms the Anthropic key works and the configured model exists (no tokens used). */
+export async function checkAnthropic(apiKey: string | undefined, model: string | undefined): Promise<CheckResult[]> {
+  const keyName = "ANTHROPIC_API_KEY";
+  const modelName = "ANTHROPIC_MODEL";
+  if (!apiKey) return [{ name: keyName, ok: false, detail: "Not set. Document analysis won't work until it is." }];
+  if (!model) return [{ name: modelName, ok: false, detail: 'Not set. Use "claude-opus-5-5".' }];
+  try {
+    const res = await fetch(`https://api.anthropic.com/v1/models/${encodeURIComponent(model.trim())}`, {
+      headers: { "x-api-key": apiKey.trim(), "anthropic-version": "2023-06-01" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+    });
+    if (res.status === 401 || res.status === 403) {
+      return [{ name: keyName, ok: false, detail: "Anthropic rejected this key. Check it was copied correctly." }];
+    }
+    if (res.status === 404) {
+      return [
+        { name: keyName, ok: true, detail: "Set and accepted." },
+        { name: modelName, ok: false, detail: `"${model}" isn't a model this key can use. Use "claude-opus-5-5".` },
+      ];
+    }
+    if (!res.ok) return [{ name: keyName, ok: false, detail: `Anthropic answered with an error (HTTP ${res.status}).` }];
+    return [
+      { name: keyName, ok: true, detail: "Set and accepted." },
+      { name: modelName, ok: true, detail: `Set (${model.trim()}).` },
+    ];
+  } catch {
+    return [{ name: keyName, ok: false, detail: "Couldn't reach Anthropic." }];
+  }
+}
+
 export async function runHealthChecks(env: Record<string, string | undefined> = process.env) {
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
   const publicKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -220,5 +251,6 @@ export async function runHealthChecks(env: Record<string, string | undefined> = 
     results.push(await checkDatabase(url!.trim(), serviceKey!.trim()));
     results.push(await checkStorage(url!.trim(), serviceKey!.trim()));
   }
+  results.push(...(await checkAnthropic(env.ANTHROPIC_API_KEY, env.ANTHROPIC_MODEL)));
   return results;
 }
