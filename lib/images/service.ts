@@ -83,8 +83,8 @@ export async function imageLink(ownerId: string, path: string | null | undefined
   return (await imageLinks([{ ownerId, path }]))[path] ?? null;
 }
 
-/** The logo's bytes for the PDF report, or null if there isn't one (or it can't be read). */
-export async function logoBytes(ownerId: string, path: string | null | undefined): Promise<Buffer | null> {
+/** An image's bytes for PDF reports (logo or signature), or null if there isn't one or it can't be read. */
+export async function imageBytes(ownerId: string, path: string | null | undefined): Promise<Buffer | null> {
   if (!ownsImagePath(path, ownerId)) return null;
   const { data, error } = await createAdminClient().storage.from(IMAGES_BUCKET).download(path);
   if (error || !data) return null;
