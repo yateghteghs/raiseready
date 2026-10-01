@@ -1,19 +1,36 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { authRedirectFor, isProtectedPath } from "@/lib/auth/routes";
 import { updateSession } from "@/lib/supabase/proxy";
 
 export async function proxy(request: NextRequest) {
-  // Without Supabase settings there is no session to refresh. Let the request
-  // through so public pages still render, and say clearly what is missing.
+  // Without Supabase settings there is no session to refresh. Let public pages
+  // render, keep signed-in areas closed, and say clearly what is missing.
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     console.error(
       "Supabase is not configured: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
     );
+    if (isProtectedPath(request.nextUrl.pathname)) {
+      return new NextResponse("Service unavailable", { status: 503 });
+    }
     return NextResponse.next({ request });
   }
 
-  const { response } = await updateSession(request);
-  return response;
+  const { response, userId } = await updateSession(request);
+
+  const target = authRedirectFor(
+    request.nextUrl.pathname,
+    request.nextUrl.search,
+    userId !== null,
+  );
+  if (!target) return response;
+
+  // Carry over any refreshed session cookies onto the redirect.
+  const redirect = NextResponse.redirect(new URL(target, request.url));
+  for (const cookie of response.cookies.getAll()) {
+    redirect.cookies.set(cookie);
+  }
+  return redirect;
 }
 
 export const config = {

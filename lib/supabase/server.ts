@@ -9,8 +9,9 @@ import type { Database } from "@/lib/supabase/database.types";
  * Acts as the signed-in user, so every query is subject to RLS.
  */
 export async function createClient() {
-  const env = publicEnv();
+  // Read cookies first: it marks the route as dynamic before anything else runs.
   const cookieStore = await cookies();
+  const env = publicEnv();
 
   return createServerClient<Database>(
     env.NEXT_PUBLIC_SUPABASE_URL,
