@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
+import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/supabase/database.types";
 
@@ -12,6 +13,7 @@ export type SessionUser = { id: string; email: string | null };
  * Cached so layouts and pages share one lookup per request.
  */
 export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
+  if (!isSupabaseConfigured()) return null;
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data?.claims?.sub) return null;

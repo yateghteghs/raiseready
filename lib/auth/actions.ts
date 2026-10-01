@@ -10,9 +10,15 @@ import {
   registerSchema,
   resetPasswordSchema,
 } from "@/lib/auth/schemas";
+import { isSupabaseConfigured } from "@/lib/env";
 import { formValues, validationFailed, type FormState } from "@/lib/forms";
 import { getSiteUrl } from "@/lib/site-url";
 import { createClient } from "@/lib/supabase/server";
+
+const NOT_CONFIGURED: FormState = {
+  status: "error",
+  message: friendlyAuthError({ code: "supabase_not_configured" }),
+};
 
 /** Values echoed back to the form after an error. Passwords never are. */
 function safeValues(formData: FormData) {
@@ -23,6 +29,7 @@ function safeValues(formData: FormData) {
 }
 
 export async function login(_prev: FormState, formData: FormData): Promise<FormState> {
+  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
   const values = safeValues(formData);
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return validationFailed(parsed.error, values);
@@ -36,6 +43,7 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
 }
 
 export async function register(_prev: FormState, formData: FormData): Promise<FormState> {
+  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
   const values = safeValues(formData);
   const parsed = registerSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return validationFailed(parsed.error, values);
@@ -68,6 +76,7 @@ export async function requestPasswordReset(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
   const values = safeValues(formData);
   const parsed = forgotPasswordSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return validationFailed(parsed.error, values);
@@ -91,6 +100,7 @@ export async function requestPasswordReset(
 }
 
 export async function resetPassword(_prev: FormState, formData: FormData): Promise<FormState> {
+  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
   const parsed = resetPasswordSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return validationFailed(parsed.error, {});
 

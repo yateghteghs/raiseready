@@ -14,6 +14,8 @@ const MESSAGES: Record<string, string> = {
   email_address_invalid: "That email address can't be used. Please try a different one.",
   email_address_not_authorized: "We can't send emails to this address yet. Please try again later.",
   service_unreachable: "We couldn't reach the sign-in service. Please try again in a moment.",
+  supabase_not_configured:
+    "Accounts aren't available yet: this site isn't connected to its database. (Error code: supabase_not_configured)",
 };
 
 /** A stable code for an auth error, including network failures. */

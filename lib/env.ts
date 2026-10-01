@@ -77,3 +77,13 @@ export function serverEnv<K extends keyof ServerEnv>(...keys: K[]): Pick<ServerE
   }
   return picked as Pick<ServerEnv, K>;
 }
+
+/** True when the Supabase settings the app needs on every request are present and valid. */
+export function isSupabaseConfigured(): boolean {
+  try {
+    publicEnv();
+    return true;
+  } catch {
+    return false;
+  }
+}
