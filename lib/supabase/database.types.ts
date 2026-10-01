@@ -1,0 +1,261 @@
+/**
+ * Database types for the `public` schema, matching supabase/migrations.
+ *
+ * Hand-maintained in the shape `supabase gen types typescript` produces. When
+ * the Supabase CLI is available, regenerate with:
+ *   npx supabase gen types typescript --local > lib/supabase/database.types.ts
+ * and keep the convenience aliases at the bottom of this file.
+ */
+
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
+type Timestamps = { created_at: string; updated_at: string };
+type OptionalTimestamps = { created_at?: string; updated_at?: string };
+
+/** Builds Insert/Update types from a Row and the keys that have DB defaults or are nullable. */
+type InsertOf<Row, Optional extends keyof Row> = Omit<Row, Optional | keyof Timestamps> &
+  Partial<Pick<Row, Optional>> &
+  OptionalTimestamps;
+type UpdateOf<Row> = Partial<Row>;
+
+export type UserRole = "founder" | "admin";
+export type Plan = "free" | "pro";
+export type StartupStage = "idea" | "pre_seed" | "seed" | "series_a" | "other";
+export type FundingType = "equity" | "safe" | "convertible_note" | "grant" | "debt" | "other";
+export type DocumentKind = "pitch_deck" | "financial_model" | "business_plan" | "other";
+export type DocumentStatus = "uploaded" | "processing" | "ready" | "failed";
+export type ReadinessBand = "not_ready" | "getting_there" | "nearly_ready" | "investor_ready";
+export type Persona = "seed_vc" | "angel" | "grant_evaluator";
+export type Difficulty = "friendly" | "analytical" | "tough";
+export type SimulationStatus = "active" | "completed" | "abandoned";
+export type InvestorConfidence = "low" | "medium" | "high";
+export type TurnRole = "investor" | "founder" | "system";
+export type RedFlagType = "contradiction" | "unsupported_claim" | "weak_answer" | "missing_info";
+export type Severity = "low" | "medium" | "high";
+export type PaymentProduct = "pro_monthly" | "credits_3" | "credits_10";
+export type PaymentStatus = "pending" | "success" | "failed" | "abandoned" | "reversed";
+export type SubscriptionStatus = "active" | "non_renewing" | "attention" | "cancelled" | "completed";
+
+type ProfileRow = Timestamps & {
+  id: string;
+  full_name: string | null;
+  country: string | null;
+  role: UserRole;
+  plan: Plan;
+  credits: number;
+  onboarding_complete: boolean;
+};
+
+type StartupRow = Timestamps & {
+  id: string;
+  owner_id: string;
+  name: string;
+  website: string | null;
+  industry: string | null;
+  country: string | null;
+  stage: StartupStage | null;
+  founding_year: number | null;
+  business_model: string | null;
+  revenue_monthly: number | null;
+  revenue_currency: string;
+  customers_count: number | null;
+  growth_notes: string | null;
+  raising: boolean;
+  amount_seeking: number | null;
+  seeking_currency: string;
+  funding_type: FundingType | null;
+  previously_raised: boolean | null;
+  use_of_funds: string | null;
+};
+
+type DocumentRow = Timestamps & {
+  id: string;
+  startup_id: string;
+  kind: DocumentKind;
+  original_filename: string | null;
+  storage_path: string;
+  mime_type: string;
+  size_bytes: number;
+  status: DocumentStatus;
+  error_message: string | null;
+};
+
+type KnowledgeProfileRow = Timestamps & {
+  id: string;
+  startup_id: string;
+  version: number;
+  data: Json;
+  source_document_ids: string[];
+};
+
+type AssessmentRow = Timestamps & {
+  id: string;
+  startup_id: string;
+  knowledge_profile_id: string | null;
+  overall_score: number;
+  band: ReadinessBand;
+  dimension_scores: Json;
+  strengths: Json;
+  weaknesses: Json;
+  recommended_actions: Json;
+  rubric_version: string;
+};
+
+type SimulationRow = Timestamps & {
+  id: string;
+  startup_id: string;
+  persona: Persona;
+  difficulty: Difficulty;
+  funding_type: string | null;
+  status: SimulationStatus;
+  current_round: number;
+  overall_score: number | null;
+  investor_confidence: InvestorConfidence | null;
+  final_evaluation: Json | null;
+  started_at: string;
+  ended_at: string | null;
+};
+
+type SimulationTurnRow = Timestamps & {
+  id: string;
+  simulation_id: string;
+  turn_index: number;
+  round: number;
+  role: TurnRole;
+  content: string;
+  evaluation: Json | null;
+  red_flags: Json | null;
+};
+
+type RedFlagRow = Timestamps & {
+  id: string;
+  simulation_id: string;
+  turn_id: string | null;
+  type: RedFlagType;
+  severity: Severity;
+  description: string;
+  evidence: Json;
+};
+
+type ReportRow = Timestamps & {
+  id: string;
+  startup_id: string;
+  assessment_id: string | null;
+  simulation_id: string | null;
+  content: Json;
+  pdf_storage_path: string | null;
+};
+
+type PaymentRow = Timestamps & {
+  id: string;
+  user_id: string;
+  provider: "paystack";
+  reference: string;
+  amount_kobo: number;
+  currency: string;
+  product: PaymentProduct;
+  status: PaymentStatus;
+  raw_event: Json | null;
+};
+
+type SubscriptionRow = Timestamps & {
+  id: string;
+  user_id: string;
+  provider_subscription_code: string | null;
+  status: SubscriptionStatus;
+  current_period_end: string | null;
+};
+
+type AiCallRow = Timestamps & {
+  id: string;
+  user_id: string | null;
+  purpose: string;
+  model: string;
+  input_tokens: number;
+  output_tokens: number;
+  latency_ms: number | null;
+  success: boolean;
+  error: string | null;
+};
+
+type AuditLogRow = Timestamps & {
+  id: string;
+  actor_id: string | null;
+  action: string;
+  target_type: string | null;
+  target_id: string | null;
+  metadata: Json;
+};
+
+type Table<Row, Optional extends keyof Row> = {
+  Row: Row;
+  Insert: InsertOf<Row, Optional>;
+  Update: UpdateOf<Row>;
+  Relationships: [];
+};
+
+export type Database = {
+  public: {
+    Tables: {
+      profiles: Table<ProfileRow, "full_name" | "country" | "role" | "plan" | "credits" | "onboarding_complete">;
+      startups: Table<
+        StartupRow,
+        | "id"
+        | "website"
+        | "industry"
+        | "country"
+        | "stage"
+        | "founding_year"
+        | "business_model"
+        | "revenue_monthly"
+        | "revenue_currency"
+        | "customers_count"
+        | "growth_notes"
+        | "raising"
+        | "amount_seeking"
+        | "seeking_currency"
+        | "funding_type"
+        | "previously_raised"
+        | "use_of_funds"
+      >;
+      documents: Table<DocumentRow, "id" | "original_filename" | "status" | "error_message">;
+      knowledge_profiles: Table<KnowledgeProfileRow, "id" | "source_document_ids">;
+      assessments: Table<
+        AssessmentRow,
+        "id" | "knowledge_profile_id" | "strengths" | "weaknesses" | "recommended_actions"
+      >;
+      simulations: Table<
+        SimulationRow,
+        | "id"
+        | "funding_type"
+        | "status"
+        | "current_round"
+        | "overall_score"
+        | "investor_confidence"
+        | "final_evaluation"
+        | "started_at"
+        | "ended_at"
+      >;
+      simulation_turns: Table<SimulationTurnRow, "id" | "evaluation" | "red_flags">;
+      red_flags: Table<RedFlagRow, "id" | "turn_id" | "evidence">;
+      reports: Table<ReportRow, "id" | "assessment_id" | "simulation_id" | "pdf_storage_path">;
+      payments: Table<PaymentRow, "id" | "provider" | "currency" | "status" | "raw_event">;
+      subscriptions: Table<SubscriptionRow, "id" | "provider_subscription_code" | "current_period_end">;
+      ai_calls: Table<
+        AiCallRow,
+        "id" | "user_id" | "input_tokens" | "output_tokens" | "latency_ms" | "error"
+      >;
+      audit_logs: Table<AuditLogRow, "id" | "actor_id" | "target_type" | "target_id" | "metadata">;
+    };
+    Views: { [_ in never]: never };
+    Functions: { [_ in never]: never };
+    Enums: { [_ in never]: never };
+    CompositeTypes: { [_ in never]: never };
+  };
+};
+
+type PublicTables = Database["public"]["Tables"];
+export type TableName = keyof PublicTables;
+export type Tables<T extends TableName> = PublicTables[T]["Row"];
+export type TablesInsert<T extends TableName> = PublicTables[T]["Insert"];
+export type TablesUpdate<T extends TableName> = PublicTables[T]["Update"];
