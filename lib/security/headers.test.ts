@@ -6,6 +6,7 @@ describe("security headers", () => {
   it("only lets the browser connect to the app and the Supabase project", () => {
     const csp = contentSecurityPolicy({ supabaseUrl: "https://abcd.supabase.co/", dev: false });
     expect(csp).toContain("connect-src 'self' https://abcd.supabase.co wss://abcd.supabase.co;");
+    expect(csp).toContain("img-src 'self' data: blob: https://abcd.supabase.co;");
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("form-action 'self'");

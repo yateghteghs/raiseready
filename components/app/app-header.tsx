@@ -1,3 +1,4 @@
+import { UserIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,17 @@ function NavLinks({ nav }: { nav: NavItem[] }) {
   ));
 }
 
-export function AppHeader({ email, nav, admin = false }: { email: string | null; nav?: NavItem[]; admin?: boolean }) {
+export function AppHeader({
+  email,
+  nav,
+  admin = false,
+  avatarUrl,
+}: {
+  email: string | null;
+  nav?: NavItem[];
+  admin?: boolean;
+  avatarUrl?: string | null;
+}) {
   return (
     <header className="border-b">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
@@ -42,6 +53,20 @@ export function AppHeader({ email, nav, admin = false }: { email: string | null;
           </Link>
           {email ? (
             <span className="text-muted-foreground hidden max-w-48 truncate text-sm 2xl:inline">{email}</span>
+          ) : null}
+          {nav ? (
+            <Link
+              href="/app/settings"
+              aria-label="Your settings"
+              className="bg-muted text-muted-foreground hover:ring-ring/40 flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full border hover:ring-2"
+            >
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element -- short-lived signed link
+                <img src={avatarUrl} alt="" className="size-full object-cover" />
+              ) : (
+                <UserIcon aria-hidden="true" className="size-4" />
+              )}
+            </Link>
           ) : null}
           <form action={logout}>
             <Button type="submit" variant="outline" size="sm">

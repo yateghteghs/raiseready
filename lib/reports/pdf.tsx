@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { Document, Font, Page, renderToBuffer, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Document, Font, Image, Page, renderToBuffer, StyleSheet, Text, View } from "@react-pdf/renderer";
 
 import type { ReportContent } from "@/lib/reports/content";
 
@@ -27,6 +27,8 @@ const BORDER = "#e3e6ea";
 const s = StyleSheet.create({
   page: { fontFamily: "Noto Sans", fontSize: 10, color: "#1c2127", padding: 40, lineHeight: 1.45 },
   brand: { fontSize: 9, color: GREEN, fontWeight: 700, marginBottom: 4 },
+  heading: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 16 },
+  logo: { maxWidth: 110, maxHeight: 48, objectFit: "contain" },
   title: { fontSize: 20, fontWeight: 700, lineHeight: 1.25 },
   subtitle: { color: MUTED, marginTop: 2 },
   h2: { fontSize: 12, fontWeight: 700, marginTop: 18, marginBottom: 6 },
@@ -66,16 +68,22 @@ function Bullets({ items }: { items: string[] }) {
 
 const dateFormat = new Intl.DateTimeFormat("en-NG", { day: "numeric", month: "long", year: "numeric" });
 
-function ReportDocument({ content }: { content: ReportContent }) {
+function ReportDocument({ content, logo }: { content: ReportContent; logo?: Buffer | null }) {
   const c = content;
   return (
     <Document title={`${c.startup.name} readiness report`} author="RaiseReady" creator="RaiseReady">
       <Page size="A4" style={s.page}>
-        <Text style={s.brand}>RAISEREADY · READINESS REPORT</Text>
-        <Text style={s.title}>{c.startup.name}</Text>
-        <Text style={s.subtitle}>
-          {[c.startup.stage, c.startup.industry, c.startup.country].filter(Boolean).join(" · ")} · {dateFormat.format(new Date(c.generated_at))}
-        </Text>
+        <View style={s.heading}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.brand}>RAISEREADY · READINESS REPORT</Text>
+            <Text style={s.title}>{c.startup.name}</Text>
+            <Text style={s.subtitle}>
+              {[c.startup.stage, c.startup.industry, c.startup.country].filter(Boolean).join(" · ")} · {dateFormat.format(new Date(c.generated_at))}
+            </Text>
+          </View>
+          {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf images take no alt text */}
+          {logo ? <Image src={logo} style={s.logo} /> : null}
+        </View>
 
         <View style={s.scoreRow}>
           <View style={s.scoreBox}>
@@ -166,7 +174,8 @@ function ReportDocument({ content }: { content: ReportContent }) {
   );
 }
 
-export async function renderReportPdf(content: ReportContent): Promise<Buffer> {
+/** Renders the report; the startup's logo, if given, goes in the top corner. */
+export async function renderReportPdf(content: ReportContent, options: { logo?: Buffer | null } = {}): Promise<Buffer> {
   registerFonts();
-  return renderToBuffer(<ReportDocument content={content} />);
+  return renderToBuffer(<ReportDocument content={content} logo={options.logo} />);
 }

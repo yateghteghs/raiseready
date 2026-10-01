@@ -1,8 +1,8 @@
 /**
  * Security headers for every response (spec section 8).
  *
- * The browser only talks to this app and the Supabase project (sign-in state
- * and direct uploads to Storage). Paystack is reached by a full-page redirect,
+ * The browser only talks to this app and the Supabase project (sign-in state,
+ * direct uploads to Storage, and signed links to profile pictures and logos). Paystack is reached by a full-page redirect,
  * which CSP doesn't restrict. Next.js inlines small bootstrap scripts, and
  * nonces would make every page dynamic, so scripts allow 'unsafe-inline';
  * the other directives still block third-party scripts, framing, plugins and
@@ -10,15 +10,19 @@
  */
 export function contentSecurityPolicy({ supabaseUrl, dev }: { supabaseUrl?: string; dev: boolean }): string {
   const connect = ["'self'"];
+  const images = ["'self'", "data:", "blob:"];
   const supabase = originOf(supabaseUrl);
-  if (supabase) connect.push(supabase, supabase.replace(/^http/, "ws"));
+  if (supabase) {
+    connect.push(supabase, supabase.replace(/^http/, "ws"));
+    images.push(supabase);
+  }
   if (dev) connect.push("ws:");
 
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
     "script-src": ["'self'", "'unsafe-inline'", ...(dev ? ["'unsafe-eval'"] : [])],
     "style-src": ["'self'", "'unsafe-inline'"],
-    "img-src": ["'self'", "data:", "blob:"],
+    "img-src": images,
     "font-src": ["'self'", "data:"],
     "connect-src": connect,
     "frame-src": ["'none'"],

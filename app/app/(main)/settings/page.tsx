@@ -2,17 +2,23 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { LoadProblem } from "@/components/app/load-problem";
+import { ImageUpload } from "@/components/images/image-upload";
 import { AccountDetailsForm } from "@/components/settings/account-details-form";
 import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { getCurrentProfile, getCurrentUser } from "@/lib/auth/session";
 import { load } from "@/lib/data-errors";
+import { imageLink } from "@/lib/images/service";
 
 export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
-  const loaded = await load(async () => ({ user: await getCurrentUser(), profile: await getCurrentProfile() }));
+  const loaded = await load(async () => {
+    const [user, profile] = await Promise.all([getCurrentUser(), getCurrentProfile()]);
+    const avatarUrl = profile ? await imageLink(profile.id, profile.avatar_path) : null;
+    return { user, profile, avatarUrl };
+  });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
-  const { user, profile } = loaded.data;
+  const { user, profile, avatarUrl } = loaded.data;
 
   return (
     <div className="grid gap-10">
@@ -28,6 +34,12 @@ export default async function SettingsPage() {
             Signed in as <span className="text-foreground font-medium">{user?.email}</span>. To change your password, log out and choose &ldquo;Forgot password&rdquo; on the login page.
           </p>
         </div>
+        <ImageUpload
+          kind="avatar"
+          label="Profile picture"
+          hint="PNG or JPEG, up to 2 MB. Only you and RaiseReady staff can see it."
+          url={avatarUrl}
+        />
         <AccountDetailsForm initialValues={{ full_name: profile?.full_name ?? "", country: profile?.country ?? "" }} />
       </section>
 
