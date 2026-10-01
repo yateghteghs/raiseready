@@ -2,10 +2,7 @@
 
 import { ErrorPanel } from "@/components/app/error-panel";
 
+/** Keeps the header and navigation on screen when a page fails. */
 export default function Error(props: { error: Error & { digest?: string }; retry: () => void }) {
-  return (
-    <main className="flex w-full flex-1 items-center px-4 sm:px-6">
-      <ErrorPanel {...props} />
-    </main>
-  );
+  return <ErrorPanel {...props} />;
 }

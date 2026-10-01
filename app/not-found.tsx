@@ -8,7 +8,7 @@ export default function NotFound() {
       <p className="text-primary text-sm font-medium">404</p>
       <h1 className="text-3xl font-semibold tracking-tight">This page isn&apos;t here</h1>
       <p className="text-muted-foreground">
-        It may have moved, or it hasn&apos;t been built yet. RaiseReady is still being put together.
+        The link may be wrong, or the page may have moved.
       </p>
       <Button asChild>
         <Link href="/">Go to the home page</Link>
