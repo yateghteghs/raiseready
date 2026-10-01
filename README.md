@@ -57,6 +57,8 @@ select private.set_user_role('you@example.com', 'admin');
 | `npm run test:db` | Applies migrations to a throwaway Postgres and runs the RLS test suite |
 | `npm run db:seed-admin -- <email>` | Grants the admin role to an existing user |
 
+Deploying: see [`docs/DEPLOY.md`](docs/DEPLOY.md).
+
 ### Database tests
 
 `npm run test:db` needs the PostgreSQL server binaries (`initdb`, `pg_ctl`,
