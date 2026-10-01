@@ -2,68 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ALL_INDICATOR_IDS, DIMENSIONS } from "@/lib/scoring/rubric";
 
-// ---- In-memory stand-in for the parts of the Supabase client the service uses.
-type Row = Record<string, unknown>;
-const db: Record<string, Row[]> = {};
-let idCounter = 0;
+import { createFakeDb } from "../../test/fake-supabase";
 
-function query(table: string) {
-  const filters: ((r: Row) => boolean)[] = [];
-  let order: { col: string; asc: boolean } | null = null;
-  let limitN: number | null = null;
-  let head = false;
-  let pendingInsert: Row | null = null;
-  const rows = () => {
-    let out = (db[table] ?? []).filter((r) => filters.every((f) => f(r)));
-    if (order) {
-      const { col, asc } = order;
-      out = [...out].sort((a, b) => (String(a[col]) < String(b[col]) ? -1 : 1) * (asc ? 1 : -1));
-    }
-    return limitN === null ? out : out.slice(0, limitN);
-  };
-  const builder = {
-    select(_cols?: string, opts?: { head?: boolean }) {
-      head = Boolean(opts?.head);
-      return builder;
-    },
-    eq(col: string, v: unknown) {
-      filters.push((r) => r[col] === v);
-      return builder;
-    },
-    gte(col: string, v: string) {
-      filters.push((r) => String(r[col]) >= v);
-      return builder;
-    },
-    order(col: string, { ascending }: { ascending: boolean }) {
-      order = { col, asc: ascending };
-      return builder;
-    },
-    limit(n: number) {
-      limitN = n;
-      return builder;
-    },
-    insert(row: Row) {
-      pendingInsert = {
-        id: `row-${++idCounter}`,
-        created_at: new Date(Date.UTC(2026, 9, 1, 0, 0, idCounter)).toISOString(),
-        ...row,
-      };
-      (db[table] ??= []).push(pendingInsert);
-      return builder;
-    },
-    async maybeSingle() {
-      return { data: rows()[0] ?? null, error: null };
-    },
-    async single() {
-      return { data: pendingInsert ?? rows()[0], error: null };
-    },
-    then(resolve: (v: unknown) => void) {
-      const r = rows();
-      resolve({ data: head ? null : r, count: r.length, error: null });
-    },
-  };
-  return builder;
-}
+const fake = createFakeDb();
+const db = fake.tables;
+const query = fake.client.from;
 
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({ from: query }) }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ from: query }) }));
@@ -72,7 +15,7 @@ vi.mock("@/lib/ai/usage", () => ({ withinRateLimit: async () => true }));
 // The model rates the first half of each dimension's indicators met, the rest not met.
 const callStructured = vi.fn(async (opts: { check?: (o: unknown) => string[] }) => {
   const output = {
-    dimensions: DIMENSIONS.filter((d) => !d.requiresSimulation).map((d) => ({
+    dimensions: DIMENSIONS.filter((d) => !d.requiresSimulation || db.simulations.length > 0).map((d) => ({
       dimension_id: d.id,
       indicators: d.indicators.map((i, n) => ({
         indicator_id: i.id,
@@ -143,6 +86,20 @@ describe("runAssessment", () => {
     expect(again.reused).toBe(false);
   });
 
+  it("scores Communication once a simulation is completed, re-assessing automatically", async () => {
+    const first = await runAssessment("u1", startup);
+    const comm = (a: typeof first) =>
+      (a.assessment.dimension_scores as { dimensions: { id: string; score: number | null }[] }).dimensions.find((d) => d.id === "communication");
+    expect(comm(first)?.score).toBeNull();
+
+    db.simulations.push({ id: "sim-1", startup_id: "s1", status: "completed", persona: "seed_vc", difficulty: "tough", overall_score: 70, investor_confidence: "medium", final_evaluation: { summary: "Fine." }, ended_at: "2026-10-02" });
+    db.simulation_turns = [];
+    db.red_flags = [];
+    const second = await runAssessment("u1", startup);
+    expect(second.reused).toBe(false);
+    expect(comm(second)?.score).not.toBeNull();
+  });
+
   it("refuses to run without analysed documents", async () => {
     db.knowledge_profiles = [];
     await expect(runAssessment("u1", startup)).rejects.toThrow(/Analyse your documents/);
@@ -151,10 +108,10 @@ describe("runAssessment", () => {
 
 describe("assessmentInputHash", () => {
   it("ignores key order but not values", () => {
-    const a = assessmentInputHash({ knowledgeProfileId: "kp", form: { a: 1, b: 2 }, hasSimulation: false });
-    const b = assessmentInputHash({ knowledgeProfileId: "kp", form: { b: 2, a: 1 }, hasSimulation: false });
-    const c = assessmentInputHash({ knowledgeProfileId: "kp", form: { a: 1, b: 3 }, hasSimulation: false });
-    const d = assessmentInputHash({ knowledgeProfileId: "kp", form: { a: 1, b: 2 }, hasSimulation: true });
+    const a = assessmentInputHash({ knowledgeProfileId: "kp", form: { a: 1, b: 2 }, simulationId: null });
+    const b = assessmentInputHash({ knowledgeProfileId: "kp", form: { b: 2, a: 1 }, simulationId: null });
+    const c = assessmentInputHash({ knowledgeProfileId: "kp", form: { a: 1, b: 3 }, simulationId: null });
+    const d = assessmentInputHash({ knowledgeProfileId: "kp", form: { a: 1, b: 2 }, simulationId: "sim-1" });
     expect(a).toBe(b);
     expect(new Set([a, c, d]).size).toBe(3);
   });

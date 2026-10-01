@@ -50,7 +50,8 @@ export function formFields(startup: Tables<"startups">) {
 export function assessmentInputHash(input: {
   knowledgeProfileId: string;
   form: Record<string, unknown>;
-  hasSimulation: boolean;
+  /** The latest completed simulation, which provides Communication/defence evidence. */
+  simulationId: string | null;
 }): string {
   const sortedForm = Object.fromEntries(Object.entries(input.form).sort(([a], [b]) => a.localeCompare(b)));
   return createHash("sha256")
@@ -60,7 +61,7 @@ export function assessmentInputHash(input: {
         prompt: ASSESSMENT_PROMPT_VERSION,
         profile: input.knowledgeProfileId,
         form: sortedForm,
-        simulation: input.hasSimulation,
+        simulation: input.simulationId,
       }),
     )
     .digest("hex");
@@ -97,14 +98,44 @@ export function summarise(dimensions: DimensionResult[]) {
   return { strengths, weaknesses, actions };
 }
 
-async function hasCompletedSimulation(startupId: string): Promise<boolean> {
-  const { count, error } = await createAdminClient()
+/** Evidence about how the founder defends their pitch, from their latest completed simulation. */
+async function latestSimulationEvidence(startupId: string): Promise<{ id: string; text: string } | null> {
+  const admin = createAdminClient();
+  const { data: sim, error } = await admin
     .from("simulations")
-    .select("id", { count: "exact", head: true })
+    .select("id, persona, difficulty, overall_score, investor_confidence, final_evaluation")
     .eq("startup_id", startupId)
-    .eq("status", "completed");
-  if (error) throw new Error(`Could not check simulations: ${error.message}`);
-  return (count ?? 0) > 0;
+    .eq("status", "completed")
+    .order("ended_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`Could not load simulations: ${error.message}`);
+  if (!sim) return null;
+
+  const [{ data: turns }, { data: flags }] = await Promise.all([
+    admin.from("simulation_turns").select("role, evaluation").eq("simulation_id", sim.id),
+    admin.from("red_flags").select("type, severity, description").eq("simulation_id", sim.id),
+  ]);
+  const evals = (turns ?? [])
+    .filter((t) => t.role === "founder" && t.evaluation)
+    .map((t) => t.evaluation as { clarity: number; evidence: number; consistency: number });
+  const avg = (k: "clarity" | "evidence" | "consistency") =>
+    evals.length ? (evals.reduce((s, e) => s + e[k], 0) / evals.length).toFixed(1) : "n/a";
+  const final = (sim.final_evaluation ?? {}) as { summary?: string; strengths?: string[]; weaknesses?: string[] };
+
+  return {
+    id: sim.id,
+    text: [
+      `Latest Investor Room session: ${sim.persona}, ${sim.difficulty}. Meeting score ${sim.overall_score}/100, investor confidence ${sim.investor_confidence}.`,
+      `Average answer ratings (0-10): clarity ${avg("clarity")}, evidence ${avg("evidence")}, consistency ${avg("consistency")} over ${evals.length} answers.`,
+      final.summary ? `Investor summary: ${final.summary}` : "",
+      final.strengths?.length ? `Strengths: ${final.strengths.join("; ")}` : "",
+      final.weaknesses?.length ? `Weaknesses: ${final.weaknesses.join("; ")}` : "",
+      `Red flags raised: ${(flags ?? []).map((f) => `${f.severity} ${f.type}: ${f.description}`).join(" | ") || "none"}`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  };
 }
 
 /**
@@ -128,9 +159,10 @@ export async function runAssessment(
   if (profileError) throw new Error(`Could not load knowledge profile: ${profileError.message}`);
   if (!profile) throw new AssessmentError("Analyse your documents first. The assessment uses what we find in them.");
 
-  const hasSimulation = await hasCompletedSimulation(startup.id);
+  const simulation = await latestSimulationEvidence(startup.id);
+  const hasSimulation = simulation !== null;
   const form = formFields(startup);
-  const inputHash = assessmentInputHash({ knowledgeProfileId: profile.id, form, hasSimulation });
+  const inputHash = assessmentInputHash({ knowledgeProfileId: profile.id, form, simulationId: simulation?.id ?? null });
 
   const { data: latest, error: latestError } = await admin
     .from("assessments")
@@ -148,9 +180,9 @@ export async function runAssessment(
     throw new AssessmentError("You've run several assessments in the last hour. Please try again later.");
   }
 
+  // Communication / defence is rated from Investor Room evidence; until the
+  // founder completes a simulation it is excluded from the prompt and the score.
   const rated = DIMENSIONS.filter((d) => !d.requiresSimulation || hasSimulation);
-  // Communication / defence needs simulation evidence, which the Investor Room
-  // provides; until then it is excluded from both the prompt and the score.
   const { _meta: _ignored, ...profileData } = (profile.data ?? {}) as Record<string, unknown>;
   void _ignored;
 
@@ -164,6 +196,7 @@ export async function runAssessment(
         buildAssessmentContent({
           profileJson: JSON.stringify(profileData, null, 1),
           formJson: JSON.stringify(form, null, 1),
+          simulationSummary: simulation?.text ?? null,
           dimensions: rated,
           retryNote,
         }),

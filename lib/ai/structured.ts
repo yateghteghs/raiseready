@@ -22,7 +22,7 @@ type Content = Anthropic.Beta.BetaContentBlockParam[];
 export type StructuredCallOptions<T> = {
   userId: string;
   purpose: string;
-  system: string;
+  system: string | Anthropic.Beta.BetaTextBlockParam[];
   /** Builds the user content; receives the previous attempt's problems on the retry. */
   buildContent: (retryNote?: string) => Content;
   schema: z.ZodType<T>;
@@ -30,6 +30,10 @@ export type StructuredCallOptions<T> = {
   check?: (value: T) => string[];
   effort?: "low" | "medium" | "high" | "xhigh" | "max";
   maxTokens?: number;
+  /** Receives the raw JSON text as it streams (for showing output live). */
+  onTextDelta?: (delta: string) => void;
+  /** Called before a retry, so live output from the failed attempt can be discarded. */
+  onRetry?: () => void;
 };
 
 function describeIssues(error: z.ZodError): string {
@@ -50,6 +54,7 @@ export async function callStructured<T>(options: StructuredCallOptions<T>): Prom
   let retryNote: string | undefined;
 
   for (let attempt = 1; attempt <= 2; attempt++) {
+    if (attempt > 1) options.onRetry?.();
     const started = Date.now();
     let message: Anthropic.Beta.BetaMessage;
     try {
@@ -68,6 +73,7 @@ export async function callStructured<T>(options: StructuredCallOptions<T>): Prom
           ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const }
           : {}),
       });
+      if (options.onTextDelta) stream.on("text", (delta) => options.onTextDelta?.(delta));
       message = await stream.finalMessage();
     } catch (error) {
       await logAiCall({

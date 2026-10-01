@@ -32,6 +32,8 @@ export async function logAiCall(record: AiCallRecord): Promise<void> {
 export const RATE_LIMITS: Record<string, { max: number; windowMinutes: number }> = {
   extraction: { max: 6, windowMinutes: 60 },
   assessment: { max: 6, windowMinutes: 60 },
+  simulation_turn: { max: 80, windowMinutes: 60 },
+  simulation_final: { max: 10, windowMinutes: 60 },
 };
 
 /** True when the user still has room under the limit for this purpose. */

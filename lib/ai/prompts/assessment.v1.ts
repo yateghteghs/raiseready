@@ -35,6 +35,8 @@ function rubricText(dimensions: DimensionDef[]): string {
 export function buildAssessmentContent(input: {
   profileJson: string;
   formJson: string;
+  /** Evidence from the latest completed Investor Room session, for Communication / defence. */
+  simulationSummary?: string | null;
   dimensions: DimensionDef[];
   retryNote?: string;
 }) {
@@ -44,6 +46,9 @@ export function buildAssessmentContent(input: {
       text: [
         `<founder_profile source="extracted from the founder's documents">\n${escapeDelimiters(input.profileJson)}\n</founder_profile>`,
         `<founder_form source="entered by the founder">\n${escapeDelimiters(input.formJson)}\n</founder_form>`,
+        input.simulationSummary
+          ? `<simulation_summary source="RaiseReady's evaluation of the founder's latest practice investor meeting">\n${escapeDelimiters(input.simulationSummary)}\n</simulation_summary>\nRate the "communication" dimension from this simulation summary.`
+          : "",
         `Rate every indicator below and give feedback for every dimension listed. Rate only these dimensions.\n\n${rubricText(input.dimensions)}`,
         input.retryNote ? `Your previous answer was rejected for these reasons. Fix them:\n${input.retryNote}` : "",
       ]
