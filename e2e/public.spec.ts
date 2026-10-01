@@ -13,6 +13,7 @@ const PUBLIC_PAGES = [
   "/register",
   "/forgot-password",
   "/account-deleted",
+  "/admin/login",
 ];
 
 for (const path of PUBLIC_PAGES) {
@@ -53,10 +54,21 @@ test("the main call to action leads to sign-up", async ({ page }) => {
 });
 
 test("signed-in areas send visitors to log in and come back afterwards", async ({ page }) => {
-  for (const path of ["/app", "/app/documents", "/app/settings", "/admin", "/admin/users"]) {
+  for (const path of ["/app", "/app/documents", "/app/settings"]) {
     await page.goto(path);
     await expect(page).toHaveURL(new RegExp(`/login\\?next=${encodeURIComponent(path)}$`));
   }
+  for (const path of ["/admin", "/admin/users", "/admin/users/00000000-0000-4000-8000-000000000000"]) {
+    await page.goto(path);
+    await expect(page).toHaveURL(new RegExp(`/admin/login\\?next=${encodeURIComponent(path)}$`));
+  }
+});
+
+test("staff have their own sign-in page", async ({ page }) => {
+  await page.goto("/admin/login");
+  await expect(page.getByRole("heading", { name: "Admin sign-in" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign in to admin" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Founder login" })).toHaveAttribute("href", "/login");
 });
 
 test("unknown pages show a friendly 404", async ({ page }) => {

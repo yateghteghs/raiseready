@@ -98,18 +98,44 @@ belonging to another company. After Paystack approves the business:
 
 The billing page shows a "test mode" notice while test keys are in use.
 
-## 5. Make yourself an admin
+## 5. Admins and staff
 
-Sign up on the site with your own email, then in **Supabase → SQL Editor**:
+Sign up on the site with your own email, then make yourself the first admin
+in **Supabase → SQL Editor**:
 
 ```sql
 select private.set_user_role('you@example.com', 'admin');
 ```
 
-Reload the app and an **Admin** link appears in the header. There is no
-separate admin password: the admin area is protected by your account login
-and your Supabase dashboard login, so turn on two-factor authentication for
-your Supabase, Vercel, GitHub and Paystack accounts.
+Staff sign in at **`/admin/login`** with their RaiseReady email and password.
+Founder accounts are turned away there. Signed-in staff also see an **Admin**
+link in the app header.
+
+From then on, admins manage everyone from **Admin → Users**. Open a user to
+change their role, suspend, reactivate, terminate or delete them. Every change
+is recorded in the user's history.
+
+| Role | Can |
+|---|---|
+| Founder | Use the app. No admin access. |
+| Viewer | See the admin dashboard. |
+| Support | Also suspend and reactivate founders. |
+| Admin | Everything: terminate, delete, change roles, act on other staff. |
+
+| Action | What happens |
+|---|---|
+| Suspend | Signed out and blocked from signing in until reactivated. Data kept. |
+| Reactivate | Lifts a suspension. |
+| Terminate | Permanently blocked; data kept for records; Pro cancelled; staff role removed. The email can't sign up again. |
+| Delete | Account, data and files erased, Pro cancelled (as when founders delete themselves). |
+
+Nobody can change their own account from the admin area, so keep at least
+two admins. The SQL command above is the way back in if you ever lose
+admin access.
+
+Protect admin accounts with strong, unique passwords, and turn on
+two-factor authentication for your Supabase, Vercel, GitHub and Paystack
+accounts.
 
 ## 6. Automated tests in GitHub
 

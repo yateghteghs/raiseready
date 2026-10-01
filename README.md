@@ -32,7 +32,10 @@ Next.js (App Router, TypeScript) · Tailwind CSS + shadcn/ui · Supabase (Postgr
 
 ### Making yourself an admin
 
-Sign up in the app first, then either run
+Staff sign in at `/admin/login`. Roles are founder, viewer, support and admin
+(see `lib/admin/permissions.ts` and [`docs/DEPLOY.md`](docs/DEPLOY.md#5-admins-and-staff)).
+Admins assign roles from **Admin → Users**. For the first admin, sign up in
+the app, then either run
 
 ```bash
 npm run db:seed-admin -- you@example.com
@@ -94,10 +97,11 @@ without them. CI runs it for commits whose message contains `[e2e]`; see
 - Founders can read only their own rows. They can directly edit their
   profile's name/country/onboarding flag, manage their startups, and delete
   their document records.
-- Plan, credits and role can never be changed from the browser.
+- Plan, credits, role, account status and image paths can never be changed
+  from the browser.
 - Uploads, extraction results, assessments, simulations, reports, payments,
   AI usage and audit logs are written by server code using the service role.
-- Storage buckets (`documents`, `reports`) are private. Objects live at
+- Storage buckets (`documents`, `reports`, `images`) are private. Objects live at
   `{user_id}/{startup_id}/{file}` and are served via short-lived signed URLs.
 - Deleting an auth user cascades to all of that user's rows. `ai_calls` and
   `audit_logs` are kept but unlinked from the deleted user.

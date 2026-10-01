@@ -7,7 +7,7 @@ import { createClient } from "@supabase/supabase-js";
 /**
  * The core loop (spec section 11, milestone 10) against a real deployment:
  * log in → onboard → upload a deck → analyse → assess → full Investor Room
- * meeting → results → delete the account.
+ * meeting → results → profile picture → delete the account.
  *
  * It creates a throwaway, pre-confirmed founder with the service-role key and
  * uses real AI calls (a few dozen; roughly the cost of one founder's session).
@@ -23,6 +23,7 @@ test.skip(!configured, "Set E2E_BASE_URL, E2E_SUPABASE_URL and E2E_SUPABASE_SERV
 test.describe.configure({ mode: "serial" });
 
 const DECK = path.join(process.cwd(), "e2e/fixtures/sample-deck.pdf");
+const AVATAR = path.join(process.cwd(), "e2e/fixtures/avatar.png");
 const email = `e2e-${Date.now()}-${randomUUID().slice(0, 8)}@raiseready-e2e.test`;
 const password = `E2e-${randomUUID()}`;
 let userId: string | null = null;
@@ -40,7 +41,7 @@ test.afterAll(async () => {
   const client = admin();
   const { data } = await client.auth.admin.getUserById(userId);
   if (!data?.user) return; // Deleted by the test, as intended.
-  for (const bucket of ["documents", "reports"]) {
+  for (const bucket of ["documents", "reports", "images"]) {
     const { data: folders } = await client.storage.from(bucket).list(userId);
     for (const folder of folders ?? []) {
       const { data: files } = await client.storage.from(bucket).list(`${userId}/${folder.name}`);
@@ -137,6 +138,13 @@ test("a founder can go from sign-in to feedback, then delete their account", asy
     await expect(page.getByText(/Investor confidence/).first()).toBeVisible();
   });
 
+  await test.step("add a profile picture", async () => {
+    await page.goto("/app/settings");
+    await page.locator("#image-avatar").setInputFiles(AVATAR);
+    await expect(page.getByText("Profile picture saved.")).toBeVisible({ timeout: 60_000 });
+    await expect(page.getByRole("img", { name: "Profile picture" })).toBeVisible();
+  });
+
   await test.step("delete the account", async () => {
     await page.goto("/app/settings");
     await page.getByLabel("Type DELETE to confirm").fill("DELETE");
@@ -146,7 +154,9 @@ test("a founder can go from sign-in to feedback, then delete their account", asy
     const { data } = await admin().auth.admin.getUserById(userId!);
     expect(data?.user ?? null, "the auth user is gone").toBeNull();
     const { data: files } = await admin().storage.from("documents").list(userId!);
-    expect(files ?? [], "no stored files remain").toEqual([]);
+    expect(files ?? [], "no stored documents remain").toEqual([]);
+    const { data: images } = await admin().storage.from("images").list(userId!);
+    expect(images ?? [], "no stored images remain").toEqual([]);
 
     await page.goto("/app");
     await expect(page).toHaveURL(/\/login/);

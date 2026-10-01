@@ -16,11 +16,13 @@ export default function PrivacyPage() {
       <ul>
         <li>
           <strong>Account details:</strong> your name, email address, country and an encrypted
-          password (we never see your password itself).
+          password (we never see your password itself). If you add one, a profile picture.
         </li>
         <li>
           <strong>Startup profile:</strong> what you enter about your startup, such as stage, revenue,
-          customers and fundraising plans.
+          customers and fundraising plans, and your company logo if you add one. Your profile picture
+          and logo are stored privately. Only you and RaiseReady staff can see them; your logo also
+          appears on your own PDF reports. They are not sent to our AI provider.
         </li>
         <li>
           <strong>Documents you upload:</strong> your pitch deck and, if you add them, your financial
@@ -38,6 +40,10 @@ export default function PrivacyPage() {
           <strong>Usage records:</strong> when AI features were used and how much processing they took,
           so we can manage costs and prevent abuse. These records don&apos;t contain your documents or
           answers.
+        </li>
+        <li>
+          <strong>Account status:</strong> if staff suspend or close an account, when it happened and
+          the reason they recorded.
         </li>
       </ul>
 
