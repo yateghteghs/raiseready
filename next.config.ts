@@ -1,14 +1,6 @@
 import type { NextConfig } from "next";
 
-// Baseline security headers (spec section 8). A full Content-Security-Policy
-// is added during hardening once every third-party origin is known.
-const securityHeaders = [
-  { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "X-Frame-Options", value: "DENY" },
-  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
-];
+import { securityHeaders } from "./lib/security/headers";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
@@ -18,7 +10,7 @@ const nextConfig: NextConfig = {
     "/app/reports/*": ["./lib/reports/fonts/*.ttf"],
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [{ source: "/:path*", headers: securityHeaders({ supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL, dev: process.env.NODE_ENV === "development" }) }];
   },
 };
 
