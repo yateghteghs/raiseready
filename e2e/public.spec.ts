@@ -14,6 +14,8 @@ const PUBLIC_PAGES = [
   "/forgot-password",
   "/account-deleted",
   "/admin/login",
+  "/testimonials",
+  "/partners",
 ];
 
 for (const path of PUBLIC_PAGES) {

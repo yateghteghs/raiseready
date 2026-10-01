@@ -100,27 +100,28 @@ The billing page shows a "test mode" notice while test keys are in use.
 
 ## 5. Admins and staff
 
-Sign up on the site with your own email, then make yourself the first admin
-in **Supabase → SQL Editor**:
+Sign up on the site with your own email, then make yourself the first
+super admin in **Supabase → SQL Editor**:
 
 ```sql
-select private.set_user_role('you@example.com', 'admin');
+select private.set_user_role('you@example.com', 'super_admin');
 ```
 
 Staff sign in at **`/admin/login`** with their RaiseReady email and password.
 Founder accounts are turned away there. Signed-in staff also see an **Admin**
 link in the app header.
 
-From then on, admins manage everyone from **Admin → Users**. Open a user to
-change their role, suspend, reactivate, terminate or delete them. Every change
-is recorded in the user's history.
+From then on, staff manage everyone from **Admin → Users**. Open a user to
+see what you can do to their account; each change is recorded in the user's
+history.
 
 | Role | Can |
 |---|---|
 | Founder | Use the app. No admin access. |
 | Viewer | See the admin dashboard. |
 | Support | Also suspend and reactivate founders. |
-| Admin | Everything: terminate, delete, change roles, act on other staff. |
+| Admin | Also terminate and delete users, send notifications, and give roles up to Support. |
+| Super admin | Everything: send password reset emails, add free credits, manage admins, edit the website's logos/testimonials/partners, and set the report signature. |
 
 | Action | What happens |
 |---|---|
@@ -128,9 +129,16 @@ is recorded in the user's history.
 | Reactivate | Lifts a suspension. |
 | Terminate | Permanently blocked; data kept for records; Pro cancelled; staff role removed. The email can't sign up again. |
 | Delete | Account, data and files erased, Pro cancelled (as when founders delete themselves). |
+| Send password reset | Emails a link to choose a new password. Staff never see or set passwords. |
+| Add free credits | Adds simulation credits at no charge (1–100 at a time). |
+
+Other admin pages:
+- **Notifications** (admin and super admin): message one founder or everyone. Messages appear under the bell in the app header.
+- **Website** (super admin): startup logos, testimonials and partners shown on the home page, `/testimonials` and `/partners`. Tick the permission box only when the company or person has agreed to appear.
+- **Report signature** (super admin): the name, title and signature image printed as "Issued by RaiseReady" at the end of new PDF reports. Founders' company logos are added to their reports automatically.
 
 Nobody can change their own account from the admin area, so keep at least
-two admins. The SQL command above is the way back in if you ever lose
+two super admins. The SQL command above is the way back in if you ever lose
 admin access.
 
 Protect admin accounts with strong, unique passwords, and turn on
@@ -182,6 +190,9 @@ E2E_BASE_URL=https://<your-site> E2E_SUPABASE_URL=… E2E_SUPABASE_SERVICE_ROLE_
         currently allows
       - whether you need to register with the Nigeria Data Protection
         Commission
+- [ ] Supabase's built-in email sender allows only a few emails an hour, which
+      also limits the admin "Send password reset" button. A custom SMTP
+      sender (below) removes this limit.
 - [ ] Add a contact email to the privacy and terms pages (they currently say
       "[contact email to be added]").
 - [ ] Custom email sender: Supabase's built-in one is rate-limited and meant

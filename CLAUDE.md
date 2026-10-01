@@ -45,12 +45,18 @@ milestone at a time (spec section 11) and stop for review after each.
   webhook can both run. Credits change only via the `add_credits` /
   `consume_credit` SQL functions.
 - Tests that touch Supabase use `test/fake-supabase.ts`.
-- Staff: roles founder/viewer/support/admin; permissions are pure rules in
+- Staff: roles founder/viewer/support/admin/super_admin; permissions are pure rules in
   `lib/admin/permissions.ts`. Admin pages call `requireStaff(action)`; user
   actions go through `applyUserAction` (`lib/admin/users.ts`), which checks
   permissions and audit-logs. Staff sign in at `/admin/login`.
 - Account status (active/suspended/terminated) is enforced in `getSession`
   (`lib/auth/session.ts`) on every request, plus a Supabase Auth ban.
+- Notifications: `lib/notifications` (staff → one founder or everyone; RLS
+  lets founders read only theirs and broadcasts; read receipts are written
+  by the server). Links must stay inside `/app`.
+- Website showcase (`lib/showcase`, public `showcase` bucket) and report
+  signature (`lib/reports/signature.ts`) are super-admin content; editing
+  revalidates the public pages.
 - Profile pictures and logos: private `images` bucket, PNG/JPEG ≤ 2 MB,
   checked by content (`lib/images`). Only server code writes `avatar_path` /
   `logo_path`; viewing uses short-lived signed links.

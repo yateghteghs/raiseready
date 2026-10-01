@@ -32,10 +32,10 @@ Next.js (App Router, TypeScript) · Tailwind CSS + shadcn/ui · Supabase (Postgr
 
 ### Making yourself an admin
 
-Staff sign in at `/admin/login`. Roles are founder, viewer, support and admin
+Staff sign in at `/admin/login`. Roles are founder, viewer, support, admin and super_admin
 (see `lib/admin/permissions.ts` and [`docs/DEPLOY.md`](docs/DEPLOY.md#5-admins-and-staff)).
-Admins assign roles from **Admin → Users**. For the first admin, sign up in
-the app, then either run
+Admins assign roles from **Admin → Users**. For the first super admin, sign
+up in the app, then either run
 
 ```bash
 npm run db:seed-admin -- you@example.com
@@ -44,7 +44,7 @@ npm run db:seed-admin -- you@example.com
 or, in the Supabase SQL editor:
 
 ```sql
-select private.set_user_role('you@example.com', 'admin');
+select private.set_user_role('you@example.com', 'super_admin');
 ```
 
 ## Scripts
@@ -59,7 +59,7 @@ select private.set_user_role('you@example.com', 'admin');
 | `npm run test:db` | Applies migrations to a throwaway Postgres and runs the RLS test suite |
 | `npm run test:e2e` | Playwright end-to-end tests (see below) |
 | `npm run db:bundle` | Regenerates `supabase/setup.sql` from the migrations |
-| `npm run db:seed-admin -- <email>` | Grants the admin role to an existing user |
+| `npm run db:seed-admin -- <email>` | Grants the super admin role to an existing user |
 
 Deploying: see [`docs/DEPLOY.md`](docs/DEPLOY.md).
 
