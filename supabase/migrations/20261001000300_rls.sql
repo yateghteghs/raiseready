@@ -77,10 +77,12 @@ $$;
 grant select on public.profiles to authenticated;
 grant update (full_name, country, onboarding_complete) on public.profiles to authenticated;
 
+drop policy if exists "profiles: owner can read" on public.profiles;
 create policy "profiles: owner can read"
   on public.profiles for select to authenticated
   using (id = (select auth.uid()));
 
+drop policy if exists "profiles: owner can update" on public.profiles;
 create policy "profiles: owner can update"
   on public.profiles for update to authenticated
   using (id = (select auth.uid()))
@@ -91,19 +93,23 @@ create policy "profiles: owner can update"
 ------------------------------------------------------------------------------
 grant select, insert, update, delete on public.startups to authenticated;
 
+drop policy if exists "startups: owner can read" on public.startups;
 create policy "startups: owner can read"
   on public.startups for select to authenticated
   using (owner_id = (select auth.uid()));
 
+drop policy if exists "startups: owner can insert" on public.startups;
 create policy "startups: owner can insert"
   on public.startups for insert to authenticated
   with check (owner_id = (select auth.uid()));
 
+drop policy if exists "startups: owner can update" on public.startups;
 create policy "startups: owner can update"
   on public.startups for update to authenticated
   using (owner_id = (select auth.uid()))
   with check (owner_id = (select auth.uid()));
 
+drop policy if exists "startups: owner can delete" on public.startups;
 create policy "startups: owner can delete"
   on public.startups for delete to authenticated
   using (owner_id = (select auth.uid()));
@@ -114,10 +120,12 @@ create policy "startups: owner can delete"
 ------------------------------------------------------------------------------
 grant select, delete on public.documents to authenticated;
 
+drop policy if exists "documents: owner can read" on public.documents;
 create policy "documents: owner can read"
   on public.documents for select to authenticated
   using ((select private.owns_startup(startup_id)));
 
+drop policy if exists "documents: owner can delete" on public.documents;
 create policy "documents: owner can delete"
   on public.documents for delete to authenticated
   using ((select private.owns_startup(startup_id)));
@@ -128,28 +136,34 @@ create policy "documents: owner can delete"
 grant select on public.knowledge_profiles, public.assessments,
   public.simulations, public.reports to authenticated;
 
+drop policy if exists "knowledge_profiles: owner can read" on public.knowledge_profiles;
 create policy "knowledge_profiles: owner can read"
   on public.knowledge_profiles for select to authenticated
   using ((select private.owns_startup(startup_id)));
 
+drop policy if exists "assessments: owner can read" on public.assessments;
 create policy "assessments: owner can read"
   on public.assessments for select to authenticated
   using ((select private.owns_startup(startup_id)));
 
+drop policy if exists "simulations: owner can read" on public.simulations;
 create policy "simulations: owner can read"
   on public.simulations for select to authenticated
   using ((select private.owns_startup(startup_id)));
 
+drop policy if exists "reports: owner can read" on public.reports;
 create policy "reports: owner can read"
   on public.reports for select to authenticated
   using ((select private.owns_startup(startup_id)));
 
 grant select on public.simulation_turns, public.red_flags to authenticated;
 
+drop policy if exists "simulation_turns: owner can read" on public.simulation_turns;
 create policy "simulation_turns: owner can read"
   on public.simulation_turns for select to authenticated
   using ((select private.owns_simulation(simulation_id)));
 
+drop policy if exists "red_flags: owner can read" on public.red_flags;
 create policy "red_flags: owner can read"
   on public.red_flags for select to authenticated
   using ((select private.owns_simulation(simulation_id)));
@@ -159,10 +173,12 @@ create policy "red_flags: owner can read"
 ------------------------------------------------------------------------------
 grant select on public.payments, public.subscriptions to authenticated;
 
+drop policy if exists "payments: owner can read" on public.payments;
 create policy "payments: owner can read"
   on public.payments for select to authenticated
   using (user_id = (select auth.uid()));
 
+drop policy if exists "subscriptions: owner can read" on public.subscriptions;
 create policy "subscriptions: owner can read"
   on public.subscriptions for select to authenticated
   using (user_id = (select auth.uid()));

@@ -5,7 +5,7 @@
 ------------------------------------------------------------------------------
 -- profiles: one row per auth user, created automatically on sign-up.
 ------------------------------------------------------------------------------
-create table public.profiles (
+create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   full_name text,
   country text,
@@ -20,7 +20,7 @@ create table public.profiles (
 ------------------------------------------------------------------------------
 -- startups
 ------------------------------------------------------------------------------
-create table public.startups (
+create table if not exists public.startups (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references public.profiles (id) on delete cascade,
   name text not null check (char_length(name) between 1 and 200),
@@ -43,12 +43,12 @@ create table public.startups (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index startups_owner_id_idx on public.startups (owner_id);
+create index if not exists startups_owner_id_idx on public.startups (owner_id);
 
 ------------------------------------------------------------------------------
 -- documents
 ------------------------------------------------------------------------------
-create table public.documents (
+create table if not exists public.documents (
   id uuid primary key default gen_random_uuid(),
   startup_id uuid not null references public.startups (id) on delete cascade,
   kind text not null check (kind in ('pitch_deck', 'financial_model', 'business_plan', 'other')),
@@ -61,12 +61,12 @@ create table public.documents (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index documents_startup_id_idx on public.documents (startup_id);
+create index if not exists documents_startup_id_idx on public.documents (startup_id);
 
 ------------------------------------------------------------------------------
 -- knowledge_profiles: versioned structured extraction (spec 6.1)
 ------------------------------------------------------------------------------
-create table public.knowledge_profiles (
+create table if not exists public.knowledge_profiles (
   id uuid primary key default gen_random_uuid(),
   startup_id uuid not null references public.startups (id) on delete cascade,
   version integer not null check (version > 0),
@@ -80,7 +80,7 @@ create table public.knowledge_profiles (
 ------------------------------------------------------------------------------
 -- assessments (spec 6.2)
 ------------------------------------------------------------------------------
-create table public.assessments (
+create table if not exists public.assessments (
   id uuid primary key default gen_random_uuid(),
   startup_id uuid not null references public.startups (id) on delete cascade,
   knowledge_profile_id uuid references public.knowledge_profiles (id) on delete set null,
@@ -94,13 +94,13 @@ create table public.assessments (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index assessments_startup_id_created_at_idx on public.assessments (startup_id, created_at desc);
-create index assessments_knowledge_profile_id_idx on public.assessments (knowledge_profile_id);
+create index if not exists assessments_startup_id_created_at_idx on public.assessments (startup_id, created_at desc);
+create index if not exists assessments_knowledge_profile_id_idx on public.assessments (knowledge_profile_id);
 
 ------------------------------------------------------------------------------
 -- simulations (spec 6.3)
 ------------------------------------------------------------------------------
-create table public.simulations (
+create table if not exists public.simulations (
   id uuid primary key default gen_random_uuid(),
   startup_id uuid not null references public.startups (id) on delete cascade,
   persona text not null check (persona in ('seed_vc', 'angel', 'grant_evaluator')),
@@ -116,9 +116,9 @@ create table public.simulations (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index simulations_startup_id_created_at_idx on public.simulations (startup_id, created_at desc);
+create index if not exists simulations_startup_id_created_at_idx on public.simulations (startup_id, created_at desc);
 
-create table public.simulation_turns (
+create table if not exists public.simulation_turns (
   id uuid primary key default gen_random_uuid(),
   simulation_id uuid not null references public.simulations (id) on delete cascade,
   turn_index integer not null check (turn_index >= 0),
@@ -132,7 +132,7 @@ create table public.simulation_turns (
   unique (simulation_id, turn_index)
 );
 
-create table public.red_flags (
+create table if not exists public.red_flags (
   id uuid primary key default gen_random_uuid(),
   simulation_id uuid not null references public.simulations (id) on delete cascade,
   turn_id uuid references public.simulation_turns (id) on delete cascade,
@@ -143,13 +143,13 @@ create table public.red_flags (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index red_flags_simulation_id_idx on public.red_flags (simulation_id);
-create index red_flags_turn_id_idx on public.red_flags (turn_id);
+create index if not exists red_flags_simulation_id_idx on public.red_flags (simulation_id);
+create index if not exists red_flags_turn_id_idx on public.red_flags (turn_id);
 
 ------------------------------------------------------------------------------
 -- reports (spec 6.4)
 ------------------------------------------------------------------------------
-create table public.reports (
+create table if not exists public.reports (
   id uuid primary key default gen_random_uuid(),
   startup_id uuid not null references public.startups (id) on delete cascade,
   assessment_id uuid references public.assessments (id) on delete set null,
@@ -159,14 +159,14 @@ create table public.reports (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index reports_startup_id_idx on public.reports (startup_id);
-create index reports_assessment_id_idx on public.reports (assessment_id);
-create index reports_simulation_id_idx on public.reports (simulation_id);
+create index if not exists reports_startup_id_idx on public.reports (startup_id);
+create index if not exists reports_assessment_id_idx on public.reports (assessment_id);
+create index if not exists reports_simulation_id_idx on public.reports (simulation_id);
 
 ------------------------------------------------------------------------------
 -- payments & subscriptions (spec 7). Written only by the server.
 ------------------------------------------------------------------------------
-create table public.payments (
+create table if not exists public.payments (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles (id) on delete cascade,
   provider text not null default 'paystack' check (provider in ('paystack')),
@@ -179,9 +179,9 @@ create table public.payments (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index payments_user_id_idx on public.payments (user_id);
+create index if not exists payments_user_id_idx on public.payments (user_id);
 
-create table public.subscriptions (
+create table if not exists public.subscriptions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles (id) on delete cascade,
   provider_subscription_code text unique,
@@ -190,14 +190,14 @@ create table public.subscriptions (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index subscriptions_user_id_idx on public.subscriptions (user_id);
+create index if not exists subscriptions_user_id_idx on public.subscriptions (user_id);
 
 ------------------------------------------------------------------------------
 -- ai_calls: cost tracking. user_id is nulled on account deletion so aggregate
 -- cost history survives without being linked to a person. No founder content
 -- is stored here.
 ------------------------------------------------------------------------------
-create table public.ai_calls (
+create table if not exists public.ai_calls (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references public.profiles (id) on delete set null,
   purpose text not null,
@@ -210,13 +210,13 @@ create table public.ai_calls (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index ai_calls_user_id_created_at_idx on public.ai_calls (user_id, created_at desc);
-create index ai_calls_created_at_idx on public.ai_calls (created_at desc);
+create index if not exists ai_calls_user_id_created_at_idx on public.ai_calls (user_id, created_at desc);
+create index if not exists ai_calls_created_at_idx on public.ai_calls (created_at desc);
 
 ------------------------------------------------------------------------------
 -- audit_logs: survives actor deletion (actor_id is nulled).
 ------------------------------------------------------------------------------
-create table public.audit_logs (
+create table if not exists public.audit_logs (
   id uuid primary key default gen_random_uuid(),
   actor_id uuid references public.profiles (id) on delete set null,
   action text not null,
@@ -226,8 +226,8 @@ create table public.audit_logs (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index audit_logs_actor_id_idx on public.audit_logs (actor_id);
-create index audit_logs_created_at_idx on public.audit_logs (created_at desc);
+create index if not exists audit_logs_actor_id_idx on public.audit_logs (actor_id);
+create index if not exists audit_logs_created_at_idx on public.audit_logs (created_at desc);
 
 ------------------------------------------------------------------------------
 -- updated_at triggers on every table
@@ -241,6 +241,7 @@ begin
     'simulations', 'simulation_turns', 'red_flags', 'reports', 'payments',
     'subscriptions', 'ai_calls', 'audit_logs'
   ] loop
+    execute format('drop trigger if exists set_updated_at on public.%I', t);
     execute format(
       'create trigger set_updated_at before update on public.%I
          for each row execute function private.set_updated_at()', t);
@@ -264,6 +265,7 @@ begin
 end;
 $$;
 
+drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function private.handle_new_user();
