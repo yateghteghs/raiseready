@@ -18,7 +18,14 @@ redeploys the site automatically.
    | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Publishable key (legacy: anon) |
    | `SUPABASE_SERVICE_ROLE_KEY` | Secret key (legacy: service_role) |
 
-   The Anthropic and Paystack variables are added in later milestones.
+   For document analysis (from Milestone 4), also add:
+
+   | Name | Value |
+   |---|---|
+   | `ANTHROPIC_API_KEY` | From console.anthropic.com → API Keys |
+   | `ANTHROPIC_MODEL` | `claude-opus-5-5` |
+
+   The Paystack variables are added in a later milestone.
 5. Click **Deploy** and wait for the build to finish. Note the site address,
    e.g. `https://raiseready-xxxx.vercel.app`.
 
