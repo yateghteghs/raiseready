@@ -31,6 +31,7 @@ export async function logAiCall(record: AiCallRecord): Promise<void> {
 /** Per-user limits on AI work, counted from ai_calls. */
 export const RATE_LIMITS: Record<string, { max: number; windowMinutes: number }> = {
   extraction: { max: 6, windowMinutes: 60 },
+  assessment: { max: 6, windowMinutes: 60 },
 };
 
 /** True when the user still has room under the limit for this purpose. */

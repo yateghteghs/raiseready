@@ -21,9 +21,9 @@ export type ExtractionDocument =
   | { id: string; kind: string; filename: string; type: "pdf"; base64: string }
   | { id: string; kind: string; filename: string; type: "text"; text: string };
 
-/** Stops founder text from closing our delimiter tag early. */
+/** Stops founder text from opening or closing any of our <founder_*> delimiter tags. */
 export function escapeDelimiters(text: string): string {
-  return text.replace(/<\/?\s*founder_document/gi, (m) => m.replace("<", "&lt;"));
+  return text.replace(/<\/?\s*founder_[a-z]+/gi, (m) => m.replace("<", "&lt;"));
 }
 
 function openTag(doc: ExtractionDocument): string {
