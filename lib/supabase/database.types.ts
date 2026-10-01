@@ -28,6 +28,7 @@ export type ReadinessBand = "not_ready" | "getting_there" | "nearly_ready" | "in
 export type Persona = "seed_vc" | "angel" | "grant_evaluator";
 export type Difficulty = "friendly" | "analytical" | "tough";
 export type SimulationStatus = "active" | "completed" | "abandoned";
+export type SimulationMode = "full" | "drill";
 export type InvestorConfidence = "low" | "medium" | "high";
 export type TurnRole = "investor" | "founder" | "system";
 export type RedFlagType = "contradiction" | "unsupported_claim" | "weak_answer" | "missing_info";
@@ -112,6 +113,9 @@ type SimulationRow = Timestamps & {
   overall_score: number | null;
   investor_confidence: InvestorConfidence | null;
   final_evaluation: Json | null;
+  mode: SimulationMode;
+  /** For drills: the investor question being practised again. */
+  source_turn_id: string | null;
   started_at: string;
   ended_at: string | null;
 };
@@ -233,6 +237,8 @@ export type Database = {
         | "overall_score"
         | "investor_confidence"
         | "final_evaluation"
+        | "mode"
+        | "source_turn_id"
         | "started_at"
         | "ended_at"
       >;

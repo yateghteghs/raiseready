@@ -320,6 +320,27 @@ select rls_test.ok(
 reset role;
 
 ------------------------------------------------------------------------------
+-- Drills (one-question practice) follow the same isolation rules
+------------------------------------------------------------------------------
+insert into public.simulations (id, startup_id, persona, difficulty, mode, source_turn_id) values
+  ('bbbbbbbb-7777-4000-8000-000000000002', 'bbbbbbbb-1111-4000-8000-000000000002', 'seed_vc', 'tough', 'drill', 'bbbbbbbb-6666-4000-8000-000000000002');
+
+select rls_test.ok(
+  (select mode from public.simulations where id = 'aaaaaaaa-5555-4000-8000-000000000001') = 'full',
+  'simulations default to full mode');
+select rls_test.throws(
+  $$insert into public.simulations (startup_id, persona, difficulty, mode) values ('aaaaaaaa-1111-4000-8000-000000000001', 'angel', 'friendly', 'speedrun')$$,
+  '23514', 'unknown simulation modes are rejected');
+
+set local role authenticated;
+select set_config('request.jwt.claims',
+  '{"sub":"aaaaaaaa-0000-4000-8000-000000000001","role":"authenticated"}', true);
+select rls_test.ok(
+  (select count(*) from public.simulations where mode = 'drill') = 0,
+  'A cannot see B''s drills');
+reset role;
+
+------------------------------------------------------------------------------
 -- An admin profile gets no extra access from the browser
 ------------------------------------------------------------------------------
 select private.set_user_role('A@example.com', 'admin');
