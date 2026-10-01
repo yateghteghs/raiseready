@@ -9,6 +9,7 @@ const MESSAGES: Record<string, string> = {
   same_password: "Your new password must be different from your current one.",
   over_request_rate_limit: "Too many attempts. Please wait a few minutes and try again.",
   over_email_send_rate_limit: "Too many emails sent recently. Please wait a few minutes and try again.",
+  user_banned: "This account has been suspended or closed. If you think this is a mistake, contact support.",
   signup_disabled: "Sign-ups are currently closed.",
   email_provider_disabled: "Email sign-up is currently turned off.",
   email_address_invalid: "That email address can't be used. Please try a different one.",

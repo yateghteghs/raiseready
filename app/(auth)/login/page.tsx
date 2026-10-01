@@ -12,6 +12,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const params = await searchParams;
   const next = typeof params.next === "string" ? safeNextPath(params.next) : undefined;
   const linkError = params.error === "link";
+  const blocked = params.error === "suspended" || params.error === "terminated" ? params.error : null;
 
   return (
     <AuthCard
@@ -31,6 +32,16 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
           <FormMessage
             status="error"
             message="That link is invalid or has expired. Log in, or request a new link."
+          />
+        ) : null}
+        {blocked ? (
+          <FormMessage
+            status="error"
+            message={
+              blocked === "suspended"
+                ? "Your account has been suspended, so you've been signed out. If you think this is a mistake, contact support."
+                : "Your account has been closed, so you've been signed out. If you think this is a mistake, contact support."
+            }
           />
         ) : null}
         <LoginForm next={next} />
