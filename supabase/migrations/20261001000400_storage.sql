@@ -18,6 +18,7 @@ on conflict (id) do update
       file_size_limit = excluded.file_size_limit,
       allowed_mime_types = excluded.allowed_mime_types;
 
+drop policy if exists "documents bucket: owner can read" on storage.objects;
 create policy "documents bucket: owner can read"
   on storage.objects for select to authenticated
   using (
@@ -25,6 +26,7 @@ create policy "documents bucket: owner can read"
     and (storage.foldername(name))[1] = (select auth.uid())::text
   );
 
+drop policy if exists "reports bucket: owner can read" on storage.objects;
 create policy "reports bucket: owner can read"
   on storage.objects for select to authenticated
   using (
