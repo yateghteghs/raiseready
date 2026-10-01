@@ -12,7 +12,9 @@
     "test:watch": "vitest",
     "test:db": "bash scripts/test-db.sh",
     "db:seed-admin": "node --env-file=.env.local scripts/seed-admin.mjs",
-    "db:bundle": "bash scripts/build-setup-sql.sh"
+    "db:bundle": "bash scripts/build-setup-sql.sh",
+    "test:e2e": "playwright test",
+    "e2e:deck": "node scripts/make-e2e-deck.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
@@ -33,6 +35,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22.20.4",
     "@types/react": "^19",
