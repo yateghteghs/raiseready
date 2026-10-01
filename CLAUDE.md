@@ -1,0 +1,23 @@
+@AGENTS.md
+
+# RaiseReady
+
+The product spec is `docs/SPEC.md` and is the source of truth. Build one
+milestone at a time (spec section 11) and stop for review after each.
+
+## Commands
+- `npm run lint`, `npm run typecheck`, `npm test` (Vitest), `npm run test:db` (SQL RLS tests)
+- `npm run test:db` spins up a throwaway Postgres with a Supabase shim when
+  `DATABASE_URL` is unset; with `DATABASE_URL` it runs against that database.
+
+## Conventions
+- Business logic lives in `/lib`; components and route handlers stay thin.
+- Supabase clients: `lib/supabase/server.ts` (user session, RLS applies),
+  `lib/supabase/client.ts` (browser), `lib/supabase/admin.ts` (service role,
+  server only, always scope queries to an already-verified user).
+- Founders may only write their profile's editable fields, their startups and
+  delete their documents. All derived data, billing, AI usage and audit logs
+  are written by server code with the service role.
+- Schema changes: add a new migration in `supabase/migrations`, update
+  `lib/supabase/database.types.ts`, and extend `supabase/tests/rls.test.sql`.
+- Ask before adding dependencies not listed in spec section 3.
