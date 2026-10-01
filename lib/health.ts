@@ -208,8 +208,9 @@ export async function checkStorage(url: string, serviceKey: string): Promise<Che
 export async function checkAnthropic(apiKey: string | undefined, model: string | undefined): Promise<CheckResult[]> {
   const keyName = "ANTHROPIC_API_KEY";
   const modelName = "ANTHROPIC_MODEL";
-  if (!apiKey) return [{ name: keyName, ok: false, detail: "Not set. Document analysis won't work until it is." }];
-  if (!model) return [{ name: modelName, ok: false, detail: 'Not set. Use "claude-opus-5-5".' }];
+  const where = "Add it in Vercel → Settings → Environment Variables with Production ticked, then redeploy.";
+  if (!apiKey) return [{ name: keyName, ok: false, detail: `Not set. ${where}` }];
+  if (!model) return [{ name: modelName, ok: false, detail: `Not set. Use "claude-opus-5-5". ${where}` }];
   try {
     const res = await fetch(`https://api.anthropic.com/v1/models/${encodeURIComponent(model.trim())}`, {
       headers: { "x-api-key": apiKey.trim(), "anthropic-version": "2023-06-01" },
