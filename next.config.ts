@@ -12,6 +12,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // PDF reports embed these fonts; make sure they ship with the routes that render PDFs.
+  outputFileTracingIncludes: {
+    "/app/reports": ["./lib/reports/fonts/*.ttf"],
+    "/app/reports/*": ["./lib/reports/fonts/*.ttf"],
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
