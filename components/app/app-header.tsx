@@ -1,4 +1,4 @@
-import { UserIcon } from "lucide-react";
+import { BellIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -23,11 +23,13 @@ export function AppHeader({
   nav,
   admin = false,
   avatarUrl,
+  unread = 0,
 }: {
   email: string | null;
   nav?: NavItem[];
   admin?: boolean;
   avatarUrl?: string | null;
+  unread?: number;
 }) {
   return (
     <header className="border-b">
@@ -53,6 +55,20 @@ export function AppHeader({
           </Link>
           {email ? (
             <span className="text-muted-foreground hidden max-w-48 truncate text-sm 2xl:inline">{email}</span>
+          ) : null}
+          {nav ? (
+            <Link
+              href="/app/notifications"
+              aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
+              className="text-muted-foreground hover:text-foreground relative flex size-8 items-center justify-center rounded-full"
+            >
+              <BellIcon aria-hidden="true" className="size-5" />
+              {unread ? (
+                <span className="bg-primary text-primary-foreground absolute -top-0.5 -right-0.5 min-w-4 rounded-full px-1 text-center text-[10px] leading-4 font-semibold">
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              ) : null}
+            </Link>
           ) : null}
           {nav ? (
             <Link

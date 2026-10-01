@@ -7,6 +7,7 @@ import { LoadProblem } from "@/components/app/load-problem";
 import { getCurrentProfile, requireUser } from "@/lib/auth/session";
 import { load } from "@/lib/data-errors";
 import { imageLink } from "@/lib/images/service";
+import { unreadCount } from "@/lib/notifications/service";
 
 const NAV = [
   { href: "/app", label: "Dashboard" },
@@ -33,11 +34,14 @@ export default async function MainAppLayout({ children }: LayoutProps<"/app">) {
     );
   }
   if (!loaded.data?.onboarding_complete) redirect("/app/onboarding");
-  const avatarUrl = await imageLink(loaded.data.id, loaded.data.avatar_path);
+  const [avatarUrl, unread] = await Promise.all([
+    imageLink(loaded.data.id, loaded.data.avatar_path),
+    unreadCount(loaded.data.id, loaded.data.created_at),
+  ]);
 
   return (
     <>
-      <AppHeader email={user.email} nav={NAV} admin={isStaffProfile(loaded.data)} avatarUrl={avatarUrl} />
+      <AppHeader email={user.email} nav={NAV} admin={isStaffProfile(loaded.data)} avatarUrl={avatarUrl} unread={unread} />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">{children}</main>
       <AppFooter />
     </>
