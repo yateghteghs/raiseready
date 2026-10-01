@@ -53,6 +53,7 @@ beforeEach(() => {
       ],
     },
     reports: { [USER]: [{ id: null, name: "startup-1" }], [`${USER}/startup-1`]: [{ id: "c", name: "r1.pdf" }] },
+    images: { [USER]: [{ id: "d", name: "avatar-1.png" }] },
   };
   db.subscriptions = [
     { id: "s1", user_id: USER, provider_subscription_code: "SUB_live", status: "active" },
@@ -72,6 +73,7 @@ describe("deleteAccount", () => {
       "disable SUB_live",
       `remove documents: ${USER}/startup-1/deck.pdf, ${USER}/startup-1/model.xlsx`,
       `remove reports: ${USER}/startup-1/r1.pdf`,
+      `remove images: ${USER}/avatar-1.png`,
       `deleteUser ${USER}`,
     ]);
     expect(db.audit_logs).toEqual([
@@ -79,7 +81,13 @@ describe("deleteAccount", () => {
         actor_id: null,
         action: "account.deleted",
         target_id: USER,
-        metadata: { payments: 1, paid_kobo: 1_500_000, files_removed: { documents: 2, reports: 1 }, subscriptions_cancelled: 1 },
+        metadata: {
+          payments: 1,
+          paid_kobo: 1_500_000,
+          files_removed: { documents: 2, reports: 1, images: 1 },
+          subscriptions_cancelled: 1,
+          by: "founder",
+        },
       }),
     ]);
   });

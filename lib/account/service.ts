@@ -1,5 +1,6 @@
 import { disableSubscription } from "@/lib/billing/paystack";
 import { DOCUMENTS_BUCKET } from "@/lib/documents/service";
+import { IMAGES_BUCKET } from "@/lib/images/rules";
 import { REPORTS_BUCKET } from "@/lib/reports/service";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -51,6 +52,32 @@ async function removeFiles(bucket: string, userId: string): Promise<number> {
 }
 
 /**
+ * Stops any Pro renewal at Paystack. Throws AccountError if Paystack can't be
+ * reached, so callers stop before doing anything irreversible.
+ */
+export async function cancelSubscriptions(userId: string): Promise<number> {
+  const { data: subs, error } = await createAdminClient()
+    .from("subscriptions")
+    .select("provider_subscription_code, status")
+    .eq("user_id", userId);
+  if (error) throw new Error(`Could not load subscriptions: ${error.message}`);
+  let cancelled = 0;
+  for (const sub of subs ?? []) {
+    if (!sub.provider_subscription_code || sub.status === "cancelled" || sub.status === "completed") continue;
+    try {
+      await disableSubscription(sub.provider_subscription_code);
+      cancelled++;
+    } catch (cause) {
+      console.error(cause);
+      throw new AccountError(
+        "We couldn't cancel the Pro subscription with Paystack, so nothing has been changed. Please try again in a few minutes, or cancel the subscription from the Billing page first.",
+      );
+    }
+  }
+  return cancelled;
+}
+
+/**
  * Hard-deletes a founder's account (spec 8): stops any Pro renewal at
  * Paystack, removes their stored files, then deletes the auth user, which
  * cascades to every row they own, payments included. AI usage rows are kept
@@ -58,27 +85,9 @@ async function removeFiles(bucket: string, userId: string): Promise<number> {
  * audit_logs without personal details, with the amount they had paid so
  * revenue history still adds up.
  */
-export async function deleteAccount(userId: string): Promise<void> {
+export async function deleteAccount(userId: string, options: { actorId?: string | null } = {}): Promise<void> {
   const admin = createAdminClient();
-
-  const { data: subs, error: subsError } = await admin
-    .from("subscriptions")
-    .select("provider_subscription_code, status")
-    .eq("user_id", userId);
-  if (subsError) throw new Error(`Could not load subscriptions: ${subsError.message}`);
-  let cancelled = 0;
-  for (const sub of subs ?? []) {
-    if (!sub.provider_subscription_code || sub.status === "cancelled" || sub.status === "completed") continue;
-    try {
-      await disableSubscription(sub.provider_subscription_code);
-      cancelled++;
-    } catch (error) {
-      console.error(error);
-      throw new AccountError(
-        "We couldn't cancel your Pro subscription with Paystack, so your account hasn't been deleted. Please try again in a few minutes, or cancel the subscription from the Billing page first.",
-      );
-    }
-  }
+  const cancelled = await cancelSubscriptions(userId);
 
   const { data: payments, error: paymentsError } = await admin
     .from("payments")
@@ -91,20 +100,22 @@ export async function deleteAccount(userId: string): Promise<void> {
   // founder can retry, rather than leaving files nobody can reach.
   const documents = await removeFiles(DOCUMENTS_BUCKET, userId);
   const reports = await removeFiles(REPORTS_BUCKET, userId);
+  const images = await removeFiles(IMAGES_BUCKET, userId);
 
   const { error } = await admin.auth.admin.deleteUser(userId);
   if (error) throw new Error(`Could not delete auth user: ${error.message}`);
 
   const { error: auditError } = await admin.from("audit_logs").insert({
-    actor_id: null,
+    actor_id: options.actorId ?? null,
     action: "account.deleted",
     target_type: "profile",
     target_id: userId,
     metadata: {
       payments: paid.length,
       paid_kobo: paid.reduce((sum, p) => sum + p.amount_kobo, 0),
-      files_removed: { documents, reports },
+      files_removed: { documents, reports, images },
       subscriptions_cancelled: cancelled,
+      by: options.actorId ? "staff" : "founder",
     },
   });
   if (auditError) console.error(`Account ${userId} deleted but the audit log failed: ${auditError.message}`);
