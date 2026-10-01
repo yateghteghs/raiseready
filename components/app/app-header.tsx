@@ -32,6 +32,9 @@ export function AppHeader({ email, nav }: { email: string | null; nav?: NavItem[
           ) : null}
         </div>
         <div className="flex items-center gap-3">
+          <Link href="/" className="text-muted-foreground hover:text-foreground text-sm">
+            Website
+          </Link>
           {email ? (
             <span className="text-muted-foreground hidden max-w-48 truncate text-sm lg:inline">{email}</span>
           ) : null}

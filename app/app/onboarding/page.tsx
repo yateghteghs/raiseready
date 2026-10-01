@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
+import { AppFooter } from "@/components/app/app-footer";
 import { AppHeader } from "@/components/app/app-header";
 import { LoadProblem } from "@/components/app/load-problem";
 import { OnboardingForm } from "@/components/startup/onboarding-form";
@@ -37,6 +38,7 @@ export default async function OnboardingPage() {
         </div>
         <OnboardingForm initialValues={toFormValues(startup, profile)} />
       </main>
+      <AppFooter />
     </>
   );
 }

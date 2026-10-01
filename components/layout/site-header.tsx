@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { MenuIcon } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { AuthActions } from "@/components/layout/auth-actions";
 import { MARKETING_NAV, SITE } from "@/lib/site";
 
 export function SiteHeader() {
@@ -23,12 +23,7 @@ export function SiteHeader() {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link href="/login">Log in</Link>
-          </Button>
-          <Button asChild size="sm">
-            <Link href="/register">Get started</Link>
-          </Button>
+          <AuthActions />
           {/* Mobile menu: a native disclosure, so it works without JavaScript. */}
           <details className="group relative md:hidden">
             <summary
