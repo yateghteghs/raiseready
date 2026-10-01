@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { countPdfPages } from "@/lib/documents/pdf";
@@ -37,5 +37,14 @@ describe("renderReportPdf", () => {
     expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");
     expect(countPdfPages(pdf)).toBeGreaterThanOrEqual(1);
     if (process.env.REPORT_PDF_OUT) writeFileSync(process.env.REPORT_PDF_OUT, pdf);
+  }, 30_000);
+
+  it("adds the startup logo and an 'Issued by RaiseReady' signature block", async () => {
+    const image = readFileSync("e2e/fixtures/avatar.png");
+    const pdf = await renderReportPdf(sampleReport, { logo: image, signer: { name: "Ada Obi", title: "Head of Programmes", image } });
+    expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");
+    // Embedded images appear as XObjects in the PDF.
+    expect(pdf.toString("latin1").match(/\/Subtype\s*\/Image/g)?.length ?? 0).toBeGreaterThanOrEqual(1);
+    if (process.env.REPORT_PDF_OUT) writeFileSync(process.env.REPORT_PDF_OUT.replace(/\.pdf$/, "-signed.pdf"), pdf);
   }, 30_000);
 });

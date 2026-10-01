@@ -11,8 +11,9 @@ import { getUsage } from "@/lib/billing/service";
 import { assessmentView } from "@/lib/assessment/view";
 import { DOCUMENT_KINDS, type UploadableKind } from "@/lib/documents/rules";
 import { reportContentSchema, type ReportContent } from "@/lib/reports/content";
-import { logoBytes } from "@/lib/images/service";
+import { imageBytes } from "@/lib/images/service";
 import { renderReportPdf } from "@/lib/reports/pdf";
+import { signerForReports } from "@/lib/reports/signature";
 import { STAGE_OPTIONS, labelFor } from "@/lib/startups/options";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Json, Tables } from "@/lib/supabase/database.types";
@@ -186,8 +187,9 @@ export async function createReport(
 export async function storePdf(userId: string, startupId: string, reportId: string, content: ReportContent): Promise<string> {
   const admin = createAdminClient();
   const { data: startup } = await admin.from("startups").select("logo_path").eq("id", startupId).eq("owner_id", userId).maybeSingle();
-  const logo = await logoBytes(userId, startup?.logo_path);
-  const pdf = await renderReportPdf(content, { logo });
+  const logo = await imageBytes(userId, startup?.logo_path);
+  const signer = await signerForReports();
+  const pdf = await renderReportPdf(content, { logo, signer });
   const path = `${userId}/${startupId}/${reportId}.pdf`;
   const { error } = await admin.storage.from(REPORTS_BUCKET).upload(path, pdf, { contentType: "application/pdf", upsert: true });
   if (error) throw new Error(`Could not store PDF: ${error.message}`);
