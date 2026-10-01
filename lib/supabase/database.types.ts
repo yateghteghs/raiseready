@@ -18,7 +18,8 @@ type InsertOf<Row, Optional extends keyof Row> = Omit<Row, Optional | keyof Time
   OptionalTimestamps;
 type UpdateOf<Row> = Partial<Row>;
 
-export type UserRole = "founder" | "viewer" | "support" | "admin";
+export type UserRole = "founder" | "viewer" | "support" | "admin" | "super_admin";
+export type ShowcaseKind = "logo" | "testimonial" | "partner";
 export type AccountStatus = "active" | "suspended" | "terminated";
 export type Plan = "free" | "pro";
 export type StartupStage = "idea" | "pre_seed" | "seed" | "series_a" | "other";
@@ -200,6 +201,45 @@ type AuditLogRow = Timestamps & {
   metadata: Json;
 };
 
+type NotificationRow = Timestamps & {
+  id: string;
+  user_id: string | null;
+  title: string;
+  body: string;
+  link: string | null;
+  created_by: string | null;
+};
+
+type NotificationReadRow = {
+  notification_id: string;
+  user_id: string;
+  read_at: string;
+};
+
+type ShowcaseItemRow = Timestamps & {
+  id: string;
+  kind: ShowcaseKind;
+  name: string;
+  quote: string | null;
+  person_name: string | null;
+  person_title: string | null;
+  url: string | null;
+  image_path: string | null;
+  permission_confirmed: boolean;
+  published: boolean;
+  position: number;
+  created_by: string | null;
+};
+
+type ReportSignatureRow = Timestamps & {
+  id: number;
+  signer_name: string | null;
+  signer_title: string | null;
+  signature_path: string | null;
+  enabled: boolean;
+  updated_by: string | null;
+};
+
 type Table<Row, Optional extends keyof Row> = {
   Row: Row;
   Insert: InsertOf<Row, Optional>;
@@ -276,6 +316,18 @@ export type Database = {
         "id" | "user_id" | "input_tokens" | "output_tokens" | "latency_ms" | "error"
       >;
       audit_logs: Table<AuditLogRow, "id" | "actor_id" | "target_type" | "target_id" | "metadata">;
+      notifications: Table<NotificationRow, "id" | "user_id" | "link" | "created_by">;
+      notification_reads: {
+        Row: NotificationReadRow;
+        Insert: Omit<NotificationReadRow, "read_at"> & { read_at?: string };
+        Update: Partial<NotificationReadRow>;
+        Relationships: [];
+      };
+      showcase_items: Table<
+        ShowcaseItemRow,
+        "id" | "quote" | "person_name" | "person_title" | "url" | "image_path" | "permission_confirmed" | "published" | "position" | "created_by"
+      >;
+      report_signature: Table<ReportSignatureRow, "id" | "signer_name" | "signer_title" | "signature_path" | "enabled" | "updated_by">;
     };
     Views: { [_ in never]: never };
     Functions: {

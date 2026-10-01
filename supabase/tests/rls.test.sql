@@ -134,6 +134,25 @@ insert into public.ai_calls (user_id, purpose, model, success) values
 insert into public.audit_logs (actor_id, action) values
   ('bbbbbbbb-0000-4000-8000-000000000002', 'test.action');
 
+insert into public.notifications (id, user_id, title, body) values
+  ('aaaaaaaa-5555-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000001', 'For A', 'Hello A'),
+  ('bbbbbbbb-5555-4000-8000-000000000002', 'bbbbbbbb-0000-4000-8000-000000000002', 'For B', 'Hello B'),
+  ('cccccccc-5555-4000-8000-000000000003', null, 'For everyone', 'Hello all');
+insert into public.notification_reads (notification_id, user_id) values
+  ('bbbbbbbb-5555-4000-8000-000000000002', 'bbbbbbbb-0000-4000-8000-000000000002');
+
+insert into public.showcase_items (kind, name, permission_confirmed, published) values
+  ('logo', 'Published Co', true, true),
+  ('testimonial', 'Draft Co', true, false);
+select rls_test.throws(
+  $$insert into public.showcase_items (kind, name, permission_confirmed, published) values ('logo', 'No Permission', false, true)$$,
+  '23514', 'showcase items cannot be published without confirmed permission');
+select rls_test.throws(
+  $$insert into public.notifications (title, body, link) values ('x', 'y', 'https://evil.example')$$,
+  '23514', 'notification links must stay inside the app');
+
+insert into public.report_signature (id, signer_name, enabled) values (1, 'Signer', true);
+
 insert into storage.objects (bucket_id, name) values
   ('documents', 'aaaaaaaa-0000-4000-8000-000000000001/aaaaaaaa-1111-4000-8000-000000000001/deck.pdf'),
   ('documents', 'bbbbbbbb-0000-4000-8000-000000000002/bbbbbbbb-1111-4000-8000-000000000002/deck.pdf'),
@@ -164,6 +183,14 @@ select rls_test.throws('select * from public.startups', '42501', 'anon cannot re
 select rls_test.throws('select * from public.profiles', '42501', 'anon cannot read profiles');
 select rls_test.throws('select * from public.reports', '42501', 'anon cannot read reports');
 select rls_test.ok((select count(*) from storage.objects) = 0, 'anon sees no storage objects');
+select rls_test.ok(
+  (select array_agg(name) from public.showcase_items) = array['Published Co'],
+  'anon sees only published showcase items');
+select rls_test.throws('select * from public.notifications', '42501', 'anon cannot read notifications');
+select rls_test.throws('select * from public.report_signature', '42501', 'anon cannot read the report signature');
+select rls_test.throws(
+  $$insert into public.showcase_items (kind, name) values ('logo', 'Spam')$$,
+  '42501', 'anon cannot add showcase items');
 
 reset role;
 
@@ -329,6 +356,25 @@ select rls_test.throws(
   $$select private.set_user_role('a@example.com', 'admin')$$,
   '42501', 'A cannot call set_user_role');
 
+-- notifications, showcase, signature
+select rls_test.ok(
+  (select array_agg(title order by title) from public.notifications) = array['For A', 'For everyone'],
+  'A reads own and broadcast notifications, not B''s');
+select rls_test.ok((select count(*) from public.notification_reads) = 0, 'A cannot see B''s read receipts');
+select rls_test.throws(
+  $$insert into public.notifications (user_id, title, body) values ('bbbbbbbb-0000-4000-8000-000000000002', 'Phish', 'Click')$$,
+  '42501', 'A cannot send notifications');
+select rls_test.throws(
+  $$insert into public.notification_reads (notification_id, user_id) values ('aaaaaaaa-5555-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000001')$$,
+  '42501', 'A cannot write read receipts directly (server does)');
+select rls_test.ok(
+  (select array_agg(name) from public.showcase_items) = array['Published Co'],
+  'A sees only published showcase items');
+select rls_test.throws(
+  $$update public.showcase_items set published = true$$,
+  '42501', 'A cannot edit the showcase');
+select rls_test.throws('select * from public.report_signature', '42501', 'A cannot read the report signature');
+
 -- storage
 select rls_test.ok(
   (select array_agg(name) from storage.objects)
@@ -408,6 +454,10 @@ select private.set_user_role('b@example.com', 'support');
 select rls_test.ok(
   (select role from public.profiles where id = 'bbbbbbbb-0000-4000-8000-000000000002') = 'support',
   'set_user_role accepts the support role');
+select private.set_user_role('b@example.com', 'super_admin');
+select rls_test.ok(
+  (select role from public.profiles where id = 'bbbbbbbb-0000-4000-8000-000000000002') = 'super_admin',
+  'set_user_role accepts the super_admin role');
 select private.set_user_role('b@example.com', 'founder');
 select rls_test.throws(
   $$select private.set_user_role('b@example.com', 'owner')$$,
