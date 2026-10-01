@@ -80,16 +80,18 @@ export default function PrivacyPage() {
         We keep your data while your account is open. When you delete a document, the file and its
         record are removed. When you delete your account, your profile, startups, documents,
         assessments, simulations, reports and payment records are permanently deleted. Usage records
-        are kept for cost reporting but are no longer linked to you, and we keep a log entry that the
-        deletion happened.
+        are kept for cost reporting but are no longer linked to you. We keep a log entry that the
+        deletion happened, with the total you had paid us but no name, email or startup details. Any
+        Pro subscription is cancelled with Paystack first. Paystack keeps its own payment records
+        under its own privacy policy.
       </p>
 
       <h2>Your rights and how to delete your data</h2>
       <p>
         You can see and edit your startup profile in the app at any time. You can ask us for a copy of
-        your data, ask us to correct it, or ask us to delete it. Self-service deletion of documents and
-        of your whole account will be available from your account settings; until then, or for any
-        other request, contact us at <ContactEmail />.
+        your data, ask us to correct it, or ask us to delete it. You can delete individual documents
+        on the Documents page, and your whole account under Settings. For anything else, contact us
+        at <ContactEmail />.
       </p>
       <p>
         If you are unhappy with how we handle your data, you can also complain to the Nigeria Data
