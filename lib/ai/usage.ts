@@ -34,6 +34,8 @@ export const RATE_LIMITS: Record<string, { max: number; windowMinutes: number }>
   assessment: { max: 6, windowMinutes: 60 },
   simulation_turn: { max: 80, windowMinutes: 60 },
   simulation_final: { max: 10, windowMinutes: 60 },
+  simulation_drill: { max: 20, windowMinutes: 60 },
+  report: { max: 10, windowMinutes: 60 },
 };
 
 /** True when the user still has room under the limit for this purpose. */

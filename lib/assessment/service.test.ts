@@ -92,7 +92,7 @@ describe("runAssessment", () => {
       (a.assessment.dimension_scores as { dimensions: { id: string; score: number | null }[] }).dimensions.find((d) => d.id === "communication");
     expect(comm(first)?.score).toBeNull();
 
-    db.simulations.push({ id: "sim-1", startup_id: "s1", status: "completed", persona: "seed_vc", difficulty: "tough", overall_score: 70, investor_confidence: "medium", final_evaluation: { summary: "Fine." }, ended_at: "2026-10-02" });
+    db.simulations.push({ id: "sim-1", startup_id: "s1", status: "completed", mode: "full", persona: "seed_vc", difficulty: "tough", overall_score: 70, investor_confidence: "medium", final_evaluation: { summary: "Fine." }, ended_at: "2026-10-02" });
     db.simulation_turns = [];
     db.red_flags = [];
     const second = await runAssessment("u1", startup);

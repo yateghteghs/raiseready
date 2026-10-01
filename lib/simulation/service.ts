@@ -1,6 +1,8 @@
 import { PERSONAS, roundTitle } from "@/lib/ai/personas";
+import { escapeDelimiters } from "@/lib/ai/prompts/extraction.v1";
 import { partialStringField } from "@/lib/ai/partial-json";
 import {
+  DRILL_SYSTEM_PROMPT,
   FINAL_EVALUATION_SYSTEM_PROMPT,
   investorSystemPrompt,
   profileBlock,
@@ -12,6 +14,7 @@ import {
 import {
   checkFinalEvaluation,
   checkTurnOutput,
+  drillOutputSchema,
   finalEvaluationSchema,
   turnOutputSchema,
   type FinalEvaluation,
@@ -34,6 +37,7 @@ import type { Difficulty, Json, Persona, Tables } from "@/lib/supabase/database.
 
 export const TURN_PURPOSE = "simulation_turn";
 export const FINAL_PURPOSE = "simulation_final";
+export const DRILL_PURPOSE = "simulation_drill";
 export const MAX_ANSWER_CHARS = 4000;
 const MAX_STARTS_PER_HOUR = 5;
 
@@ -49,6 +53,7 @@ export type RoomEvent =
       redFlags: Tables<"red_flags">[];
       ended: boolean;
     }
+  | { type: "drill_done" }
   | { type: "error"; message: string };
 
 /** Loads a simulation only if it belongs to this user's startup. */
@@ -115,6 +120,7 @@ export async function startSimulation(
     .from("simulations")
     .select("id", { count: "exact", head: true })
     .eq("startup_id", startup.id)
+    .eq("mode", "full")
     .gte("created_at", since);
   if ((count ?? 0) >= MAX_STARTS_PER_HOUR) {
     throw new SimulationError("You've started several simulations in the last hour. Please try again later.");
@@ -125,6 +131,7 @@ export async function startSimulation(
     .from("simulations")
     .update({ status: "abandoned", ended_at: new Date().toISOString() })
     .eq("startup_id", startup.id)
+    .eq("mode", "full")
     .eq("status", "active")
     .is("ended_at", null);
 
@@ -171,6 +178,11 @@ export async function takeTurn(
 
   const { sim } = await getOwnedSimulation(userId, simulationId);
   if (sim.status !== "active" || sim.ended_at) throw new SimulationError("This session has finished.");
+  if (sim.mode === "drill") {
+    await takeDrillTurn(userId, sim, answer);
+    emit({ type: "drill_done" });
+    return false;
+  }
 
   const turns = await loadTurns(simulationId);
   const state = deriveState(sim.persona, sim.difficulty, turns);
@@ -378,6 +390,160 @@ export async function finalizeSimulation(userId: string, simulationId: string): 
     })
     .eq("id", simulationId)
     .eq("status", "active");
+}
+
+/**
+ * Starts a one-question drill that re-asks an investor question from an
+ * earlier session of the same founder.
+ */
+export async function startDrill(userId: string, questionTurnId: string): Promise<string> {
+  const admin = createAdminClient();
+  const { data: question } = await admin
+    .from("simulation_turns")
+    .select("*")
+    .eq("id", questionTurnId)
+    .eq("role", "investor")
+    .maybeSingle();
+  if (!question) throw new SimulationError("Question not found.");
+  const { sim: source } = await getOwnedSimulation(userId, question.simulation_id);
+  if (!(await withinRateLimit(userId, DRILL_PURPOSE))) {
+    throw new SimulationError("You've practised a lot of questions in the last hour. Please try again later.");
+  }
+
+  const { data: drill, error } = await admin
+    .from("simulations")
+    .insert({
+      startup_id: source.startup_id,
+      persona: source.persona,
+      difficulty: source.difficulty,
+      funding_type: source.funding_type,
+      current_round: question.round,
+      mode: "drill",
+      source_turn_id: question.id,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(`Could not start practice: ${error.message}`);
+
+  const { error: turnError } = await admin.from("simulation_turns").insert({
+    simulation_id: drill.id,
+    turn_index: 0,
+    round: question.round,
+    role: "investor",
+    content: question.content,
+  });
+  if (turnError) throw new Error(`Could not start practice: ${turnError.message}`);
+  return drill.id;
+}
+
+/** The founder's original answer to a question: the turn right after it. */
+async function originalAnswer(questionTurnId: string | null) {
+  if (!questionTurnId) return null;
+  const admin = createAdminClient();
+  const { data: question } = await admin.from("simulation_turns").select("*").eq("id", questionTurnId).maybeSingle();
+  if (!question) return null;
+  const { data: answer } = await admin
+    .from("simulation_turns")
+    .select("*")
+    .eq("simulation_id", question.simulation_id)
+    .eq("turn_index", question.turn_index + 1)
+    .maybeSingle();
+  return answer?.role === "founder" ? answer : null;
+}
+
+/** Rates a drill answer, coaches against the earlier attempt and completes the drill. */
+async function takeDrillTurn(userId: string, sim: Tables<"simulations">, answer: string): Promise<void> {
+  const admin = createAdminClient();
+  const turns = await loadTurns(sim.id);
+  if (turns.length !== 1) throw new SimulationError("You've already answered this practice question.");
+  const question = turns[0];
+
+  const { data: founderTurn, error: founderError } = await admin
+    .from("simulation_turns")
+    .insert({ simulation_id: sim.id, turn_index: 1, round: question.round, role: "founder", content: answer })
+    .select("*")
+    .single();
+  if (founderError) throw new SimulationError("That answer was already sent.");
+
+  try {
+    const profile = await loadProfile(sim.startup_id);
+    const previous = await originalAnswer(sim.source_turn_id);
+    const previousEval = previous?.evaluation as unknown as TurnEvaluation | null;
+    // Earlier attempt is shown as turn 0 so contradictions with it can be cited.
+    const founderAnswers = new Map<number, string>([[1, answer], ...(previous ? [[0, previous.content] as [number, string]] : [])]);
+
+    const output = await callStructured({
+      userId,
+      purpose: DRILL_PURPOSE,
+      system: DRILL_SYSTEM_PROMPT,
+      buildContent: (retryNote) => [
+        {
+          type: "text",
+          text: [
+            profileBlock(profile.json, profile.documents),
+            `Investor question (${PERSONAS[sim.persona].name}, ${sim.difficulty}): ${question.content}`,
+            previous
+              ? `Earlier answer (turn 0):\n<founder_answer turn="0">\n${escapeDelimiters(previous.content)}\n</founder_answer>${
+                  previousEval
+                    ? `\nEarlier ratings: clarity ${previousEval.clarity}, evidence ${previousEval.evidence}, consistency ${previousEval.consistency}. ${previousEval.notes}`
+                    : ""
+                }`
+              : "There is no earlier answer.",
+            `New answer (turn 1):\n<founder_answer turn="1">\n${escapeDelimiters(answer)}\n</founder_answer>`,
+            retryNote ? `Your previous answer was rejected for these reasons. Fix them:\n${retryNote}` : "",
+          ]
+            .filter(Boolean)
+            .join("\n\n"),
+        },
+      ],
+      schema: drillOutputSchema,
+      check: (o) =>
+        checkTurnOutput(
+          { next_action: "end", investor_message: "-", evaluation: o.evaluation, red_flags: o.red_flags },
+          { currentTurnIndex: 1, founderAnswers, documentIds: profile.documents.map((d) => d.id) },
+        ),
+      effort: "medium",
+      maxTokens: 16000,
+    });
+
+    await admin
+      .from("simulation_turns")
+      .update({ evaluation: output.evaluation as unknown as Json, red_flags: output.red_flags as unknown as Json })
+      .eq("id", founderTurn.id);
+    if (output.red_flags.length) {
+      await admin.from("red_flags").insert(
+        output.red_flags.map((f) => ({
+          simulation_id: sim.id,
+          turn_id: founderTurn.id,
+          type: f.type,
+          severity: f.severity,
+          description: f.description,
+          evidence: f.evidence as unknown as Json,
+        })),
+      );
+    }
+    const now = new Date().toISOString();
+    await admin
+      .from("simulations")
+      .update({
+        status: "completed",
+        ended_at: now,
+        overall_score: simulationScore([output.evaluation], output.red_flags.map((f) => f.severity)),
+        final_evaluation: {
+          kind: "drill",
+          improvement: output.improvement,
+          still_missing: output.still_missing,
+          better_answer: output.better_answer,
+          previous: previousEval,
+          prompt_version: SIMULATION_PROMPT_VERSION,
+        } as unknown as Json,
+      })
+      .eq("id", sim.id);
+  } catch (error) {
+    await admin.from("simulation_turns").delete().eq("id", founderTurn.id);
+    if (error instanceof AiCallError) throw new SimulationError(error.userMessage);
+    throw error;
+  }
 }
 
 export async function abandonSimulation(userId: string, simulationId: string): Promise<void> {

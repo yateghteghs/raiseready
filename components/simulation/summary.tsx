@@ -17,10 +17,13 @@ export function SimulationSummary({
   score,
   confidence,
   evaluation,
+  resultsHref,
 }: {
   score: number;
   confidence: InvestorConfidence;
   evaluation: FinalEvaluation;
+  /** Link to per-question feedback, when shown outside the results page. */
+  resultsHref?: string;
 }) {
   const next = evaluation.recommended_next_practice;
   return (
@@ -36,6 +39,11 @@ export function SimulationSummary({
           </div>
         </div>
         <div className="grid content-start gap-3">
+          {resultsHref ? (
+            <Button asChild size="sm" className="justify-self-start">
+              <Link href={resultsHref}>See feedback on every answer</Link>
+            </Button>
+          ) : null}
           <p className={cn("justify-self-start rounded-full px-2.5 py-0.5 text-xs font-medium", CONFIDENCE[confidence].className)}>
             Investor confidence: {CONFIDENCE[confidence].label}
           </p>

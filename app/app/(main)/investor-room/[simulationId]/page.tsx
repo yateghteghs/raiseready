@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { LoadProblem } from "@/components/app/load-problem";
+import { DrillResult, type DrillFeedback } from "@/components/simulation/drill-result";
 import { RetryFeedbackButton } from "@/components/simulation/retry-feedback";
 import { Room } from "@/components/simulation/room";
 import { SimulationSummary } from "@/components/simulation/summary";
 import type { FlagView } from "@/components/simulation/red-flag-card";
 import { Button } from "@/components/ui/button";
 import { DIFFICULTIES, PERSONAS, roundTitle } from "@/lib/ai/personas";
-import { finalEvaluationSchema } from "@/lib/ai/schemas/simulation";
+import { finalEvaluationSchema, type TurnEvaluation } from "@/lib/ai/schemas/simulation";
 import { load } from "@/lib/data-errors";
 import { DOCUMENT_KINDS, type UploadableKind } from "@/lib/documents/rules";
 import { abandonSimulationAction } from "@/lib/simulation/actions";
@@ -25,16 +26,27 @@ export default async function SimulationPage({ params }: PageProps<"/app/investo
     const supabase = await createClient();
     const { data: sim, error } = await supabase.from("simulations").select("*").eq("id", simulationId).maybeSingle();
     if (error || !sim) return null;
-    const [turns, flags, docs] = await Promise.all([
-      supabase.from("simulation_turns").select("id, turn_index, round, role, content").eq("simulation_id", sim.id).order("turn_index"),
+    const [turns, flags, docs, source] = await Promise.all([
+      supabase.from("simulation_turns").select("id, turn_index, round, role, content, evaluation").eq("simulation_id", sim.id).order("turn_index"),
       supabase.from("red_flags").select("id, turn_id, type, severity, description, evidence").eq("simulation_id", sim.id).order("created_at"),
       supabase.from("documents").select("id, kind").eq("startup_id", sim.startup_id),
+      sim.source_turn_id
+        ? supabase.from("simulation_turns").select("simulation_id").eq("id", sim.source_turn_id).maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
-    return { sim, turns: turns.data ?? [], flags: (flags.data ?? []) as unknown as FlagView[], docs: docs.data ?? [] };
+    return {
+      sim,
+      turns: turns.data ?? [],
+      flags: (flags.data ?? []) as unknown as FlagView[],
+      docs: docs.data ?? [],
+      sourceSimulationId: (source.data as { simulation_id: string } | null)?.simulation_id ?? null,
+    };
   });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) notFound();
-  const { sim, turns, flags, docs } = loaded.data;
+  const { sim, turns, flags, docs, sourceSimulationId } = loaded.data;
+  const isDrill = sim.mode === "drill";
+  const drillAnswer = turns.find((t) => t.role === "founder");
 
   const persona = PERSONAS[sim.persona];
   const evaluating = sim.status === "active" && Boolean(sim.ended_at);
@@ -46,14 +58,16 @@ export default async function SimulationPage({ params }: PageProps<"/app/investo
     <div className="mx-auto grid w-full max-w-3xl grid-cols-1 gap-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Meeting with a {persona.name.toLowerCase()}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {isDrill ? "Practise a question again" : `Meeting with a ${persona.name.toLowerCase()}`}
+          </h1>
           <p className="text-muted-foreground text-sm">
             {DIFFICULTIES[sim.difficulty].label}
             {sim.funding_type ? ` · Raising: ${sim.funding_type}` : ""}
             {sim.status === "abandoned" ? " · You left this session early" : ""}
           </p>
         </div>
-        {mode === "live" ? (
+        {mode === "live" && !isDrill ? (
           <form action={abandonSimulationAction.bind(null, sim.id)}>
             <Button type="submit" variant="ghost" size="sm">
               Leave session
@@ -62,8 +76,22 @@ export default async function SimulationPage({ params }: PageProps<"/app/investo
         ) : null}
       </div>
 
-      {sim.status === "completed" && finalEval?.success && sim.overall_score !== null && sim.investor_confidence ? (
-        <SimulationSummary score={sim.overall_score} confidence={sim.investor_confidence} evaluation={finalEval.data} />
+      {!isDrill && sim.status === "completed" && finalEval?.success && sim.overall_score !== null && sim.investor_confidence ? (
+        <SimulationSummary
+          score={sim.overall_score}
+          confidence={sim.investor_confidence}
+          evaluation={finalEval.data}
+          resultsHref={`/app/simulations/${sim.id}/results`}
+        />
+      ) : null}
+      {isDrill && sim.status === "completed" && sim.overall_score !== null && sim.final_evaluation ? (
+        <DrillResult
+          score={sim.overall_score}
+          evaluation={(drillAnswer?.evaluation as unknown as TurnEvaluation | null) ?? null}
+          feedback={sim.final_evaluation as unknown as DrillFeedback}
+          questionTurnId={sim.source_turn_id}
+          sourceSimulationId={sourceSimulationId}
+        />
       ) : null}
       {canRetryFeedback ? <RetryFeedbackButton simulationId={sim.id} /> : null}
 
@@ -79,6 +107,7 @@ export default async function SimulationPage({ params }: PageProps<"/app/investo
         initialFlags={flags}
         docLabels={Object.fromEntries(docs.map((d) => [d.id, DOCUMENT_KINDS[d.kind as UploadableKind]?.label ?? "Document"]))}
         mode={mode}
+        variant={isDrill ? "drill" : "full"}
       />
     </div>
   );

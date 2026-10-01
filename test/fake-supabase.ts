@@ -45,6 +45,7 @@ export function createFakeDb() {
             red_flags: null,
             ended_at: null,
             status: table === "simulations" ? "active" : undefined,
+            mode: table === "simulations" ? "full" : undefined,
             ...row,
           };
           const clash =

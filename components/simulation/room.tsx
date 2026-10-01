@@ -23,12 +23,15 @@ type Props = {
   docLabels: Record<string, string>;
   /** "live" while answering; "evaluating" after the meeting ends; "closed" otherwise. */
   mode: "live" | "evaluating" | "closed";
+  /** A drill re-asks a single question; it has no rounds. */
+  variant?: "full" | "drill";
 };
 
 type StreamEvent =
   | { type: "delta"; text: string }
   | { type: "reset" }
   | { type: "done"; founderTurn: TurnView; investorTurn: TurnView; redFlags: FlagView[]; ended: boolean }
+  | { type: "drill_done" }
   | { type: "error"; message: string };
 
 export function Room(props: Props) {
@@ -89,7 +92,12 @@ export function Room(props: Props) {
           const event = JSON.parse(line) as StreamEvent;
           if (event.type === "delta") setPending((p) => (p ? { ...p, reply: p.reply + event.text } : p));
           else if (event.type === "reset") setPending((p) => (p ? { ...p, reply: "" } : p));
-          else if (event.type === "error") {
+          else if (event.type === "drill_done") {
+            setTurns((t) => [...t, { id: "pending-answer", turn_index: t.length, round: currentRound, role: "founder", content: text }]);
+            setMode("closed");
+            router.refresh();
+            finished = true;
+          } else if (event.type === "error") {
             setError(event.message);
             setAnswer(text);
             finished = true;
@@ -115,7 +123,7 @@ export function Room(props: Props) {
   return (
     <div className="grid grid-cols-1 gap-6">
       {/* Round progress */}
-      <div className="bg-background/95 sticky top-0 z-10 grid gap-2 border-b py-3 backdrop-blur">
+      <div className={cn("bg-background/95 sticky top-0 z-10 grid gap-2 border-b py-3 backdrop-blur", props.variant === "drill" && "hidden")}>
         <div className="flex items-baseline justify-between gap-3 text-sm">
           <p className="font-medium">
             {props.investorName} · Round {roundPosition + 1} of {props.plan.length}: {props.roundTitles[currentRound]}

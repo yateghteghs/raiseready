@@ -125,3 +125,13 @@ export function checkFinalEvaluation(output: FinalEvaluation, investorTurnIndexe
   if (output.weaknesses.length === 0) problems.push("weaknesses: give at least one.");
   return problems;
 }
+
+/** Output of a one-question drill: rating plus coaching against the earlier attempt. */
+export const drillOutputSchema = z.object({
+  evaluation: turnEvaluationSchema,
+  red_flags: z.array(redFlagSchema),
+  improvement: z.string().describe("How this answer compares with the earlier attempt, in one or two sentences."),
+  still_missing: z.string().describe("What a strong answer would still need, or 'Nothing important' if it is strong."),
+  better_answer: z.string().describe("A short outline of a strong answer for this startup, using only facts from the documents and answers."),
+});
+export type DrillOutput = z.infer<typeof drillOutputSchema>;

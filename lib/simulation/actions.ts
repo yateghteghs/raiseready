@@ -12,6 +12,7 @@ import {
   finalizeSimulation,
   getOwnedSimulation,
   SimulationError,
+  startDrill,
   startSimulation,
 } from "@/lib/simulation/service";
 import { getMyStartup } from "@/lib/startups/service";
@@ -69,4 +70,19 @@ export async function retryFeedbackAction(simulationId: string): Promise<{ ok: b
   }
   after(() => finalizeSimulation(user.id, String(simulationId)));
   return { ok: true };
+}
+
+/** "Practise this question again": opens a one-question drill. */
+export async function startDrillAction(questionTurnId: string): Promise<{ error: string } | void> {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Your session has ended. Please log in again." };
+  let id: string;
+  try {
+    id = await startDrill(user.id, String(questionTurnId));
+  } catch (error) {
+    if (error instanceof SimulationError) return { error: error.message };
+    console.error("[simulation] drill start failed:", error);
+    return { error: "Something went wrong. Please try again." };
+  }
+  redirect(`/app/investor-room/${id}`);
 }

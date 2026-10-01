@@ -26,6 +26,7 @@ export default async function InvestorRoomPage() {
         .from("simulations")
         .select("id, persona, difficulty, status, overall_score, started_at, ended_at")
         .eq("startup_id", startup.id)
+        .eq("mode", "full")
         .order("started_at", { ascending: false })
         .limit(10),
     ]);

@@ -106,6 +106,7 @@ async function latestSimulationEvidence(startupId: string): Promise<{ id: string
     .select("id, persona, difficulty, overall_score, investor_confidence, final_evaluation")
     .eq("startup_id", startupId)
     .eq("status", "completed")
+    .eq("mode", "full")
     .order("ended_at", { ascending: false })
     .limit(1)
     .maybeSingle();

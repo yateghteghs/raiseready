@@ -37,7 +37,7 @@ vi.mock("@/lib/ai/structured", () => ({
   AiCallError: class extends Error {},
 }));
 
-const { finalizeSimulation, startSimulation, takeTurn } = await import("@/lib/simulation/service");
+const { finalizeSimulation, startDrill, startSimulation, takeTurn } = await import("@/lib/simulation/service");
 
 const DECK = "documents-deck";
 const evaluation = { clarity: 7, evidence: 5, consistency: 8, notes: "OK." };
@@ -194,6 +194,60 @@ describe("Investor Room", () => {
     ];
     await finalizeSimulation("u1", id);
     expect(db.simulations[0]).toMatchObject({ status: "completed", investor_confidence: "medium", overall_score: 67 });
+  });
+});
+
+describe("practise a question again (drills)", () => {
+  beforeEach(reset);
+
+  async function sessionWithOneAnswer() {
+    const id = await start();
+    replies = [turn()];
+    await takeTurn("u1", id, { answer: "We help traders take payments.", clarifiesRedFlagId: null }, () => {});
+    return id;
+  }
+
+  it("re-asks the original question and scores the new answer against the first attempt", async () => {
+    await sessionWithOneAnswer();
+    const question = db.simulation_turns.find((t) => t.turn_index === 0)!;
+    const drillId = await startDrill("u1", question.id as string);
+
+    const drill = db.simulations.find((s) => s.id === drillId)!;
+    expect(drill).toMatchObject({ mode: "drill", source_turn_id: question.id });
+    expect(db.simulation_turns.filter((t) => t.simulation_id === drillId)).toEqual([
+      expect.objectContaining({ turn_index: 0, role: "investor", content: question.content }),
+    ]);
+
+    replies = [
+      {
+        evaluation: { clarity: 9, evidence: 8, consistency: 10, notes: "Much clearer." },
+        red_flags: [],
+        improvement: "You added numbers this time.",
+        still_missing: "Nothing important",
+        better_answer: "Lead with 1,200 paying merchants.",
+      },
+    ];
+    const events: { type: string }[] = [];
+    await takeTurn("u1", drillId, { answer: "1,200 paying merchants in Lagos, growing 15% a month.", clarifiesRedFlagId: null }, (e) => events.push(e));
+    expect(events.at(-1)?.type).toBe("drill_done");
+    expect(drill).toMatchObject({ status: "completed", overall_score: 90 });
+    expect(drill.final_evaluation).toMatchObject({ kind: "drill", previous: evaluation, improvement: expect.any(String) });
+
+    await expect(takeTurn("u1", drillId, { answer: "again", clarifiesRedFlagId: null }, () => {})).rejects.toThrow(/finished/);
+  });
+
+  it("doesn't let another founder practise someone else's question", async () => {
+    await sessionWithOneAnswer();
+    const question = db.simulation_turns.find((t) => t.turn_index === 0)!;
+    await expect(startDrill("u2", question.id as string)).rejects.toThrow(/not found/);
+  });
+
+  it("doesn't count drills as the live session when starting a new meeting", async () => {
+    await sessionWithOneAnswer();
+    const question = db.simulation_turns.find((t) => t.turn_index === 0)!;
+    const drillId = await startDrill("u1", question.id as string);
+    await start();
+    expect(db.simulations.find((s) => s.id === drillId)?.status).toBe("active");
   });
 });
 
