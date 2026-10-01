@@ -1,6 +1,7 @@
 import { AccountError, cancelSubscriptions, deleteAccount } from "@/lib/account/service";
 import type { Staff } from "@/lib/admin/auth";
 import { userActionProblem, type UserAction } from "@/lib/admin/permissions";
+import { getSiteUrl } from "@/lib/site-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Json } from "@/lib/supabase/database.types";
 
@@ -83,6 +84,28 @@ export async function applyUserAction(staff: Staff, targetId: string, action: Us
         throw cause;
       }
       return;
+    case "reset_password": {
+      // Staff never see or set passwords: the person gets an email and picks their own.
+      const { data: authUser } = await admin.auth.admin.getUserById(targetId);
+      const email = authUser.user?.email;
+      if (!email) throw new AdminActionError("This account has no email address.");
+      const siteUrl = await getSiteUrl();
+      const { error: resetError } = await admin.auth.resetPasswordForEmail(email, {
+        redirectTo: `${siteUrl}/auth/callback?next=/reset-password`,
+      });
+      if (resetError?.code === "over_email_send_rate_limit" || resetError?.code === "over_request_rate_limit") {
+        throw new AdminActionError("Too many emails sent recently. Wait a few minutes and try again.");
+      }
+      if (resetError) throw new Error(`Could not send reset email: ${resetError.message}`);
+      await audit(staff.id, "admin.password_reset_sent", targetId, {});
+      return;
+    }
+    case "grant_credits": {
+      const { data: balance, error: creditError } = await admin.rpc("add_credits", { p_user_id: targetId, p_amount: action.amount });
+      if (creditError || balance === null) throw new Error(`Could not add credits: ${creditError?.message ?? "no balance returned"}`);
+      await audit(staff.id, "admin.credits_granted", targetId, { amount: action.amount, balance, reason: reason ?? null });
+      return;
+    }
     case "change_role": {
       const from = target.role;
       const { error: roleError } = await admin.from("profiles").update({ role: action.role }).eq("id", targetId);

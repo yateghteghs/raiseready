@@ -3,16 +3,19 @@ import Link from "next/link";
 import { AppFooter } from "@/components/app/app-footer";
 import { Button } from "@/components/ui/button";
 import { requireStaff } from "@/lib/admin/auth";
-import { roleLabel } from "@/lib/admin/permissions";
+import { can, roleLabel, type StaffAction } from "@/lib/admin/permissions";
 import { logout } from "@/lib/auth/actions";
 
-const NAV = [
-  { href: "/admin", label: "Overview" },
-  { href: "/admin/users", label: "Users" },
-  { href: "/admin/simulations", label: "Simulations" },
-  { href: "/admin/payments", label: "Payments" },
-  { href: "/admin/ai-usage", label: "AI usage" },
-  { href: "/admin/insights", label: "Insights" },
+const NAV: { href: string; label: string; needs: StaffAction }[] = [
+  { href: "/admin", label: "Overview", needs: "view" },
+  { href: "/admin/users", label: "Users", needs: "view" },
+  { href: "/admin/simulations", label: "Simulations", needs: "view" },
+  { href: "/admin/payments", label: "Payments", needs: "view" },
+  { href: "/admin/ai-usage", label: "AI usage", needs: "view" },
+  { href: "/admin/insights", label: "Insights", needs: "view" },
+  { href: "/admin/notifications", label: "Notifications", needs: "notify" },
+  { href: "/admin/website", label: "Website", needs: "manage_content" },
+  { href: "/admin/report-signature", label: "Report signature", needs: "manage_content" },
 ];
 
 export const metadata = { title: { default: "Admin", template: "%s | RaiseReady admin" }, robots: { index: false } };
@@ -41,7 +44,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           </div>
         </div>
         <nav aria-label="Admin" className="mx-auto flex max-w-6xl gap-5 overflow-x-auto px-4 pb-3 text-sm sm:px-6">
-          {NAV.map((n) => (
+          {NAV.filter((n) => can(staff.profile.role, n.needs)).map((n) => (
             <Link key={n.href} href={n.href} className="text-muted-foreground hover:text-foreground shrink-0">
               {n.label}
             </Link>

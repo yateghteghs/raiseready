@@ -26,6 +26,8 @@ const HISTORY_LABELS: Record<string, string> = {
   "billing.pro_renewed": "Pro renewed",
   "billing.credits_added": "Credits bought",
   "billing.amount_mismatch": "Payment amount mismatch",
+  "admin.password_reset_sent": "Password reset email sent",
+  "admin.credits_granted": "Free credits added",
 };
 
 export default async function AdminUserPage({ params }: PageProps<"/admin/users/[userId]">) {
@@ -45,7 +47,11 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
     terminate: check({ type: "terminate" }),
     delete: check({ type: "delete" }),
     change_role: ROLES.some((r) => check({ type: "change_role", role: r.value })),
+    reset_password: check({ type: "reset_password" }),
+    grant_credits: check({ type: "grant_credits", amount: 1 }),
   };
+  // Only offer the roles this staff member may actually give.
+  const roles = ROLES.filter((r) => r.value === profile.role || check({ type: "change_role", role: r.value }));
   const isSelf = staff.id === profile.id;
 
   return (
@@ -127,7 +133,7 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
         {isSelf ? (
           <p className="text-muted-foreground text-sm">This is your own account. Another admin has to make changes to it.</p>
         ) : Object.values(allowed).some(Boolean) ? (
-          <UserActions userId={profile.id} allowed={allowed} roles={ROLES} currentRole={profile.role} />
+          <UserActions userId={profile.id} allowed={allowed} roles={roles} currentRole={profile.role} />
         ) : (
           <p className="text-muted-foreground text-sm">
             Your role ({roleLabel(staff.profile.role)}) can&apos;t change this account
@@ -146,6 +152,9 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
                   {HISTORY_LABELS[h.action] ?? h.action}
                   {h.action === "profile.role_changed" && h.metadata && typeof h.metadata === "object" && "role" in h.metadata
                     ? ` to ${roleLabel(String(h.metadata.role))}`
+                    : ""}
+                  {h.action === "admin.credits_granted" && h.metadata && typeof h.metadata === "object" && "amount" in h.metadata
+                    ? ` (${String(h.metadata.amount)})`
                     : ""}
                   <span className="text-muted-foreground"> · by {h.actor}</span>
                 </span>

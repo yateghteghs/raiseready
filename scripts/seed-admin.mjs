@@ -1,4 +1,4 @@
-// Grants the admin role to an existing user.
+// Grants the super admin role to an existing user (the first staff account).
 // Usage: npm run db:seed-admin -- you@example.com
 // Reads NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY from .env.local.
 import { createClient } from "@supabase/supabase-js";
@@ -38,7 +38,7 @@ if (!userId) {
 
 const { error: updateError } = await supabase
   .from("profiles")
-  .update({ role: "admin" })
+  .update({ role: "super_admin" })
   .eq("id", userId);
 if (updateError) throw updateError;
 
@@ -47,8 +47,8 @@ const { error: auditError } = await supabase.from("audit_logs").insert({
   action: "profile.role_changed",
   target_type: "profile",
   target_id: userId,
-  metadata: { role: "admin", via: "seed-admin script" },
+  metadata: { role: "super_admin", via: "seed-admin script" },
 });
 if (auditError) throw auditError;
 
-console.log(`${email} is now an admin.`);
+console.log(`${email} is now a super admin.`);

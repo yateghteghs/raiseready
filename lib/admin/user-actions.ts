@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { getStaff } from "@/lib/admin/auth";
+import { MAX_GRANT, type UserAction } from "@/lib/admin/permissions";
 import { AdminActionError, applyUserAction } from "@/lib/admin/users";
 import { formValues, validationFailed, type FormState } from "@/lib/forms";
 
@@ -17,7 +18,16 @@ const actionSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("reactivate") }),
   z.object({ type: z.literal("terminate"), terminate_reason: reason, confirm_terminate: confirmWord("TERMINATE") }),
   z.object({ type: z.literal("delete"), confirm_delete: confirmWord("DELETE") }),
-  z.object({ type: z.literal("change_role"), role: z.enum(["founder", "viewer", "support", "admin"], { error: "Choose a role." }) }),
+  z.object({
+    type: z.literal("change_role"),
+    role: z.enum(["founder", "viewer", "support", "admin", "super_admin"], { error: "Choose a role." }),
+  }),
+  z.object({ type: z.literal("reset_password") }),
+  z.object({
+    type: z.literal("grant_credits"),
+    amount: z.coerce.number({ error: "Enter a number." }).int({ error: "Use a whole number." }).min(1).max(MAX_GRANT, { error: `At most ${MAX_GRANT} at a time.` }),
+    credit_reason: reason,
+  }),
 ]);
 
 /** One entry point for every admin action on a user; permissions are checked in applyUserAction. */
@@ -32,12 +42,18 @@ export async function userAdminAction(targetId: string, _prev: FormState, formDa
   const input = parsed.data;
 
   try {
-    await applyUserAction(
-      staff,
-      targetId,
-      input.type === "change_role" ? { type: "change_role", role: input.role } : { type: input.type },
-      ("reason" in input && input.reason) || ("terminate_reason" in input && input.terminate_reason) || undefined,
-    );
+    const action: UserAction =
+      input.type === "change_role"
+        ? { type: "change_role", role: input.role }
+        : input.type === "grant_credits"
+          ? { type: "grant_credits", amount: input.amount }
+          : { type: input.type };
+    const why =
+      ("reason" in input && input.reason) ||
+      ("terminate_reason" in input && input.terminate_reason) ||
+      ("credit_reason" in input && input.credit_reason) ||
+      undefined;
+    await applyUserAction(staff, targetId, action, why);
   } catch (error) {
     if (error instanceof AdminActionError) return { status: "error", message: error.message, values };
     console.error("[admin] user action failed:", error);
@@ -51,6 +67,8 @@ export async function userAdminAction(targetId: string, _prev: FormState, formDa
     reactivate: "Account reactivated. They can sign in again.",
     terminate: "Account terminated permanently.",
     change_role: "Role updated.",
+    reset_password: "Password reset email sent. The link in it works once and expires after an hour.",
+    grant_credits: "Credits added.",
   };
   return { status: "success", message: done[input.type] };
 }

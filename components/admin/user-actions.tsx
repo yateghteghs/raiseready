@@ -10,7 +10,7 @@ import { userAdminAction } from "@/lib/admin/user-actions";
 import { initialFormState } from "@/lib/forms";
 import { cn } from "@/lib/utils";
 
-export type ActionKey = "suspend" | "reactivate" | "terminate" | "delete" | "change_role";
+export type ActionKey = "suspend" | "reactivate" | "terminate" | "delete" | "change_role" | "reset_password" | "grant_credits";
 
 function ActionCard({
   userId,
@@ -78,6 +78,29 @@ export function UserActions({
             </NativeSelect>
           </div>
         </ActionCard>
+      ) : null}
+      {allowed.grant_credits ? (
+        <ActionCard
+          userId={userId}
+          type="grant_credits"
+          title="Free credits"
+          description="Adds simulation credits at no charge. Recorded in their history."
+          submit="Add credits"
+          pending="Adding…"
+        >
+          <TextField name="amount" label="How many" type="number" inputMode="numeric" min={1} max={100} defaultValue="3" className="max-w-32" />
+          <TextField name="credit_reason" label="Reason (seen only by staff)" optional maxLength={500} />
+        </ActionCard>
+      ) : null}
+      {allowed.reset_password ? (
+        <ActionCard
+          userId={userId}
+          type="reset_password"
+          title="Password"
+          description="Emails them a link to choose a new password. You never see or set it. Their current password keeps working until they change it."
+          submit="Send password reset email"
+          pending="Sending…"
+        />
       ) : null}
       {allowed.suspend ? (
         <ActionCard
