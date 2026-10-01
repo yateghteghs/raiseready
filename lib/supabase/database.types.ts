@@ -18,7 +18,8 @@ type InsertOf<Row, Optional extends keyof Row> = Omit<Row, Optional | keyof Time
   OptionalTimestamps;
 type UpdateOf<Row> = Partial<Row>;
 
-export type UserRole = "founder" | "admin";
+export type UserRole = "founder" | "viewer" | "support" | "admin";
+export type AccountStatus = "active" | "suspended" | "terminated";
 export type Plan = "free" | "pro";
 export type StartupStage = "idea" | "pre_seed" | "seed" | "series_a" | "other";
 export type FundingType = "equity" | "safe" | "convertible_note" | "grant" | "debt" | "other";
@@ -46,6 +47,10 @@ type ProfileRow = Timestamps & {
   credits: number;
   onboarding_complete: boolean;
   paystack_customer_code: string | null;
+  status: AccountStatus;
+  status_reason: string | null;
+  status_changed_at: string | null;
+  avatar_path: string | null;
 };
 
 type StartupRow = Timestamps & {
@@ -68,6 +73,7 @@ type StartupRow = Timestamps & {
   funding_type: FundingType | null;
   previously_raised: boolean | null;
   use_of_funds: string | null;
+  logo_path: string | null;
 };
 
 type DocumentRow = Timestamps & {
@@ -206,7 +212,17 @@ export type Database = {
     Tables: {
       profiles: Table<
         ProfileRow,
-        "full_name" | "country" | "role" | "plan" | "credits" | "onboarding_complete" | "paystack_customer_code"
+        | "full_name"
+        | "country"
+        | "role"
+        | "plan"
+        | "credits"
+        | "onboarding_complete"
+        | "paystack_customer_code"
+        | "status"
+        | "status_reason"
+        | "status_changed_at"
+        | "avatar_path"
       >;
       startups: Table<
         StartupRow,
@@ -227,6 +243,7 @@ export type Database = {
         | "funding_type"
         | "previously_raised"
         | "use_of_funds"
+        | "logo_path"
       >;
       documents: Table<DocumentRow, "id" | "original_filename" | "status" | "error_message">;
       knowledge_profiles: Table<KnowledgeProfileRow, "id" | "source_document_ids">;

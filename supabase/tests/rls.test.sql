@@ -75,6 +75,16 @@ select rls_test.ok(
   (select role = 'founder' and plan = 'free' and credits = 0 and not onboarding_complete
    from public.profiles where id = 'bbbbbbbb-0000-4000-8000-000000000002'),
   'new profiles default to founder / free / 0 credits / not onboarded');
+select rls_test.ok(
+  (select status = 'active' and avatar_path is null and status_reason is null
+   from public.profiles where id = 'bbbbbbbb-0000-4000-8000-000000000002'),
+  'new profiles are active with no picture');
+select rls_test.throws(
+  $$update public.profiles set role = 'owner' where id = 'bbbbbbbb-0000-4000-8000-000000000002'$$,
+  '23514', 'role must be founder, viewer, support or admin');
+select rls_test.throws(
+  $$update public.profiles set status = 'banned' where id = 'bbbbbbbb-0000-4000-8000-000000000002'$$,
+  '23514', 'status must be active, suspended or terminated');
 
 insert into public.startups (id, owner_id, name) values
   ('aaaaaaaa-1111-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000001', 'A Startup'),
@@ -189,6 +199,15 @@ select rls_test.throws(
 select rls_test.throws(
   $$delete from public.profiles where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
   '42501', 'A cannot delete profiles directly');
+select rls_test.throws(
+  $$update public.profiles set role = 'viewer' where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
+  '42501', 'A cannot give themself a staff role');
+select rls_test.throws(
+  $$update public.profiles set status = 'active', status_reason = null where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
+  '42501', 'A cannot change own account status (e.g. lift a suspension)');
+select rls_test.throws(
+  $$update public.profiles set avatar_path = 'bbbbbbbb-0000-4000-8000-000000000002/avatar.png' where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
+  '42501', 'A cannot set own picture path (server validates images)');
 
 -- startups
 select rls_test.ok(
@@ -212,6 +231,12 @@ select rls_test.ok(
 select rls_test.throws(
   $$update public.startups set owner_id = 'bbbbbbbb-0000-4000-8000-000000000002' where id = 'aaaaaaaa-1111-4000-8000-000000000001'$$,
   '42501', 'A cannot hand a startup to B');
+select rls_test.throws(
+  $$update public.startups set logo_path = 'bbbbbbbb-0000-4000-8000-000000000002/logo.png' where id = 'aaaaaaaa-1111-4000-8000-000000000001'$$,
+  '42501', 'A cannot point their logo at another file (server sets logo_path)');
+select rls_test.throws(
+  $$insert into public.startups (owner_id, name, logo_path) values ('aaaaaaaa-0000-4000-8000-000000000001', 'Logo', 'x.png')$$,
+  '42501', 'A cannot create a startup with a logo path');
 select rls_test.ok(
   rls_test.affected($$delete from public.startups where id = 'bbbbbbbb-1111-4000-8000-000000000002'$$) = 0,
   'A cannot delete B''s startup');
@@ -313,6 +338,10 @@ select rls_test.throws(
   $$insert into storage.objects (bucket_id, name)
     values ('documents', 'aaaaaaaa-0000-4000-8000-000000000001/aaaaaaaa-1111-4000-8000-000000000001/x.pdf')$$,
   '42501', 'A cannot upload directly to storage (server validates content)');
+select rls_test.throws(
+  $$insert into storage.objects (bucket_id, name)
+    values ('images', 'aaaaaaaa-0000-4000-8000-000000000001/avatar.png')$$,
+  '42501', 'A cannot upload images directly to storage');
 select rls_test.ok(
   rls_test.affected($$delete from storage.objects where bucket_id = 'documents'$$) = 0,
   'A cannot delete storage objects directly');
@@ -375,6 +404,14 @@ select rls_test.ok(
 select rls_test.throws(
   $$select private.set_user_role('nobody@example.com', 'admin')$$,
   'P0001', 'set_user_role rejects unknown emails');
+select private.set_user_role('b@example.com', 'support');
+select rls_test.ok(
+  (select role from public.profiles where id = 'bbbbbbbb-0000-4000-8000-000000000002') = 'support',
+  'set_user_role accepts the support role');
+select private.set_user_role('b@example.com', 'founder');
+select rls_test.throws(
+  $$select private.set_user_role('b@example.com', 'owner')$$,
+  'P0001', 'set_user_role rejects unknown roles');
 
 set local role authenticated;
 select set_config('request.jwt.claims',
