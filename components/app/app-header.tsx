@@ -17,7 +17,7 @@ function NavLinks({ nav }: { nav: NavItem[] }) {
   ));
 }
 
-export function AppHeader({ email, nav }: { email: string | null; nav?: NavItem[] }) {
+export function AppHeader({ email, nav, admin = false }: { email: string | null; nav?: NavItem[]; admin?: boolean }) {
   return (
     <header className="border-b">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
@@ -32,6 +32,11 @@ export function AppHeader({ email, nav }: { email: string | null; nav?: NavItem[
           ) : null}
         </div>
         <div className="flex items-center gap-3">
+          {admin ? (
+            <Link href="/admin" className="text-muted-foreground hover:text-foreground text-sm">
+              Admin
+            </Link>
+          ) : null}
           <Link href="/" className="text-muted-foreground hover:text-foreground text-sm">
             Website
           </Link>

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { AppFooter } from "@/components/app/app-footer";
 import { AppHeader } from "@/components/app/app-header";
+import { isAdmin } from "@/lib/admin/auth";
 import { LoadProblem } from "@/components/app/load-problem";
 import { getCurrentProfile, requireUser } from "@/lib/auth/session";
 import { load } from "@/lib/data-errors";
@@ -33,7 +34,7 @@ export default async function MainAppLayout({ children }: LayoutProps<"/app">) {
 
   return (
     <>
-      <AppHeader email={user.email} nav={NAV} />
+      <AppHeader email={user.email} nav={NAV} admin={isAdmin(loaded.data)} />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">{children}</main>
       <AppFooter />
     </>
