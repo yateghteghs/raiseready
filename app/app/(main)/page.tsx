@@ -44,7 +44,12 @@ export default async function DashboardPage() {
   const steps = [
     { title: "Upload your pitch deck", description: "We turn it into a structured profile of your startup.", href: "/app/documents", done: docs.some((d) => d.kind === "pitch_deck") && Boolean(knowledge) },
     { title: "Get your readiness score", description: "See how investors would rate you across 10 areas, and what to fix.", href: knowledge ? "/app/assessment" : undefined, done: Boolean(latest) },
-    { title: "Practise in the Investor Room", description: "Face an AI investor who challenges weak answers and spots contradictions.", href: undefined, done: false },
+    {
+      title: "Practise in the Investor Room",
+      description: "Face an AI investor who challenges weak answers and spots contradictions.",
+      href: knowledge ? "/app/investor-room" : undefined,
+      done: activity.some((a) => a.href.startsWith("/app/investor-room/")),
+    },
   ];
 
   return (
@@ -95,8 +100,11 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground text-sm">
-                {nextSim ? `Because ${nextSim.reason.toLowerCase()} is your weakest area. ` : ""}The Investor Room opens in the next update.
+                {nextSim ? `Because ${nextSim.reason.toLowerCase()} is your weakest area.` : ""}
               </p>
+              <Button asChild size="sm" className="mt-3">
+                <Link href="/app/investor-room">Enter the Investor Room</Link>
+              </Button>
             </CardContent>
           </Card>
         </div>
