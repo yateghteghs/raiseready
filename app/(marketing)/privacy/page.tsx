@@ -45,6 +45,10 @@ export default function PrivacyPage() {
           <strong>Account status:</strong> if staff suspend or close an account, when it happened and
           the reason they recorded.
         </li>
+        <li>
+          <strong>Messages:</strong> notifications the RaiseReady team sends you in the app, and
+          whether you have read them.
+        </li>
       </ul>
 
       <h2>What is sent to our AI provider</h2>

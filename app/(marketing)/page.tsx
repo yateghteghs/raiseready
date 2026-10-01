@@ -4,10 +4,19 @@ import { ArrowRightIcon } from "lucide-react";
 import { PricingCards } from "@/components/marketing/pricing-cards";
 import { SampleReport } from "@/components/marketing/sample-report";
 import { Section } from "@/components/marketing/section";
+import { LogoStrip, TestimonialCards } from "@/components/marketing/showcase";
 import { HOW_IT_WORKS_STEPS } from "@/components/marketing/steps";
 import { Button } from "@/components/ui/button";
+import { publishedShowcase } from "@/lib/showcase/service";
 
-export default function HomePage() {
+// Logos and testimonials are edited in the admin area, which also refreshes
+// this page straight away; the timer is a fallback.
+export const revalidate = 3600;
+
+export default async function HomePage() {
+  const showcase = await publishedShowcase();
+  const logos = showcase.filter((i) => i.kind === "logo");
+  const testimonials = showcase.filter((i) => i.kind === "testimonial");
   return (
     <>
       <section className="border-b">
@@ -37,6 +46,8 @@ export default function HomePage() {
           <SampleReport />
         </div>
       </section>
+
+      <LogoStrip items={logos} />
 
       <Section
         title="How it works"
@@ -89,6 +100,17 @@ export default function HomePage() {
           </ul>
         </Section>
       </div>
+
+      {testimonials.length ? (
+        <Section title="What founders say">
+          <TestimonialCards items={testimonials.slice(0, 3)} />
+          {testimonials.length > 3 ? (
+            <Link href="/testimonials" className="text-primary mt-6 inline-block text-sm font-medium underline-offset-4 hover:underline">
+              Read more stories
+            </Link>
+          ) : null}
+        </Section>
+      ) : null}
 
       <Section title="Simple pricing" intro="Start free. Upgrade when you're actively raising.">
         <PricingCards />

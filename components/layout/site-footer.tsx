@@ -5,7 +5,7 @@ import { MARKETING_NAV, SITE } from "@/lib/site";
 export function SiteFooter() {
   return (
     <footer className="border-t">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-sm sm:grid-cols-[2fr_1fr_1fr] sm:px-6">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-sm sm:grid-cols-[2fr_1fr_1fr_1fr] sm:px-6">
         <div>
           <p className="font-semibold">{SITE.name}</p>
           <p className="text-muted-foreground mt-2 max-w-xs">{SITE.tagline}</p>
@@ -13,6 +13,18 @@ export function SiteFooter() {
         <nav aria-label="Product" className="grid content-start gap-2">
           <p className="font-medium">Product</p>
           {MARKETING_NAV.map((link) => (
+            <Link key={link.href} href={link.href} className="text-muted-foreground hover:text-foreground">
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+        <nav aria-label="Company" className="grid content-start gap-2">
+          <p className="font-medium">Company</p>
+          {[
+            { href: "/about", label: "About" },
+            { href: "/testimonials", label: "Testimonials" },
+            { href: "/partners", label: "Partners" },
+          ].map((link) => (
             <Link key={link.href} href={link.href} className="text-muted-foreground hover:text-foreground">
               {link.label}
             </Link>
