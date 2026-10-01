@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, types, unit, database and public E2E tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - name: Database access rules (RLS)
+        run: npm run test:db
+      - run: npx playwright install --with-deps chromium
+      - name: Public end-to-end tests (desktop and mobile)
+        run: npx playwright test --project=public --project=mobile
+        env:
+          CI: "true"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-public
+          path: playwright-report/
+          retention-days: 7
+
+  core-loop:
+    name: Core loop E2E against the live deployment
+    # Uses real AI calls, so it only runs when a commit message contains [e2e].
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[e2e]')
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      E2E_BASE_URL: ${{ vars.E2E_BASE_URL }}
+      E2E_SUPABASE_URL: ${{ vars.E2E_SUPABASE_URL }}
+      E2E_SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+      CI: "true"
+    steps:
+      - name: Check configuration
+        run: |
+          missing=""
+          [ -n "$E2E_BASE_URL" ] || missing="$missing E2E_BASE_URL(variable)"
+          [ -n "$E2E_SUPABASE_URL" ] || missing="$missing E2E_SUPABASE_URL(variable)"
+          [ -n "$E2E_SUPABASE_SERVICE_ROLE_KEY" ] || missing="$missing E2E_SUPABASE_SERVICE_ROLE_KEY(secret)"
+          if [ -n "$missing" ]; then echo "::error::Missing GitHub settings:$missing. See docs/DEPLOY.md."; exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Wait for Vercel to deploy this commit
+        run: |
+          for i in $(seq 1 60); do
+            commit=$(curl -fsS "$E2E_BASE_URL/api/version" | node -pe 'JSON.parse(require("fs").readFileSync(0)).commit' || true)
+            if [ "$commit" = "$GITHUB_SHA" ]; then echo "Deployed."; exit 0; fi
+            echo "Live: ${commit:-unknown}; waiting for $GITHUB_SHA"; sleep 15
+          done
+          echo "::error::Vercel did not deploy $GITHUB_SHA within 15 minutes."; exit 1
+      - run: npx playwright test --project=core-loop
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-core-loop
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
