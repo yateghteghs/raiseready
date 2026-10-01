@@ -138,5 +138,21 @@ export function createFakeDb() {
     return builder;
   }
 
-  return { tables, client: { from } };
+  /** The SQL functions in supabase/migrations/*_billing.sql. */
+  async function rpc(name: string, args: Record<string, unknown>) {
+    const profile = (tables.profiles ?? []).find((p) => p.id === args.p_user_id);
+    if (name === "add_credits") {
+      if (!profile || (args.p_amount as number) <= 0) return { data: null, error: null };
+      profile.credits = (profile.credits as number) + (args.p_amount as number);
+      return { data: profile.credits, error: null };
+    }
+    if (name === "consume_credit") {
+      if (!profile || (profile.credits as number) <= 0) return { data: null, error: null };
+      profile.credits = (profile.credits as number) - 1;
+      return { data: profile.credits, error: null };
+    }
+    return { data: null, error: { message: `unknown function ${name}` } };
+  }
+
+  return { tables, client: { from, rpc } };
 }

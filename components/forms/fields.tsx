@@ -238,7 +238,15 @@ export function MoneyField({
   );
 }
 
-export function FormMessage({ status, message }: { status: string; message?: string }) {
+export function FormMessage({
+  status,
+  message,
+  action,
+}: {
+  status: string;
+  message?: string;
+  action?: { href: string; label: string };
+}) {
   if (!message) return null;
   return (
     <p
@@ -251,6 +259,14 @@ export function FormMessage({ status, message }: { status: string; message?: str
       )}
     >
       {message}
+      {action ? (
+        <>
+          {" "}
+          <a href={action.href} className="font-medium underline underline-offset-4">
+            {action.label}
+          </a>
+        </>
+      ) : null}
     </p>
   );
 }

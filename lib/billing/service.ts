@@ -1,0 +1,310 @@
+import { randomUUID } from "node:crypto";
+
+import { lagosMonthStart, isProActive, type Usage } from "@/lib/billing/entitlements";
+import {
+  ensureProPlan,
+  initializeTransaction,
+  metadataOf,
+  planCodeOf,
+  subscriptionManageLink,
+  type PaystackTransaction,
+} from "@/lib/billing/paystack";
+import { CREDIT_PACKS, CURRENCY, PRO_PLAN } from "@/lib/billing/plans";
+import { createAdminClient } from "@/lib/supabase/admin";
+import type { Json, PaymentProduct, SubscriptionStatus, Tables } from "@/lib/supabase/database.types";
+
+export class BillingError extends Error {}
+
+const PRODUCTS: Record<PaymentProduct, { amountKobo: number; credits: number; label: string }> = {
+  pro_monthly: { amountKobo: PRO_PLAN.priceKobo, credits: 0, label: "Pro (monthly)" },
+  credits_3: { amountKobo: CREDIT_PACKS[0].priceKobo, credits: CREDIT_PACKS[0].simulations, label: CREDIT_PACKS[0].name },
+  credits_10: { amountKobo: CREDIT_PACKS[1].priceKobo, credits: CREDIT_PACKS[1].simulations, label: CREDIT_PACKS[1].name },
+};
+
+export function productLabel(product: PaymentProduct): string {
+  return PRODUCTS[product].label;
+}
+
+async function audit(action: string, targetId: string | null, metadata: Record<string, unknown>) {
+  await createAdminClient()
+    .from("audit_logs")
+    .insert({ actor_id: null, action, target_type: "profile", target_id: targetId, metadata: metadata as Json });
+}
+
+export async function getSubscription(userId: string): Promise<Tables<"subscriptions"> | null> {
+  const { data } = await createAdminClient()
+    .from("subscriptions")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data;
+}
+
+/** Everything the plan rules need, read fresh from the database (never from the browser). */
+export async function getUsage(userId: string, startupId: string | null): Promise<Usage & { profile: Tables<"profiles"> }> {
+  const admin = createAdminClient();
+  const { data: profile, error } = await admin.from("profiles").select("*").eq("id", userId).single();
+  if (error || !profile) throw new Error(`Could not load profile: ${error?.message}`);
+  const subscription = await getSubscription(userId);
+
+  let assessments = 0;
+  let freeSimulationsUsed = 0;
+  let proSimulationsThisMonth = 0;
+  if (startupId) {
+    const [a, free, pro] = await Promise.all([
+      admin.from("assessments").select("id", { count: "exact", head: true }).eq("startup_id", startupId),
+      admin.from("simulations").select("id", { count: "exact", head: true }).eq("startup_id", startupId).eq("funded_by", "free"),
+      admin
+        .from("simulations")
+        .select("id", { count: "exact", head: true })
+        .eq("startup_id", startupId)
+        .eq("funded_by", "pro")
+        .gte("created_at", lagosMonthStart().toISOString()),
+    ]);
+    assessments = a.count ?? 0;
+    freeSimulationsUsed = free.count ?? 0;
+    proSimulationsThisMonth = pro.count ?? 0;
+  }
+  return {
+    profile,
+    proActive: isProActive(profile.plan, subscription),
+    credits: profile.credits,
+    assessments,
+    freeSimulationsUsed,
+    proSimulationsThisMonth,
+  };
+}
+
+/** Spends one credit atomically. Returns false if none was left. */
+export async function consumeCredit(userId: string): Promise<boolean> {
+  const { data, error } = await createAdminClient().rpc("consume_credit", { p_user_id: userId });
+  if (error) throw new Error(`Could not use credit: ${error.message}`);
+  return data !== null && data !== undefined;
+}
+
+export async function refundCredit(userId: string): Promise<void> {
+  await createAdminClient().rpc("add_credits", { p_user_id: userId, p_amount: 1 });
+}
+
+/**
+ * Starts a Paystack checkout: records a pending payment, then initialises the
+ * transaction on the server and returns Paystack's payment page URL.
+ */
+export async function startCheckout(
+  user: { id: string; email: string | null },
+  product: PaymentProduct,
+  callbackUrl: string,
+): Promise<string> {
+  if (!user.email) throw new BillingError("Your account has no email address. Contact support.");
+  if (product === "pro_monthly") {
+    const usage = await getUsage(user.id, null);
+    if (usage.proActive) throw new BillingError("You're already on Pro.");
+  }
+
+  const reference = `rr_${product}_${randomUUID().replace(/-/g, "")}`;
+  const { amountKobo } = PRODUCTS[product];
+  const admin = createAdminClient();
+  const { error } = await admin.from("payments").insert({
+    user_id: user.id,
+    provider: "paystack",
+    reference,
+    amount_kobo: amountKobo,
+    currency: CURRENCY,
+    product,
+    status: "pending",
+  });
+  if (error) throw new Error(`Could not record payment: ${error.message}`);
+
+  const planCode = product === "pro_monthly" ? await ensureProPlan() : undefined;
+  const tx = await initializeTransaction({
+    email: user.email,
+    amountKobo,
+    reference,
+    callbackUrl,
+    metadata: { user_id: user.id, product },
+    planCode,
+  });
+  return tx.authorization_url;
+}
+
+function plusOneMonth(iso: string | null | undefined): string {
+  const d = iso ? new Date(iso) : new Date();
+  d.setUTCMonth(d.getUTCMonth() + 1);
+  return d.toISOString();
+}
+
+/**
+ * Applies a successful charge exactly once. Called from the webhook (the
+ * source of truth) and from the post-payment return page; whichever arrives
+ * first grants the purchase, the other finds nothing left to do.
+ * Returns true if this call granted something.
+ */
+export async function applyChargeSuccess(tx: PaystackTransaction, raw: unknown): Promise<boolean> {
+  if (tx.status !== "success") return false;
+  const admin = createAdminClient();
+  const { data: payment } = await admin.from("payments").select("*").eq("reference", tx.reference).maybeSingle();
+
+  if (!payment) return applyRenewal(tx, raw);
+
+  if (tx.amount !== payment.amount_kobo || tx.currency !== payment.currency) {
+    await admin.from("payments").update({ status: "failed", raw_event: raw as Json }).eq("id", payment.id).eq("status", "pending");
+    await audit("billing.amount_mismatch", payment.user_id, { reference: tx.reference, amount: tx.amount, currency: tx.currency });
+    return false;
+  }
+
+  // Only the call that flips pending -> success grants the purchase.
+  const { data: flipped } = await admin
+    .from("payments")
+    .update({ status: "success", raw_event: raw as Json })
+    .eq("id", payment.id)
+    .eq("status", "pending")
+    .select("id");
+  if (!flipped || flipped.length === 0) return false;
+
+  const customerCode = tx.customer?.customer_code ?? null;
+  if (customerCode) {
+    await admin.from("profiles").update({ paystack_customer_code: customerCode }).eq("id", payment.user_id).is("paystack_customer_code", null);
+  }
+
+  if (payment.product === "pro_monthly") {
+    await admin.from("profiles").update({ plan: "pro" }).eq("id", payment.user_id);
+    const existing = await getSubscription(payment.user_id);
+    const periodEnd = plusOneMonth(tx.paid_at);
+    if (existing) {
+      await admin.from("subscriptions").update({ status: "active", current_period_end: periodEnd }).eq("id", existing.id);
+    } else {
+      await admin.from("subscriptions").insert({ user_id: payment.user_id, status: "active", current_period_end: periodEnd });
+    }
+    await audit("billing.pro_started", payment.user_id, { reference: tx.reference });
+  } else {
+    const credits = PRODUCTS[payment.product].credits;
+    const { error } = await admin.rpc("add_credits", { p_user_id: payment.user_id, p_amount: credits });
+    if (error) throw new Error(`Could not add credits: ${error.message}`);
+    await audit("billing.credits_added", payment.user_id, { reference: tx.reference, credits });
+  }
+  return true;
+}
+
+/** A Pro renewal charge: Paystack creates the reference, so we record it now. */
+async function applyRenewal(tx: PaystackTransaction, raw: unknown): Promise<boolean> {
+  const planCode = planCodeOf(tx.plan);
+  const customerCode = tx.customer?.customer_code;
+  if (!planCode || !customerCode) return false;
+
+  const admin = createAdminClient();
+  const { data: profile } = await admin.from("profiles").select("id").eq("paystack_customer_code", customerCode).maybeSingle();
+  if (!profile) return false;
+
+  const { error } = await admin.from("payments").insert({
+    user_id: profile.id,
+    provider: "paystack",
+    reference: tx.reference,
+    amount_kobo: tx.amount,
+    currency: tx.currency,
+    product: "pro_monthly",
+    status: "success",
+    raw_event: raw as Json,
+  });
+  if (error) return false; // already recorded (unique reference)
+
+  await admin.from("profiles").update({ plan: "pro" }).eq("id", profile.id);
+  const existing = await getSubscription(profile.id);
+  if (existing) {
+    await admin.from("subscriptions").update({ status: "active", current_period_end: plusOneMonth(tx.paid_at) }).eq("id", existing.id);
+  }
+  await audit("billing.pro_renewed", profile.id, { reference: tx.reference });
+  return true;
+}
+
+const STATUS_MAP: Record<string, SubscriptionStatus> = {
+  active: "active",
+  "non-renewing": "non_renewing",
+  attention: "attention",
+  cancelled: "cancelled",
+  complete: "completed",
+  completed: "completed",
+};
+
+type SubscriptionPayload = {
+  subscription_code?: string;
+  status?: string;
+  next_payment_date?: string | null;
+  customer?: { customer_code?: string };
+};
+
+/** Keeps the subscription record in step with Paystack's subscription and invoice events. */
+export async function applySubscriptionEvent(event: string, data: Record<string, unknown>): Promise<void> {
+  const sub = (event.startsWith("invoice.") ? (data.subscription as SubscriptionPayload) : (data as SubscriptionPayload)) ?? {};
+  const customerCode = (data.customer as { customer_code?: string } | undefined)?.customer_code ?? sub.customer?.customer_code;
+  const code = sub.subscription_code;
+  if (!code || !customerCode) return;
+
+  const admin = createAdminClient();
+  const { data: profile } = await admin.from("profiles").select("id").eq("paystack_customer_code", customerCode).maybeSingle();
+  if (!profile) return;
+
+  let status = STATUS_MAP[sub.status ?? ""] ?? "active";
+  if (event === "invoice.payment_failed") status = "attention";
+  if (event === "subscription.disable") status = sub.status === "complete" || sub.status === "completed" ? "completed" : "cancelled";
+  if (event === "subscription.not_renew") status = "non_renewing";
+
+  const fields = {
+    provider_subscription_code: code,
+    status,
+    ...(sub.next_payment_date ? { current_period_end: sub.next_payment_date } : {}),
+  };
+
+  const { data: byCode } = await admin.from("subscriptions").select("id").eq("provider_subscription_code", code).maybeSingle();
+  if (byCode) {
+    await admin.from("subscriptions").update(fields).eq("id", byCode.id);
+  } else {
+    const { data: pending } = await admin
+      .from("subscriptions")
+      .select("id")
+      .eq("user_id", profile.id)
+      .is("provider_subscription_code", null)
+      .limit(1)
+      .maybeSingle();
+    if (pending) await admin.from("subscriptions").update(fields).eq("id", pending.id);
+    else await admin.from("subscriptions").insert({ user_id: profile.id, ...fields });
+  }
+
+  if (status === "cancelled" || status === "completed") {
+    await admin.from("profiles").update({ plan: "free" }).eq("id", profile.id);
+    await audit("billing.pro_ended", profile.id, { event, subscription_code: code });
+  }
+}
+
+/** Routes a verified webhook event. Unknown events are ignored. */
+export async function handlePaystackEvent(payload: { event?: string; data?: Record<string, unknown> }): Promise<void> {
+  const event = payload.event ?? "";
+  const data = payload.data ?? {};
+  if (event === "charge.success") {
+    await applyChargeSuccess(data as unknown as PaystackTransaction, payload);
+  } else if (
+    event === "subscription.create" ||
+    event === "subscription.not_renew" ||
+    event === "subscription.disable" ||
+    event === "invoice.update" ||
+    event === "invoice.payment_failed"
+  ) {
+    await applySubscriptionEvent(event, data);
+  }
+}
+
+/** Link to Paystack's page for cancelling or updating the card on a subscription. */
+export async function manageSubscriptionLink(userId: string): Promise<string> {
+  const sub = await getSubscription(userId);
+  if (!sub?.provider_subscription_code) {
+    throw new BillingError("Your subscription is still being set up. Try again in a few minutes.");
+  }
+  return subscriptionManageLink(sub.provider_subscription_code);
+}
+
+/** Who a verified transaction belongs to, from the metadata we set at checkout. */
+export function transactionUserId(tx: PaystackTransaction): string | null {
+  const id = metadataOf(tx).user_id;
+  return typeof id === "string" ? id : null;
+}

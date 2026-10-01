@@ -9,6 +9,8 @@ export type FormState = {
   fieldErrors?: FieldErrors;
   /** Submitted values, echoed back so the form keeps them after an error. */
   values?: Record<string, string>;
+  /** Optional link shown with the message, e.g. to upgrade. */
+  action?: { href: string; label: string };
 };
 
 export const initialFormState: FormState = { status: "idle" };
