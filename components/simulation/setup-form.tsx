@@ -47,7 +47,7 @@ export function SetupForm({
   const [state, action] = useActionState(startSimulationAction, initialFormState);
   return (
     <form action={action} className="grid gap-8">
-      <FormMessage status={state.status} message={state.message} />
+      <FormMessage status={state.status} message={state.message} action={state.action} />
       <ChoiceGroup name="persona" legend="Who are you pitching to?" choices={personas} defaultValue="seed_vc" />
       <ChoiceGroup name="difficulty" legend="How hard should they push?" choices={difficulties} defaultValue="analytical" />
       <div className="grid max-w-sm gap-2">

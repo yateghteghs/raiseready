@@ -9,13 +9,13 @@ import { runAssessmentAction } from "@/lib/assessment/actions";
 export function RunAssessmentButton({ hasAssessment, disabled }: { hasAssessment: boolean; disabled?: boolean }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [message, setMessage] = useState<{ kind: "error" | "info"; text: string } | null>(null);
+  const [message, setMessage] = useState<{ kind: "error" | "info"; text: string; upgrade?: boolean } | null>(null);
 
   function run() {
     setMessage(null);
     startTransition(async () => {
       const result = await runAssessmentAction();
-      if (!result.ok) return setMessage({ kind: "error", text: result.error });
+      if (!result.ok) return setMessage({ kind: "error", text: result.error, upgrade: result.upgrade });
       if (result.reused) {
         setMessage({
           kind: "info",
@@ -37,6 +37,14 @@ export function RunAssessmentButton({ hasAssessment, disabled }: { hasAssessment
         ) : message ? (
           <span className={message.kind === "error" ? "text-destructive" : "text-muted-foreground"} role={message.kind === "error" ? "alert" : undefined}>
             {message.text}
+            {message.upgrade ? (
+              <>
+                {" "}
+                <a href="/app/billing" className="font-medium underline underline-offset-4">
+                  See plans
+                </a>
+              </>
+            ) : null}
           </span>
         ) : null}
       </p>

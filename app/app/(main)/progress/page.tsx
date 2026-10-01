@@ -5,6 +5,8 @@ import { LoadProblem } from "@/components/app/load-problem";
 import { ProgressChart } from "@/components/progress/progress-chart";
 import { Button } from "@/components/ui/button";
 import { DIFFICULTIES, PERSONAS } from "@/lib/ai/personas";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getUsage } from "@/lib/billing/service";
 import { load } from "@/lib/data-errors";
 import { bandFor } from "@/lib/scoring/rubric";
 import { getMyStartup } from "@/lib/startups/service";
@@ -16,8 +18,10 @@ const dateFormat = new Intl.DateTimeFormat("en-NG", { day: "numeric", month: "sh
 
 export default async function ProgressPage() {
   const loaded = await load(async () => {
-    const startup = await getMyStartup();
-    if (!startup) return null;
+    const [startup, user] = await Promise.all([getMyStartup(), getCurrentUser()]);
+    if (!startup || !user) return null;
+    const usage = await getUsage(user.id, startup.id);
+    if (!usage.proActive) return { locked: true as const };
     const supabase = await createClient();
     const [assessments, sims] = await Promise.all([
       supabase.from("assessments").select("id, overall_score, created_at").eq("startup_id", startup.id).order("created_at", { ascending: true }),
@@ -29,10 +33,26 @@ export default async function ProgressPage() {
         .eq("status", "completed")
         .order("ended_at", { ascending: true }),
     ]);
-    return { assessments: assessments.data ?? [], sims: sims.data ?? [] };
+    return { locked: false as const, assessments: assessments.data ?? [], sims: sims.data ?? [] };
   });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) return <LoadProblem code="no_startup" />;
+  if (loaded.data.locked) {
+    return (
+      <div className="grid gap-6">
+        <h1 className="text-2xl font-semibold tracking-tight">Progress</h1>
+        <div className="bg-muted/40 flex flex-col items-start gap-3 rounded-xl border p-5">
+          <p className="font-medium">Track your progress with Pro</p>
+          <p className="text-muted-foreground text-sm">
+            See how your readiness and Investor Room scores change over time as you improve your pitch.
+          </p>
+          <Button asChild size="sm">
+            <Link href="/app/billing">See plans</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
   const { assessments, sims } = loaded.data;
 
   const readiness = assessments.map((a) => ({ t: new Date(a.created_at).getTime(), score: a.overall_score }));

@@ -23,6 +23,9 @@ import {
 } from "@/lib/ai/schemas/simulation";
 import { AiCallError, callStructured } from "@/lib/ai/structured";
 import { withinRateLimit } from "@/lib/ai/usage";
+import { simulationAccess } from "@/lib/billing/entitlements";
+import { PlanLimitError } from "@/lib/billing/limits";
+import { consumeCredit, getUsage, refundCredit } from "@/lib/billing/service";
 import { DOCUMENT_KINDS, type UploadableKind } from "@/lib/documents/rules";
 import { simulationScore } from "@/lib/simulation/score";
 import {
@@ -126,6 +129,17 @@ export async function startSimulation(
     throw new SimulationError("You've started several simulations in the last hour. Please try again later.");
   }
 
+  // Plan limits (spec 7), checked on the server before anything is created.
+  const usage = await getUsage(userId, startup.id);
+  const access = simulationAccess(usage, options.persona, options.difficulty);
+  if (!access.ok) throw new PlanLimitError(access.reason);
+  if (access.via === "credit" && !(await consumeCredit(userId))) {
+    throw new PlanLimitError("You don't have any credits left. Buy more or upgrade to Pro.");
+  }
+  const refund = async () => {
+    if (access.via === "credit") await refundCredit(userId);
+  };
+
   // One live session at a time: older unfinished ones are marked abandoned.
   await admin
     .from("simulations")
@@ -144,10 +158,14 @@ export async function startSimulation(
       difficulty: options.difficulty,
       funding_type: options.fundingType,
       current_round: persona.rounds[0],
+      funded_by: access.via,
     })
     .select("id")
     .single();
-  if (error) throw new Error(`Could not start simulation: ${error.message}`);
+  if (error) {
+    await refund();
+    throw new Error(`Could not start simulation: ${error.message}`);
+  }
 
   const { error: turnError } = await admin.from("simulation_turns").insert({
     simulation_id: sim.id,
@@ -156,7 +174,11 @@ export async function startSimulation(
     role: "investor",
     content: persona.opening(startup.name),
   });
-  if (turnError) throw new Error(`Could not start simulation: ${turnError.message}`);
+  if (turnError) {
+    await admin.from("simulations").delete().eq("id", sim.id);
+    await refund();
+    throw new Error(`Could not start simulation: ${turnError.message}`);
+  }
   return sim.id;
 }
 

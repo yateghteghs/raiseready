@@ -1,0 +1,189 @@
+import type { Metadata } from "next";
+import { CheckIcon } from "lucide-react";
+
+import { LoadProblem } from "@/components/app/load-problem";
+import { CheckoutButton } from "@/components/billing/checkout-button";
+import { getCurrentUser } from "@/lib/auth/session";
+import { CREDIT_PACKS, FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
+import { getSubscription, getUsage, productLabel } from "@/lib/billing/service";
+import { load } from "@/lib/data-errors";
+import { formatMoney, koboToNaira } from "@/lib/format";
+import { getMyStartup } from "@/lib/startups/service";
+import { createClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
+
+export const metadata: Metadata = { title: "Billing" };
+
+const dateFormat = new Intl.DateTimeFormat("en-NG", { day: "numeric", month: "short", year: "numeric" });
+const naira = (kobo: number) => formatMoney(koboToNaira(kobo));
+
+const PAYMENT_MESSAGES: Record<string, { text: string; ok: boolean }> = {
+  success: { text: "Payment received. Thank you! Your account has been updated.", ok: true },
+  pending: { text: "We're confirming your payment with Paystack. This page will update within a minute or two.", ok: true },
+  failed: { text: "The payment didn't go through. You haven't been charged.", ok: false },
+  cancelled: { text: "Payment cancelled. You haven't been charged.", ok: false },
+  unknown: { text: "We couldn't confirm that payment. If you were charged, it will appear here shortly.", ok: false },
+};
+
+export default async function BillingPage({ searchParams }: PageProps<"/app/billing">) {
+  const { payment } = await searchParams;
+  const loaded = await load(async () => {
+    const user = await getCurrentUser();
+    if (!user) return null;
+    const startup = await getMyStartup();
+    const supabase = await createClient();
+    const [usage, subscription, payments] = await Promise.all([
+      getUsage(user.id, startup?.id ?? null),
+      getSubscription(user.id),
+      supabase.from("payments").select("*").neq("status", "pending").order("created_at", { ascending: false }).limit(30),
+    ]);
+    return { usage, subscription, payments: payments.data ?? [] };
+  });
+  if (!loaded.ok) return <LoadProblem code={loaded.code} />;
+  if (!loaded.data) return <LoadProblem code="no_startup" />;
+  const { usage, subscription, payments } = loaded.data;
+
+  const testMode = (process.env.PAYSTACK_SECRET_KEY ?? "").startsWith("sk_test_");
+  const banner = typeof payment === "string" ? PAYMENT_MESSAGES[payment] : undefined;
+  const ending = subscription && (subscription.status === "non_renewing" || subscription.status === "cancelled");
+
+  return (
+    <div className="grid gap-10">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Billing</h1>
+        <p className="text-muted-foreground mt-1">Your plan, credits and payments. Payments are in naira and handled securely by Paystack.</p>
+      </div>
+
+      {banner ? (
+        <p role="status" className={cn("rounded-xl border p-4 text-sm", banner.ok ? "border-primary/30 bg-accent" : "border-destructive/40 text-destructive")}>
+          {banner.text}
+        </p>
+      ) : null}
+      {testMode ? (
+        <p className="border-warning bg-warning/15 rounded-xl border p-4 text-sm">
+          <span className="font-medium">Test mode.</span> No real money moves. Paystack&apos;s checkout shows the test cards to use.
+        </p>
+      ) : null}
+
+      <section aria-labelledby="plan-heading" className="grid gap-4 md:grid-cols-3">
+        <div className="bg-card rounded-xl border p-5 md:col-span-2">
+          <h2 id="plan-heading" className="text-muted-foreground text-sm">
+            Your plan
+          </h2>
+          <p className="mt-1 text-2xl font-semibold">{usage.proActive ? "Pro" : "Free"}</p>
+          {usage.proActive && subscription?.current_period_end ? (
+            <p className="text-muted-foreground text-sm">
+              {ending ? "Ends" : "Renews"} on {dateFormat.format(new Date(subscription.current_period_end))}
+              {subscription.status === "attention" ? " · Your last renewal payment failed. Update your card to keep Pro." : ""}
+            </p>
+          ) : null}
+          <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+            {usage.proActive ? (
+              <div>
+                <dt className="text-muted-foreground">Simulations this month</dt>
+                <dd className="font-medium tabular-nums">
+                  {usage.proSimulationsThisMonth} of {PRO_PLAN.simulationsPerMonth}
+                </dd>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <dt className="text-muted-foreground">Free assessment</dt>
+                  <dd className="font-medium">{usage.assessments >= FREE_PLAN.assessments ? "Used" : "Available"}</dd>
+                </div>
+                <div>
+                  <dt className="text-muted-foreground">Free simulation</dt>
+                  <dd className="font-medium">{usage.freeSimulationsUsed >= FREE_PLAN.simulations ? "Used" : "Available"}</dd>
+                </div>
+              </>
+            )}
+          </dl>
+          {usage.proActive && subscription?.provider_subscription_code ? (
+            <div className="mt-4">
+              <CheckoutButton product="manage" variant="outline">
+                Manage or cancel subscription
+              </CheckoutButton>
+            </div>
+          ) : null}
+        </div>
+        <div className="bg-card rounded-xl border p-5">
+          <h2 className="text-muted-foreground text-sm">Simulation credits</h2>
+          <p className="mt-1 text-4xl font-semibold tabular-nums">{usage.credits}</p>
+          <p className="text-muted-foreground text-sm">Each credit pays for one Investor Room session, with any investor and difficulty.</p>
+        </div>
+      </section>
+
+      <section aria-labelledby="buy-heading" className="grid gap-4">
+        <h2 id="buy-heading" className="text-lg font-semibold">
+          {usage.proActive ? "Need more sessions?" : "Upgrade"}
+        </h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          {!usage.proActive ? (
+            <div className="bg-card border-primary ring-primary/20 flex flex-col gap-3 rounded-xl border p-5 ring-4">
+              <h3 className="font-semibold">Pro</h3>
+              <p>
+                <span className="text-3xl font-semibold">{naira(PRO_PLAN.priceKobo)}</span>
+                <span className="text-muted-foreground text-sm"> / month</span>
+              </p>
+              <ul className="grid gap-2 text-sm">
+                {["Unlimited assessments", `Up to ${PRO_PLAN.simulationsPerMonth} simulations a month`, "Every investor and difficulty", "PDF reports and progress tracking"].map((f) => (
+                  <li key={f} className="flex gap-2">
+                    <CheckIcon className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-auto">
+                <CheckoutButton product="pro_monthly">Upgrade to Pro</CheckoutButton>
+              </div>
+            </div>
+          ) : null}
+          {CREDIT_PACKS.map((pack) => (
+            <div key={pack.product} className="bg-card flex flex-col gap-3 rounded-xl border p-5">
+              <h3 className="font-semibold">{pack.simulations} simulation credits</h3>
+              <p className="text-3xl font-semibold">{naira(pack.priceKobo)}</p>
+              <p className="text-muted-foreground text-sm">One-off payment. No subscription.</p>
+              <div className="mt-auto">
+                <CheckoutButton product={pack.product as "credits_3" | "credits_10"} variant="outline">
+                  Buy {pack.simulations} credits
+                </CheckoutButton>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section aria-labelledby="history-heading" className="grid gap-4">
+        <h2 id="history-heading" className="text-lg font-semibold">
+          Payment history
+        </h2>
+        {payments.length ? (
+          <div className="overflow-x-auto rounded-xl border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40 text-muted-foreground text-left text-xs">
+                <tr>
+                  <th scope="col" className="px-4 py-2 font-medium">Date</th>
+                  <th scope="col" className="px-4 py-2 font-medium">Item</th>
+                  <th scope="col" className="px-4 py-2 font-medium">Status</th>
+                  <th scope="col" className="px-4 py-2 text-right font-medium">Amount</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y">
+                {payments.map((p) => (
+                  <tr key={p.id}>
+                    <td className="px-4 py-3 whitespace-nowrap">{dateFormat.format(new Date(p.created_at))}</td>
+                    <td className="px-4 py-3">{productLabel(p.product)}</td>
+                    <td className="px-4 py-3 capitalize">{p.status}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{formatMoney(koboToNaira(p.amount_kobo), p.currency)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-muted-foreground text-sm">No payments yet.</p>
+        )}
+      </section>
+    </div>
+  );
+}

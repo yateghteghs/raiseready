@@ -14,6 +14,7 @@ const NAV = [
   { href: "/app/investor-room", label: "Investor Room" },
   { href: "/app/reports", label: "Reports" },
   { href: "/app/progress", label: "Progress" },
+  { href: "/app/billing", label: "Billing" },
 ];
 
 /** Signed-in pages that need onboarding to be finished first. */

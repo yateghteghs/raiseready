@@ -6,6 +6,7 @@ import { after } from "next/server";
 import { z } from "zod";
 
 import { getCurrentUser } from "@/lib/auth/session";
+import { PlanLimitError } from "@/lib/billing/limits";
 import type { FormState } from "@/lib/forms";
 import {
   abandonSimulation,
@@ -39,6 +40,9 @@ export async function startSimulationAction(_prev: FormState, formData: FormData
       fundingType: parsed.data.funding_type || null,
     });
   } catch (error) {
+    if (error instanceof PlanLimitError) {
+      return { status: "error", message: error.message, action: { href: error.upgradeHref, label: "See plans" } };
+    }
     if (error instanceof SimulationError) return { status: "error", message: error.message };
     console.error("[simulation] start failed:", error);
     return { status: "error", message: "Something went wrong. Please try again." };

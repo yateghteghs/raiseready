@@ -5,6 +5,9 @@ import { checkReportNarrative, reportNarrativeSchema } from "@/lib/ai/schemas/re
 import { finalEvaluationSchema, type FinalEvaluation } from "@/lib/ai/schemas/simulation";
 import { AiCallError, callStructured } from "@/lib/ai/structured";
 import { withinRateLimit } from "@/lib/ai/usage";
+import { pdfAccess } from "@/lib/billing/entitlements";
+import { PlanLimitError } from "@/lib/billing/limits";
+import { getUsage } from "@/lib/billing/service";
 import { assessmentView } from "@/lib/assessment/view";
 import { DOCUMENT_KINDS, type UploadableKind } from "@/lib/documents/rules";
 import { reportContentSchema, type ReportContent } from "@/lib/reports/content";
@@ -174,7 +177,7 @@ export async function createReport(
     .single();
   if (error) throw new Error(`Could not save report: ${error.message}`);
 
-  await storePdf(userId, startup.id, report.id, content);
+  if (pdfAccess(await getUsage(userId, null)).ok) await storePdf(userId, startup.id, report.id, content);
   return report.id;
 }
 
@@ -191,6 +194,8 @@ export async function storePdf(userId: string, startupId: string, reportId: stri
 
 /** A one-minute download link for a report's PDF, creating the PDF if it is missing. */
 export async function reportDownloadLink(userId: string, reportId: string): Promise<string> {
+  const access = pdfAccess(await getUsage(userId, null));
+  if (!access.ok) throw new PlanLimitError(access.reason);
   const supabase = await createClient();
   const { data: report } = await supabase.from("reports").select("*").eq("id", reportId).maybeSingle();
   if (!report) throw new ReportError("Report not found.");

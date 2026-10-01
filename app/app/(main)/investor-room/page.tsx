@@ -5,6 +5,9 @@ import { LoadProblem } from "@/components/app/load-problem";
 import { SetupForm } from "@/components/simulation/setup-form";
 import { Button } from "@/components/ui/button";
 import { DIFFICULTIES, PERSONAS } from "@/lib/ai/personas";
+import { getCurrentUser } from "@/lib/auth/session";
+import { getUsage } from "@/lib/billing/service";
+import { PRO_PLAN } from "@/lib/billing/plans";
 import { load } from "@/lib/data-errors";
 import { getLatestKnowledgeProfile } from "@/lib/documents/service";
 import { FUNDING_TYPE_OPTIONS, labelFor } from "@/lib/startups/options";
@@ -17,10 +20,10 @@ const dateFormat = new Intl.DateTimeFormat("en-NG", { day: "numeric", month: "sh
 
 export default async function InvestorRoomPage() {
   const loaded = await load(async () => {
-    const startup = await getMyStartup();
-    if (!startup) return null;
+    const [startup, user] = await Promise.all([getMyStartup(), getCurrentUser()]);
+    if (!startup || !user) return null;
     const supabase = await createClient();
-    const [profile, sims] = await Promise.all([
+    const [profile, sims, usage] = await Promise.all([
       getLatestKnowledgeProfile(startup.id),
       supabase
         .from("simulations")
@@ -29,13 +32,21 @@ export default async function InvestorRoomPage() {
         .eq("mode", "full")
         .order("started_at", { ascending: false })
         .limit(10),
+      getUsage(user.id, startup.id),
     ]);
     if (sims.error) throw new Error(sims.error.message);
-    return { startup, profile, sims: sims.data };
+    return { startup, profile, sims: sims.data, usage };
   });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) return <LoadProblem code="no_startup" />;
-  const { startup, profile, sims } = loaded.data;
+  const { startup, profile, sims, usage } = loaded.data;
+  const planNote = usage.proActive
+    ? `Pro: ${Math.max(0, PRO_PLAN.simulationsPerMonth - usage.proSimulationsThisMonth)} of ${PRO_PLAN.simulationsPerMonth} sessions left this month${usage.credits ? `, plus ${usage.credits} credits` : ""}.`
+    : usage.freeSimulationsUsed === 0
+      ? `Your free session works with an Angel or Seed VC on Friendly or Analytical${usage.credits ? `. You also have ${usage.credits} credits for any investor and difficulty` : ""}.`
+      : usage.credits
+        ? `You have ${usage.credits} credits. Each session uses one.`
+        : "You've used your free session. Upgrade to Pro or buy credits to practise again.";
 
   return (
     <div className="grid gap-10">
@@ -46,6 +57,13 @@ export default async function InvestorRoomPage() {
           and flag anything that contradicts your deck.
         </p>
       </div>
+
+      <p className="bg-muted/40 rounded-xl border px-4 py-3 text-sm">
+        {planNote}{" "}
+        <Link href="/app/billing" className="font-medium underline underline-offset-4">
+          {usage.proActive ? "Billing" : "See plans"}
+        </Link>
+      </p>
 
       {profile ? (
         <SetupForm

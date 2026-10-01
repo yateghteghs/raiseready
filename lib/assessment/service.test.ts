@@ -50,6 +50,8 @@ describe("runAssessment", () => {
     for (const k of Object.keys(db)) delete db[k];
     callStructured.mockClear();
     db.knowledge_profiles = [{ id: "kp1", startup_id: "s1", version: 1, data: { problem: null } }];
+    db.profiles = [{ id: "u1", plan: "pro", credits: 0 }];
+    db.subscriptions = [];
     db.simulations = [];
   });
 

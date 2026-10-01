@@ -243,6 +243,27 @@ export async function checkAnthropic(apiKey: string | undefined, model: string |
   }
 }
 
+/** Confirms the Paystack secret key works and reports test or live mode (no charge made). */
+export async function checkPaystack(secret: string | undefined): Promise<CheckResult> {
+  const name = "PAYSTACK_SECRET_KEY";
+  if (!secret) return { name, ok: false, detail: "Not set. Payments won't work until it is. Add it in Vercel → Settings → Environment Variables, then redeploy." };
+  const key = secret.trim();
+  if (key.startsWith("pk_")) return { name, ok: false, detail: "This is the public key. Use the secret key (starts with sk_test_ or sk_live_)." };
+  if (!key.startsWith("sk_")) return { name, ok: false, detail: "Doesn't look like a Paystack secret key." };
+  try {
+    const res = await fetch("https://api.paystack.co/plan?perPage=1", {
+      headers: { Authorization: `Bearer ${key}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+    });
+    if (res.status === 401) return { name, ok: false, detail: "Paystack rejected this key. Check it was copied correctly." };
+    if (!res.ok) return { name, ok: false, detail: `Paystack answered with an error (HTTP ${res.status}).` };
+    return { name, ok: true, detail: key.startsWith("sk_test_") ? "Set and accepted (test mode: no real money moves)." : "Set and accepted (LIVE mode: real payments)." };
+  } catch {
+    return { name, ok: false, detail: "Couldn't reach Paystack." };
+  }
+}
+
 export async function runHealthChecks(env: Record<string, string | undefined> = process.env) {
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
   const publicKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -260,5 +281,6 @@ export async function runHealthChecks(env: Record<string, string | undefined> = 
     results.push(await checkStorage(url!.trim(), serviceKey!.trim()));
   }
   results.push(...(await checkAnthropic(env.ANTHROPIC_API_KEY, env.ANTHROPIC_MODEL)));
+  results.push(await checkPaystack(env.PAYSTACK_SECRET_KEY));
   return results;
 }

@@ -54,6 +54,9 @@ function reset() {
   replies = [];
   callStructured.mockClear();
   db.startups = [{ id: "s1", owner_id: "u1", name: "PayLink" }];
+  db.profiles = [{ id: "u1", plan: "pro", credits: 0 }];
+  db.subscriptions = [];
+  db.assessments = [];
   db.documents = [{ id: DECK, startup_id: "s1", kind: "pitch_deck" }];
   db.knowledge_profiles = [
     {

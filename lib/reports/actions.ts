@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { getCurrentUser } from "@/lib/auth/session";
+import { PlanLimitError } from "@/lib/billing/limits";
 import type { FormState } from "@/lib/forms";
 import { createReport, ReportError, reportDownloadLink } from "@/lib/reports/service";
 import { getMyStartup } from "@/lib/startups/service";
@@ -29,12 +30,15 @@ export async function createReportAction(_prev: FormState, formData: FormData): 
   redirect(`/app/reports/${id}`);
 }
 
-export async function reportDownloadAction(reportId: string): Promise<{ url: string } | { error: string }> {
+export async function reportDownloadAction(
+  reportId: string,
+): Promise<{ url: string } | { error: string; upgrade?: boolean }> {
   try {
     const user = await getCurrentUser();
     if (!user) return { error: "Your session has ended. Please log in again." };
     return { url: await reportDownloadLink(user.id, String(reportId)) };
   } catch (error) {
+    if (error instanceof PlanLimitError) return { error: error.message, upgrade: true };
     if (error instanceof ReportError) return { error: error.message };
     console.error("[reports] download failed:", error);
     return { error: "Something went wrong. Please try again." };

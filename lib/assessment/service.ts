@@ -12,6 +12,9 @@ import {
   type DimensionFeedback,
 } from "@/lib/ai/schemas/assessment";
 import { withinRateLimit } from "@/lib/ai/usage";
+import { assessmentAccess } from "@/lib/billing/entitlements";
+import { PlanLimitError } from "@/lib/billing/limits";
+import { getUsage } from "@/lib/billing/service";
 import { DIMENSIONS, RUBRIC_VERSION, WEAK_THRESHOLD, type Rating } from "@/lib/scoring/rubric";
 import { computeScores, type DimensionScore } from "@/lib/scoring/score";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -176,6 +179,9 @@ export async function runAssessment(
   if (latest && (latest.dimension_scores as StoredDimensionScores | null)?.input_hash === inputHash) {
     return { assessment: latest, reused: true };
   }
+
+  const access = assessmentAccess(await getUsage(userId, startup.id));
+  if (!access.ok) throw new PlanLimitError(access.reason);
 
   if (!(await withinRateLimit(userId, ASSESSMENT_PURPOSE))) {
     throw new AssessmentError("You've run several assessments in the last hour. Please try again later.");

@@ -25,7 +25,15 @@ redeploys the site automatically.
    | `ANTHROPIC_API_KEY` | From console.anthropic.com → API Keys |
    | `ANTHROPIC_MODEL` | `claude-opus-5-5` |
 
-   The Paystack variables are added in a later milestone.
+   For payments (from Milestone 8), also add:
+
+   | Name | Value (Paystack dashboard → Settings → API Keys & Webhooks) |
+   |---|---|
+   | `PAYSTACK_SECRET_KEY` | Test secret key (`sk_test_…`) |
+   | `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` | Test public key (`pk_test_…`) |
+
+   and in the same Paystack settings page set the **Test Webhook URL** to
+   `https://<your-site>/api/paystack/webhook`.
 5. Click **Deploy** and wait for the build to finish. Note the site address,
    e.g. `https://raiseready-xxxx.vercel.app`.
 

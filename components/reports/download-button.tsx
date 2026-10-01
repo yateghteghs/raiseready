@@ -8,7 +8,7 @@ import { reportDownloadAction } from "@/lib/reports/actions";
 
 export function DownloadReportButton({ reportId }: { reportId: string }) {
   const [pending, start] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ text: string; upgrade?: boolean } | null>(null);
   return (
     <div className="grid justify-items-start gap-1">
       <Button
@@ -19,7 +19,7 @@ export function DownloadReportButton({ reportId }: { reportId: string }) {
             setError(null);
             const result = await reportDownloadAction(reportId);
             if ("url" in result) window.location.href = result.url;
-            else setError(result.error);
+            else setError({ text: result.error, upgrade: result.upgrade });
           })
         }
       >
@@ -27,8 +27,16 @@ export function DownloadReportButton({ reportId }: { reportId: string }) {
         {pending ? "Preparing…" : "Download PDF"}
       </Button>
       {error ? (
-        <p role="alert" className="text-destructive text-xs">
-          {error}
+        <p role="alert" className="text-destructive max-w-xs text-xs">
+          {error.text}
+          {error.upgrade ? (
+            <>
+              {" "}
+              <a href="/app/billing" className="font-medium underline underline-offset-4">
+                Upgrade to Pro
+              </a>
+            </>
+          ) : null}
         </p>
       ) : null}
     </div>
