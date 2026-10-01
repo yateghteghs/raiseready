@@ -69,7 +69,7 @@ psql "$URL" -X -q -v ON_ERROR_STOP=1 -f "$TESTS_DIR/support/supabase-shim.sql" >
 
 for migration in "$MIGRATIONS_DIR"/*.sql; do
   echo "==> Applying $(basename "$migration")"
-  psql "$URL" -X -q -v ON_ERROR_STOP=1 --single-transaction -f "$migration" >/dev/null
+  PGOPTIONS="-c client_min_messages=warning" psql "$URL" -X -q -v ON_ERROR_STOP=1 --single-transaction -f "$migration" >/dev/null
 done
 
 run_tests "$URL"
