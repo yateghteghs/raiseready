@@ -139,10 +139,15 @@ export async function checkDatabase(url: string, serviceKey: string): Promise<Ch
     const supabase = createClient(url, serviceKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
-    const { error } = await supabase.from("profiles").select("id", { count: "exact", head: true });
+    // A full GET, not a HEAD request: supabase-js reports a HEAD 404 as success.
+    const { error } = await supabase.from("profiles").select("id").limit(1);
     if (!error) return { name, ok: true, detail: "Found. The database setup script has been run." };
     if (error.code === "42P01" || error.code === "PGRST205") {
-      return { name, ok: false, detail: "Tables not found. Run the database setup script in the Supabase SQL Editor." };
+      return {
+        name,
+        ok: false,
+        detail: `The app's API can't see the tables (code ${error.code}). If the setup script has run, restart the project in Supabase (Project Settings → General) so the API reloads.`,
+      };
     }
     return { name, ok: false, detail: `Database error (code ${error.code || "unknown"}).` };
   } catch {
