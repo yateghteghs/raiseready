@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { cache } from "react";
 
 import { isSupabaseConfigured } from "@/lib/env";
@@ -13,6 +14,8 @@ export type SessionUser = { id: string; email: string | null };
  * Cached so layouts and pages share one lookup per request.
  */
 export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
+  // Sign-in state is per request: never let a page using it be prerendered.
+  await connection();
   if (!isSupabaseConfigured()) return null;
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
