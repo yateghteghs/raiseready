@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { cache } from "react";
 
+import { DataLoadError } from "@/lib/data-errors";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/supabase/database.types";
@@ -40,6 +41,6 @@ export const getCurrentProfile = cache(async (): Promise<Tables<"profiles"> | nu
     .select("*")
     .eq("id", user.id)
     .maybeSingle();
-  if (error) throw new Error(`Could not load profile: ${error.message}`);
+  if (error) throw new DataLoadError("profile", error.code || "unknown", error.message);
   return data;
 });

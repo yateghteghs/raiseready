@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { AppHeader } from "@/components/app/app-header";
+import { LoadProblem } from "@/components/app/load-problem";
 import { OnboardingForm } from "@/components/startup/onboarding-form";
 import { getCurrentProfile, requireUser } from "@/lib/auth/session";
+import { load } from "@/lib/data-errors";
 import { toFormValues } from "@/lib/startups/schema";
 import { getMyStartup } from "@/lib/startups/service";
 
@@ -11,10 +13,17 @@ export const metadata: Metadata = { title: "Set up your startup" };
 
 export default async function OnboardingPage() {
   const user = await requireUser("/app/onboarding");
-  const profile = await getCurrentProfile();
+  const loaded = await load(() => Promise.all([getCurrentProfile(), getMyStartup()]));
+  if (!loaded.ok) {
+    return (
+      <>
+        <AppHeader email={user.email} />
+        <LoadProblem code={loaded.code} />
+      </>
+    );
+  }
+  const [profile, startup] = loaded.data;
   if (profile?.onboarding_complete) redirect("/app");
-
-  const startup = await getMyStartup();
 
   return (
     <>

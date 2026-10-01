@@ -150,6 +150,55 @@ export async function checkDatabase(url: string, serviceKey: string): Promise<Ch
   }
 }
 
+/**
+ * Confirms the tables are visible to the app's public API and locked down:
+ * an anonymous request must be refused (permission denied), not succeed.
+ */
+export async function checkAccessRules(url: string, publicKey: string): Promise<CheckResult> {
+  const name = "Database access rules";
+  try {
+    const supabase = createClient(url, publicKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { error } = await supabase.from("profiles").select("id").limit(1);
+    if (error?.code === "42501") return { name, ok: true, detail: "In place. Anonymous visitors can't read account data." };
+    if (!error) {
+      return { name, ok: false, detail: "Anonymous visitors can read the profiles table. Re-run the database setup script." };
+    }
+    if (error.code === "PGRST205" || error.code === "42P01") {
+      return {
+        name,
+        ok: false,
+        detail: `The app can't see the tables (code ${error.code}). Check the setup script ran, and that the "public" schema is exposed under Project Settings → Data API.`,
+      };
+    }
+    return { name, ok: false, detail: `Unexpected database response (code ${error.code || "unknown"}).` };
+  } catch {
+    return { name, ok: false, detail: "Couldn't reach the database API." };
+  }
+}
+
+/** Confirms the private file buckets exist. */
+export async function checkStorage(url: string, serviceKey: string): Promise<CheckResult> {
+  const name = "File storage";
+  try {
+    const supabase = createClient(url, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { data, error } = await supabase.storage.listBuckets();
+    if (error) return { name, ok: false, detail: "Couldn't list storage buckets." };
+    const missing = ["documents", "reports"].filter((id) => !data.some((b) => b.id === id));
+    if (missing.length) {
+      return { name, ok: false, detail: `Missing bucket(s): ${missing.join(", ")}. Re-run the database setup script.` };
+    }
+    const pub = data.filter((b) => ["documents", "reports"].includes(b.id) && b.public);
+    if (pub.length) return { name, ok: false, detail: "A document bucket is public. It must be private." };
+    return { name, ok: true, detail: "Private buckets for documents and reports exist." };
+  } catch {
+    return { name, ok: false, detail: "Couldn't reach storage." };
+  }
+}
+
 export async function runHealthChecks(env: Record<string, string | undefined> = process.env) {
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
   const publicKey = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -161,6 +210,10 @@ export async function runHealthChecks(env: Record<string, string | undefined> = 
   const results: CheckResult[] = [urlCheck, publicKeyCheck, serviceKeyCheck, checkAppUrl(env.APP_URL)];
 
   if (urlCheck.ok && publicKeyCheck.ok) results.push(await checkAuthService(url!.trim(), publicKey!.trim()));
-  if (urlCheck.ok && serviceKeyCheck.ok) results.push(await checkDatabase(url!.trim(), serviceKey!.trim()));
+  if (urlCheck.ok && publicKeyCheck.ok) results.push(await checkAccessRules(url!.trim(), publicKey!.trim()));
+  if (urlCheck.ok && serviceKeyCheck.ok) {
+    results.push(await checkDatabase(url!.trim(), serviceKey!.trim()));
+    results.push(await checkStorage(url!.trim(), serviceKey!.trim()));
+  }
   return results;
 }

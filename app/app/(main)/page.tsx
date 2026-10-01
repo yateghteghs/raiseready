@@ -3,7 +3,9 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoadProblem } from "@/components/app/load-problem";
 import { getCurrentProfile } from "@/lib/auth/session";
+import { load } from "@/lib/data-errors";
 import { formatMoney } from "@/lib/format";
 import { FUNDING_TYPE_OPTIONS, labelFor, STAGE_OPTIONS } from "@/lib/startups/options";
 import { getMyStartup } from "@/lib/startups/service";
@@ -26,7 +28,9 @@ const NEXT_STEPS = [
 ];
 
 export default async function DashboardPage() {
-  const [profile, startup] = await Promise.all([getCurrentProfile(), getMyStartup()]);
+  const loaded = await load(() => Promise.all([getCurrentProfile(), getMyStartup()]));
+  if (!loaded.ok) return <LoadProblem code={loaded.code} />;
+  const [profile, startup] = loaded.data;
   const firstName = profile?.full_name?.split(" ")[0];
 
   const facts = startup

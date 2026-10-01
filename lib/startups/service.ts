@@ -1,6 +1,7 @@
 import { cache } from "react";
 
 import { getCurrentUser } from "@/lib/auth/session";
+import { DataLoadError } from "@/lib/data-errors";
 import type { OnboardingInput, StartupInput } from "@/lib/startups/schema";
 import { toStartupRow } from "@/lib/startups/schema";
 import { createClient } from "@/lib/supabase/server";
@@ -21,7 +22,7 @@ export const getMyStartup = cache(async (): Promise<Tables<"startups"> | null> =
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
-  if (error) throw new Error(`Could not load startup: ${error.message}`);
+  if (error) throw new DataLoadError("startup", error.code || "unknown", error.message);
   return data;
 });
 
