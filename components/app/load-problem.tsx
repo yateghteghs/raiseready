@@ -7,6 +7,7 @@ const HINTS: Record<string, string> = {
   PGRST301: "Your sign-in couldn't be verified by the database. Try logging out and in again.",
   PGRST002: "The database is starting up or unreachable. Try again in a minute.",
   no_startup: "Set up your startup profile first.",
+  report_format: "This report was made with an older format and can't be shown. Create a new one.",
 };
 
 /** Shown instead of a page when its data couldn't be loaded. */

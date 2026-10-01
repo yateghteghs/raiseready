@@ -1,14 +1,18 @@
-import { Room } from "@/components/simulation/room";
+import { AppHeader } from "@/components/app/app-header";
+import { ProgressChart } from "@/components/progress/progress-chart";
+const d = (s: string) => new Date(s).getTime();
 export default function Preview() {
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-6">
-      <Room simulationId="x" investorName="Seed VC" plan={[1, 2]} roundTitles={{ 1: "Overview", 2: "Problem" }} maxInvestorTurns={20} maxAnswerChars={4000} mode="live" docLabels={{ deck: "Pitch deck" }}
-        initialTurns={[
-          { id: "t0", turn_index: 0, round: 1, role: "investor", content: "Hello there." },
-          { id: "t1", turn_index: 1, round: 1, role: "founder", content: "We have about 3,000 paying merchants." },
-          { id: "t2", turn_index: 2, round: 1, role: "investor", content: "Which number is right?" },
-        ]}
-        initialFlags={[{ id: "f1", turn_id: "t1", type: "contradiction", severity: "high", description: "You said about 3,000 paying merchants, but your deck says 1,200.", evidence: [{ source: "document", document_id: "deck", page_or_sheet: "page 2", turn_index: null, quote: "1,200 paying merchants" }] }]} />
-    </main>
+    <>
+      <AppHeader email="ada@example.com" nav={["Dashboard", "Startup", "Documents", "Assessment", "Investor Room", "Reports", "Progress"].map((l) => ({ href: "/" + l, label: l }))} />
+      <main className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-6 px-4 py-8">
+        <section className="bg-card rounded-xl border p-5">
+          <ProgressChart
+            readiness={[{ t: d("2026-09-02"), score: 41 }, { t: d("2026-09-12"), score: 52 }, { t: d("2026-09-22"), score: 63 }, { t: d("2026-10-01"), score: 71 }]}
+            meetings={[{ t: d("2026-09-14"), score: 48 }, { t: d("2026-09-25"), score: 61 }, { t: d("2026-09-30"), score: 66 }]}
+          />
+        </section>
+      </main>
+    </>
   );
 }
