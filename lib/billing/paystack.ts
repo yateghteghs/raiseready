@@ -90,6 +90,16 @@ export async function subscriptionManageLink(subscriptionCode: string): Promise<
   return data.link;
 }
 
+/**
+ * Stops a subscription from renewing. Paystack needs the subscription's email
+ * token, so we fetch it first. Already-ended or non-renewing ones are left alone.
+ */
+export async function disableSubscription(subscriptionCode: string): Promise<void> {
+  const sub = await call<{ status: string; email_token: string }>("GET", `/subscription/${encodeURIComponent(subscriptionCode)}`);
+  if (["cancelled", "complete", "completed", "non-renewing"].includes(sub.status)) return;
+  await call("POST", "/subscription/disable", { code: subscriptionCode, token: sub.email_token });
+}
+
 /** Checks the x-paystack-signature header: HMAC-SHA512 of the raw body with the secret key. */
 export function isValidSignature(rawBody: string, signature: string | null, secret: string): boolean {
   if (!signature || !secret) return false;
