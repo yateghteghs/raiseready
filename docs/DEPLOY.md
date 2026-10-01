@@ -35,3 +35,22 @@ redeploys the site automatically.
 
 Environment variable changes only apply to new deployments. After editing one,
 redeploy from **Deployments → ⋯ → Redeploy**.
+
+## Sign-up emails
+
+Supabase sends the confirmation and password-reset emails. Their links land on
+`/auth/callback`, which signs the user in and forwards them on.
+
+With Supabase's default email templates, a link works only in the browser
+where the person signed up. To let links work on any device (e.g. sign up on a
+laptop, confirm on a phone), edit the templates in Supabase under
+**Authentication → Emails**:
+
+- **Confirm signup**: link to
+  `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/app/onboarding`
+- **Reset password**: link to
+  `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/reset-password`
+
+Supabase's built-in email sender is rate-limited and meant for testing. Before
+launch, add your own SMTP provider under **Authentication → Emails → SMTP
+Settings**.
