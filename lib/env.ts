@@ -17,7 +17,7 @@ const publicSchema = z.object({
 const serverSchema = publicSchema.extend({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   ANTHROPIC_API_KEY: z.string().min(1),
-  ANTHROPIC_MODEL: z.string().min(1),
+  ANTHROPIC_MODEL: z.string().min(1).optional(),
   PAYSTACK_SECRET_KEY: z.string().min(1),
   NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: z.string().min(1),
   APP_URL: z.url(),

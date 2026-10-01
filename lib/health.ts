@@ -1,5 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
+import { DEFAULT_MODEL } from "@/lib/ai/client";
+
 /**
  * Configuration checks for the /status page. Reports whether each setting is
  * present and plausible, never the values themselves.
@@ -210,9 +212,10 @@ export async function checkAnthropic(apiKey: string | undefined, model: string |
   const modelName = "ANTHROPIC_MODEL";
   const where = "Add it in Vercel → Settings → Environment Variables with Production ticked, then redeploy.";
   if (!apiKey) return [{ name: keyName, ok: false, detail: `Not set. ${where}` }];
-  if (!model) return [{ name: modelName, ok: false, detail: `Not set. Use "claude-opus-5-5". ${where}` }];
+  const usingDefault = !model?.trim();
+  const effective = usingDefault ? DEFAULT_MODEL : model!.trim();
   try {
-    const res = await fetch(`https://api.anthropic.com/v1/models/${encodeURIComponent(model.trim())}`, {
+    const res = await fetch(`https://api.anthropic.com/v1/models/${encodeURIComponent(effective)}`, {
       headers: { "x-api-key": apiKey.trim(), "anthropic-version": "2023-06-01" },
       cache: "no-store",
       signal: AbortSignal.timeout(5000),
@@ -223,13 +226,17 @@ export async function checkAnthropic(apiKey: string | undefined, model: string |
     if (res.status === 404) {
       return [
         { name: keyName, ok: true, detail: "Set and accepted." },
-        { name: modelName, ok: false, detail: `"${model}" isn't a model this key can use. Use "claude-opus-5-5".` },
+        { name: modelName, ok: false, detail: `"${effective}" isn't a model this key can use. Use "${DEFAULT_MODEL}".` },
       ];
     }
     if (!res.ok) return [{ name: keyName, ok: false, detail: `Anthropic answered with an error (HTTP ${res.status}).` }];
     return [
       { name: keyName, ok: true, detail: "Set and accepted." },
-      { name: modelName, ok: true, detail: `Set (${model.trim()}).` },
+      {
+        name: modelName,
+        ok: true,
+        detail: usingDefault ? `Not set, so the default (${DEFAULT_MODEL}) is used.` : `Set (${effective}).`,
+      },
     ];
   } catch {
     return [{ name: keyName, ok: false, detail: "Couldn't reach Anthropic." }];

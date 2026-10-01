@@ -13,6 +13,9 @@ export function getAnthropic(): Anthropic {
   return client;
 }
 
+/** Used when ANTHROPIC_MODEL isn't set. */
+export const DEFAULT_MODEL = "claude-opus-5-5";
+
 export function getModel(): string {
-  return serverEnv("ANTHROPIC_MODEL").ANTHROPIC_MODEL;
+  return process.env.ANTHROPIC_MODEL?.trim() || DEFAULT_MODEL;
 }
