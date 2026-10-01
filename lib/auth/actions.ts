@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 
-import { friendlyAuthError } from "@/lib/auth/errors";
+import { friendlyAuthError, logAuthError } from "@/lib/auth/errors";
 import { safeNextPath } from "@/lib/auth/redirect";
 import {
   forgotPasswordSchema,
@@ -29,6 +29,7 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  if (error && error.code !== "invalid_credentials") logAuthError("login", error);
   if (error) return { status: "error", message: friendlyAuthError(error), values };
 
   redirect(safeNextPath(formData.get("next")));
@@ -49,7 +50,10 @@ export async function register(_prev: FormState, formData: FormData): Promise<Fo
       emailRedirectTo: `${siteUrl}/auth/callback?next=/app/onboarding`,
     },
   });
-  if (error) return { status: "error", message: friendlyAuthError(error), values };
+  if (error) {
+    logAuthError("sign-up", error);
+    return { status: "error", message: friendlyAuthError(error), values };
+  }
 
   // With email confirmation off, Supabase signs the user in immediately.
   if (data.session) redirect("/app/onboarding");
@@ -73,6 +77,7 @@ export async function requestPasswordReset(
   const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: `${siteUrl}/auth/callback?next=/reset-password`,
   });
+  if (error) logAuthError("password reset request", error);
   if (error && (error.code === "over_email_send_rate_limit" || error.code === "over_request_rate_limit")) {
     return { status: "error", message: friendlyAuthError(error), values };
   }
@@ -99,6 +104,7 @@ export async function resetPassword(_prev: FormState, formData: FormData): Promi
   }
 
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) logAuthError("password update", error);
   if (error) return { status: "error", message: friendlyAuthError(error) };
 
   redirect("/app");

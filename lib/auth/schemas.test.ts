@@ -27,8 +27,11 @@ describe("friendlyAuthError", () => {
   });
 
   it("never leaks unknown error details", () => {
-    expect(friendlyAuthError({ code: "x", message: "db exploded at host 10.0.0.1" })).toBe(
-      "Something went wrong. Please try again.",
-    );
+    const message = friendlyAuthError({ code: "x", message: "db exploded at host 10.0.0.1" });
+    expect(message).toBe("Something went wrong. Please try again. (Error code: x)");
+  });
+
+  it("recognises network failures", () => {
+    expect(friendlyAuthError({ name: "AuthRetryableFetchError", status: 0 })).toMatch(/couldn't reach/);
   });
 });
