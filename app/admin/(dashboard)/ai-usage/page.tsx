@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { num, PageTitle, pct, Stat, StatGrid, Table, usd } from "@/components/admin/ui";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requireStaff } from "@/lib/admin/auth";
 import { aiUsage } from "@/lib/admin/data";
 import { purposeLabel } from "@/lib/admin/labels";
 import type { UsageSummary } from "@/lib/admin/aggregate";
@@ -27,7 +27,7 @@ function columns(first: { header: string; cell: (u: UsageSummary) => React.React
 }
 
 export default async function AdminAiUsage({ searchParams }: PageProps<"/admin/ai-usage">) {
-  await requireAdmin();
+  await requireStaff();
   const requested = Number((await searchParams).days);
   const days = RANGES.includes(requested) ? requested : 30;
   const { summary, emails, truncated } = await aiUsage(days);

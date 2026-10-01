@@ -1,10 +1,11 @@
 import { assessmentInsights, redFlagCounts, revenueSummary, summariseAiCalls, type AiCallRow } from "@/lib/admin/aggregate";
 import { lagosMonthStart } from "@/lib/billing/entitlements";
+import { imageLinks } from "@/lib/images/service";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Admin data, read with the service role (spec 5: admins read all via the
- * service role on the server only). Callers must have passed requireAdmin().
+ * service role on the server only). Callers must have passed requireStaff().
  */
 
 const MAX_ROWS = 5000;
@@ -145,4 +146,55 @@ export async function insights() {
     redFlags: redFlagCounts(rowsOf(flags, "red flags")),
     redFlagTotal: rowsOf(flags, "red flags").length,
   };
+}
+
+/** Everything the admin user page shows about one user. Counts and metadata, not documents or answers. */
+export async function userDetail(userId: string) {
+  const admin = createAdminClient();
+  const { data: profile, error } = await admin.from("profiles").select("*").eq("id", userId).maybeSingle();
+  if (error) throw new Error(`Could not load user: ${error.message}`);
+  if (!profile) return null;
+
+  const [authUser, startups, payments, history] = await Promise.all([
+    admin.auth.admin.getUserById(userId),
+    admin.from("startups").select("id, owner_id, name, stage, industry, country, logo_path").eq("owner_id", userId),
+    admin.from("payments").select("amount_kobo, status").eq("user_id", userId),
+    admin.from("audit_logs").select("action, actor_id, metadata, created_at").eq("target_id", userId).order("created_at", { ascending: false }).limit(20),
+  ]);
+  const startupRows = rowsOf(startups, "startups");
+  const startupIds = startupRows.map((s) => s.id);
+  const count = (table: "documents" | "assessments" | "simulations") =>
+    startupIds.length ? headCount(admin.from(table).select("id", { count: "exact", head: true }).in("startup_id", startupIds)) : Promise.resolve(0);
+  const [documents, assessments, simulations] = await Promise.all([count("documents"), count("assessments"), count("simulations")]);
+
+  const startup = startupRows[0] ?? null;
+  const links = await imageLinks([
+    { ownerId: userId, path: profile.avatar_path },
+    { ownerId: userId, path: startup?.logo_path },
+  ]);
+  const historyRows = rowsOf(history, "history");
+  const actorIds = [...new Set(historyRows.map((h) => h.actor_id).filter((id): id is string => Boolean(id)))];
+  const actors = actorIds.length ? await emailsFor(actorIds) : new Map<string, string>();
+
+  return {
+    profile,
+    email: authUser.data.user?.email ?? "",
+    lastSignIn: authUser.data.user?.last_sign_in_at ?? null,
+    startup,
+    avatarUrl: profile.avatar_path ? (links[profile.avatar_path] ?? null) : null,
+    logoUrl: startup?.logo_path ? (links[startup.logo_path] ?? null) : null,
+    counts: {
+      documents,
+      assessments,
+      simulations,
+      paidKobo: rowsOf(payments, "payments").filter((p) => p.status === "success").reduce((s, p) => s + p.amount_kobo, 0),
+    },
+    history: historyRows.map((h) => ({ ...h, actor: h.actor_id ? (actors.get(h.actor_id) ?? "Staff") : "System or the user" })),
+  };
+}
+
+async function emailsFor(ids: string[]): Promise<Map<string, string>> {
+  const admin = createAdminClient();
+  const results = await Promise.all(ids.map((id) => admin.auth.admin.getUserById(id)));
+  return new Map(results.flatMap((r, i) => (r.data.user?.email ? [[ids[i], r.data.user.email] as const] : [])));
 }

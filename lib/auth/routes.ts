@@ -1,6 +1,8 @@
 import { DEFAULT_AFTER_LOGIN } from "@/lib/auth/redirect";
 
 const PROTECTED_PREFIXES = ["/app", "/admin"] as const;
+/** The admin sign-in page lives under /admin but must stay reachable. */
+export const ADMIN_LOGIN_PATH = "/admin/login";
 const GUEST_ONLY_PATHS = ["/login", "/register", "/forgot-password"] as const;
 
 function matchesPrefix(pathname: string, prefix: string): boolean {
@@ -8,6 +10,7 @@ function matchesPrefix(pathname: string, prefix: string): boolean {
 }
 
 export function isProtectedPath(pathname: string): boolean {
+  if (pathname === ADMIN_LOGIN_PATH) return false;
   return PROTECTED_PREFIXES.some((p) => matchesPrefix(pathname, p));
 }
 
@@ -25,7 +28,8 @@ export function authRedirectFor(
 ): string | null {
   if (!isSignedIn && isProtectedPath(pathname)) {
     const next = encodeURIComponent(`${pathname}${search}`);
-    return `/login?next=${next}`;
+    const login = matchesPrefix(pathname, "/admin") ? ADMIN_LOGIN_PATH : "/login";
+    return `${login}?next=${next}`;
   }
   if (isSignedIn && GUEST_ONLY_PATHS.some((p) => pathname === p)) {
     return DEFAULT_AFTER_LOGIN;

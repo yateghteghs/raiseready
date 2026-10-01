@@ -1,14 +1,16 @@
 import { describe, expect, it } from "vitest";
 
 import { assessmentInsights, redFlagCounts, revenueSummary, summariseAiCalls } from "@/lib/admin/aggregate";
-import { isAdmin } from "@/lib/admin/auth";
+import { isStaffProfile } from "@/lib/admin/auth";
 import { estimateCostUsd } from "@/lib/ai/pricing";
 
-describe("isAdmin", () => {
+describe("isStaffProfile", () => {
   it("only admits the admin role", () => {
-    expect(isAdmin({ role: "admin" })).toBe(true);
-    expect(isAdmin({ role: "founder" })).toBe(false);
-    expect(isAdmin(null)).toBe(false);
+    expect(isStaffProfile({ role: "admin", status: "active" })).toBe(true);
+    expect(isStaffProfile({ role: "viewer", status: "active" })).toBe(true);
+    expect(isStaffProfile({ role: "founder", status: "active" })).toBe(false);
+    expect(isStaffProfile({ role: "admin", status: "suspended" })).toBe(false);
+    expect(isStaffProfile(null)).toBe(false);
   });
 });
 

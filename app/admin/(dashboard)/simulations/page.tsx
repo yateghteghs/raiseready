@@ -1,5 +1,5 @@
 import { adminDate, PageTitle, Table } from "@/components/admin/ui";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requireStaff } from "@/lib/admin/auth";
 import { simulationsList } from "@/lib/admin/data";
 import { difficultyLabel, personaLabel } from "@/lib/admin/labels";
 
@@ -8,7 +8,7 @@ export const metadata = { title: "Simulations" };
 const STATUS: Record<string, string> = { active: "In progress", completed: "Completed", abandoned: "Abandoned" };
 
 export default async function AdminSimulations() {
-  await requireAdmin();
+  await requireStaff();
   const sims = await simulationsList();
   return (
     <>

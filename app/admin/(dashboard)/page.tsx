@@ -1,12 +1,12 @@
 import { num, PageTitle, pct, Stat, StatGrid, usd } from "@/components/admin/ui";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requireStaff } from "@/lib/admin/auth";
 import { overviewMetrics } from "@/lib/admin/data";
 import { formatMoney, koboToNaira } from "@/lib/format";
 
 export const metadata = { title: "Overview" };
 
 export default async function AdminOverview() {
-  await requireAdmin();
+  await requireStaff();
   const m = await overviewMetrics();
   return (
     <>

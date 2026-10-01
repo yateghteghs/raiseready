@@ -9,8 +9,14 @@ describe("authRedirectFor", () => {
     );
   });
 
-  it("protects /admin", () => {
-    expect(authRedirectFor("/admin", "", false)).toBe("/login?next=%2Fadmin");
+  it("sends signed-out visitors of /admin to the admin login page", () => {
+    expect(authRedirectFor("/admin", "", false)).toBe("/admin/login?next=%2Fadmin");
+    expect(authRedirectFor("/admin/users", "", false)).toBe("/admin/login?next=%2Fadmin%2Fusers");
+  });
+
+  it("keeps the admin login page reachable, signed in or not", () => {
+    expect(authRedirectFor("/admin/login", "", false)).toBeNull();
+    expect(authRedirectFor("/admin/login", "", true)).toBeNull();
   });
 
   it("does not treat look-alike paths as protected", () => {

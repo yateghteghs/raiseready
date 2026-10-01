@@ -1,12 +1,12 @@
 import { num, PageTitle, pct, Table } from "@/components/admin/ui";
-import { requireAdmin } from "@/lib/admin/auth";
+import { requireStaff } from "@/lib/admin/auth";
 import { insights } from "@/lib/admin/data";
 import { redFlagLabel } from "@/lib/admin/labels";
 
 export const metadata = { title: "Insights" };
 
 export default async function AdminInsights() {
-  await requireAdmin();
+  await requireStaff();
   const data = await insights();
   return (
     <>

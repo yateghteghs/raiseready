@@ -1,7 +1,10 @@
 import Link from "next/link";
 
 import { AppFooter } from "@/components/app/app-footer";
-import { requireAdmin } from "@/lib/admin/auth";
+import { Button } from "@/components/ui/button";
+import { requireStaff } from "@/lib/admin/auth";
+import { roleLabel } from "@/lib/admin/permissions";
+import { logout } from "@/lib/auth/actions";
 
 const NAV = [
   { href: "/admin", label: "Overview" },
@@ -15,7 +18,7 @@ const NAV = [
 export const metadata = { title: { default: "Admin", template: "%s | RaiseReady admin" }, robots: { index: false } };
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
-  await requireAdmin();
+  const staff = await requireStaff();
   return (
     <div className="flex flex-1 flex-col">
       <header className="border-b">
@@ -23,9 +26,19 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           <Link href="/admin" className="font-semibold tracking-tight">
             RaiseReady <span className="bg-primary text-primary-foreground ml-1 rounded px-1.5 py-0.5 text-xs">Admin</span>
           </Link>
-          <Link href="/app" className="text-muted-foreground hover:text-foreground text-sm">
-            Back to app
-          </Link>
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-muted-foreground hidden truncate md:inline">
+              {staff.email} · {roleLabel(staff.profile.role)}
+            </span>
+            <Link href="/app" className="text-muted-foreground hover:text-foreground">
+              Back to app
+            </Link>
+            <form action={logout}>
+              <Button type="submit" variant="outline" size="sm">
+                Log out
+              </Button>
+            </form>
+          </div>
         </div>
         <nav aria-label="Admin" className="mx-auto flex max-w-6xl gap-5 overflow-x-auto px-4 pb-3 text-sm sm:px-6">
           {NAV.map((n) => (
