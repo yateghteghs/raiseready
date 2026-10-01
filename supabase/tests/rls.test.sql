@@ -320,6 +320,28 @@ select rls_test.ok(
 reset role;
 
 ------------------------------------------------------------------------------
+-- Billing: credits change only through the server's atomic functions
+------------------------------------------------------------------------------
+select rls_test.ok(public.add_credits('aaaaaaaa-0000-4000-8000-000000000001', 3) = 3, 'add_credits adds credits');
+select rls_test.ok(public.consume_credit('aaaaaaaa-0000-4000-8000-000000000001') = 2, 'consume_credit spends one');
+select rls_test.ok(public.consume_credit('bbbbbbbb-0000-4000-8000-000000000002') is null, 'consume_credit refuses at zero');
+select rls_test.ok(public.add_credits('aaaaaaaa-0000-4000-8000-000000000001', -5) is null, 'add_credits ignores non-positive amounts');
+
+set local role authenticated;
+select set_config('request.jwt.claims',
+  '{"sub":"aaaaaaaa-0000-4000-8000-000000000001","role":"authenticated"}', true);
+select rls_test.throws(
+  $$select public.add_credits('aaaaaaaa-0000-4000-8000-000000000001', 100)$$,
+  '42501', 'A cannot grant themself credits');
+select rls_test.throws(
+  $$select public.consume_credit('bbbbbbbb-0000-4000-8000-000000000002')$$,
+  '42501', 'A cannot spend credits directly');
+select rls_test.throws(
+  $$update public.profiles set paystack_customer_code = 'CUS_x' where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
+  '42501', 'A cannot change their Paystack customer link');
+reset role;
+
+------------------------------------------------------------------------------
 -- Drills (one-question practice) follow the same isolation rules
 ------------------------------------------------------------------------------
 insert into public.simulations (id, startup_id, persona, difficulty, mode, source_turn_id) values

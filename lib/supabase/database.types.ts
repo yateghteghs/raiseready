@@ -45,6 +45,7 @@ type ProfileRow = Timestamps & {
   plan: Plan;
   credits: number;
   onboarding_complete: boolean;
+  paystack_customer_code: string | null;
 };
 
 type StartupRow = Timestamps & {
@@ -116,6 +117,8 @@ type SimulationRow = Timestamps & {
   mode: SimulationMode;
   /** For drills: the investor question being practised again. */
   source_turn_id: string | null;
+  /** What paid for this simulation (null for drills). */
+  funded_by: "free" | "pro" | "credit" | null;
   started_at: string;
   ended_at: string | null;
 };
@@ -201,7 +204,10 @@ type Table<Row, Optional extends keyof Row> = {
 export type Database = {
   public: {
     Tables: {
-      profiles: Table<ProfileRow, "full_name" | "country" | "role" | "plan" | "credits" | "onboarding_complete">;
+      profiles: Table<
+        ProfileRow,
+        "full_name" | "country" | "role" | "plan" | "credits" | "onboarding_complete" | "paystack_customer_code"
+      >;
       startups: Table<
         StartupRow,
         | "id"
@@ -239,6 +245,7 @@ export type Database = {
         | "final_evaluation"
         | "mode"
         | "source_turn_id"
+        | "funded_by"
         | "started_at"
         | "ended_at"
       >;
@@ -254,7 +261,10 @@ export type Database = {
       audit_logs: Table<AuditLogRow, "id" | "actor_id" | "target_type" | "target_id" | "metadata">;
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      add_credits: { Args: { p_user_id: string; p_amount: number }; Returns: number | null };
+      consume_credit: { Args: { p_user_id: string }; Returns: number | null };
+    };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
   };
