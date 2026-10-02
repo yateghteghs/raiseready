@@ -155,6 +155,16 @@ export function createFakeDb() {
       profile.credits = (profile.credits as number) - 1;
       return { data: profile.credits, error: null };
     }
+    if (name === "add_deck_credits") {
+      if (!profile || (args.p_amount as number) <= 0) return { data: null, error: null };
+      profile.deck_credits = ((profile.deck_credits as number) ?? 0) + (args.p_amount as number);
+      return { data: profile.deck_credits, error: null };
+    }
+    if (name === "consume_deck_credit") {
+      if (!profile || ((profile.deck_credits as number) ?? 0) <= 0) return { data: null, error: null };
+      profile.deck_credits = (profile.deck_credits as number) - 1;
+      return { data: profile.deck_credits, error: null };
+    }
     return { data: null, error: { message: `unknown function ${name}` } };
   }
 

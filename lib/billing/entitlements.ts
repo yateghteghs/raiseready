@@ -1,5 +1,5 @@
-import { FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
-import type { Difficulty, Persona, Plan, SubscriptionStatus } from "@/lib/supabase/database.types";
+import { DECK_BUILDER, FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
+import type { DeckAccess, Difficulty, Persona, Plan, SubscriptionStatus } from "@/lib/supabase/database.types";
 
 /**
  * Plan rules (spec section 7), as pure functions so they are easy to test.
@@ -76,4 +76,49 @@ export function pdfAccess(usage: Pick<Usage, "proActive">): Access<"pro"> {
 export function lagosMonthStart(now = Date.now()): Date {
   const lagos = new Date(now + 60 * 60 * 1000);
   return new Date(Date.UTC(lagos.getUTCFullYear(), lagos.getUTCMonth(), 1) - 60 * 60 * 1000);
+}
+
+export type DeckUsage = {
+  proActive: boolean;
+  /** Decks bought one at a time and not yet used. */
+  deckCredits: number;
+  /** Decks Pro has unlocked this calendar month. */
+  proDecksThisMonth: number;
+  /** Free previews already made. */
+  previewsUsed: number;
+};
+
+/** What pays for unlocking a deck in full: Pro's monthly allowance first, then a bought deck. */
+export function deckUnlockAccess(usage: DeckUsage): Access<"pro" | "credit"> {
+  if (usage.proActive && usage.proDecksThisMonth < DECK_BUILDER.proDecksPerMonth) return { ok: true, via: "pro" };
+  if (usage.deckCredits > 0) return { ok: true, via: "credit" };
+  return {
+    ok: false,
+    reason: usage.proActive
+      ? `You've used the ${DECK_BUILDER.proDecksPerMonth} decks included with Pro this month. Buy another deck to keep going.`
+      : "Unlock the full deck with Pro, or buy this one deck on its own.",
+    upgrade: true,
+  };
+}
+
+/** Building a new deck: unlocked straight away if paid for, otherwise the one free preview. */
+export function deckBuildAccess(usage: DeckUsage): Access<"pro" | "credit" | "preview"> {
+  const unlock = deckUnlockAccess(usage);
+  if (unlock.ok) return unlock;
+  if (usage.previewsUsed < DECK_BUILDER.freePreviews) return { ok: true, via: "preview" };
+  return unlock;
+}
+
+/** AI rewrites of single slides. Previews have none; typing changes is always free. */
+export function rewriteAccess(deck: { access: DeckAccess; rewrites_used: number }): Access<"rewrite"> {
+  if (deck.access === "preview") {
+    return { ok: false, reason: "Unlock the full deck to have slides rewritten. You can still edit the text yourself.", upgrade: true };
+  }
+  const limit = deck.access === "pro" ? DECK_BUILDER.proRewritesPerDeck : DECK_BUILDER.creditRewritesPerDeck;
+  if (deck.rewrites_used < limit) return { ok: true, via: "rewrite" };
+  return {
+    ok: false,
+    reason: `You've used the ${limit} AI rewrites for this deck. You can still edit the text yourself.`,
+    upgrade: false,
+  };
 }

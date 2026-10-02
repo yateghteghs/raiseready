@@ -17,7 +17,7 @@ export const discountCodeSchema = z.object({
   description: z.preprocess(blank, z.string().trim().max(200).optional()),
   percent_off: z.coerce.number({ error: "Enter a percentage." }).int().min(1, { error: "At least 1%." }).max(100, { error: "At most 100%." }),
   products: z
-    .array(z.enum(["pro_monthly", "credits_3", "credits_10"]))
+    .array(z.enum(["pro_monthly", "credits_3", "credits_10", "deck_builder"]))
     .min(1, { error: "Choose at least one product." }),
   max_redemptions: z.preprocess(blank, z.coerce.number().int().min(1, { error: "At least 1, or leave empty." }).optional()),
   expires_on: z.preprocess(blank, z.iso.date({ error: "Pick a date." }).optional()),

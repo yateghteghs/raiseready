@@ -120,6 +120,21 @@ insert into public.reports (startup_id, assessment_id, simulation_id, content) v
   ('aaaaaaaa-1111-4000-8000-000000000001', 'aaaaaaaa-4444-4000-8000-000000000001', 'aaaaaaaa-5555-4000-8000-000000000001', '{}'),
   ('bbbbbbbb-1111-4000-8000-000000000002', 'bbbbbbbb-4444-4000-8000-000000000002', 'bbbbbbbb-5555-4000-8000-000000000002', '{}');
 
+insert into public.pitch_decks (user_id, startup_id, status, access, title, content) values
+  ('aaaaaaaa-0000-4000-8000-000000000001', 'aaaaaaaa-1111-4000-8000-000000000001', 'ready', 'preview', 'A deck', '{}'),
+  ('bbbbbbbb-0000-4000-8000-000000000002', 'bbbbbbbb-1111-4000-8000-000000000002', 'ready', 'pro', 'B deck', '{}');
+select rls_test.throws(
+  $$insert into public.pitch_decks (user_id, startup_id, access) values ('aaaaaaaa-0000-4000-8000-000000000001', 'aaaaaaaa-1111-4000-8000-000000000001', 'free')$$,
+  '23514', 'decks record how they were paid for');
+select rls_test.throws(
+  $$insert into public.payments (user_id, reference, amount_kobo, product) values ('aaaaaaaa-0000-4000-8000-000000000001', 'ref-x', 1, 'mystery')$$,
+  '23514', 'payments are for known products only');
+
+insert into public.payments (user_id, reference, amount_kobo, product) values
+  ('aaaaaaaa-0000-4000-8000-000000000001', 'ref-deck', 750000, 'deck_builder');
+select rls_test.ok(rls_test.affected($$delete from public.payments where reference = 'ref-deck'$$) = 1,
+  'the deck builder is a payable product');
+
 insert into public.payments (user_id, reference, amount_kobo, product, status) values
   ('aaaaaaaa-0000-4000-8000-000000000001', 'ref-a', 500000, 'credits_3', 'success'),
   ('bbbbbbbb-0000-4000-8000-000000000002', 'ref-b', 1500000, 'pro_monthly', 'success');
@@ -232,6 +247,7 @@ select set_config('request.jwt.claims', '{"role":"anon"}', true);
 select rls_test.throws('select * from public.startups', '42501', 'anon cannot read startups');
 select rls_test.throws('select * from public.profiles', '42501', 'anon cannot read profiles');
 select rls_test.throws('select * from public.reports', '42501', 'anon cannot read reports');
+select rls_test.throws('select * from public.pitch_decks', '42501', 'anon cannot read pitch decks');
 select rls_test.ok((select count(*) from storage.objects) = 0, 'anon sees no storage objects');
 select rls_test.ok(
   (select array_agg(name) from public.showcase_items) = array['Published Co'],
@@ -275,6 +291,9 @@ select rls_test.throws(
 select rls_test.throws(
   $$update public.profiles set credits = 999 where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
   '42501', 'A cannot change own credits');
+select rls_test.throws(
+  $$update public.profiles set deck_credits = 9 where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
+  '42501', 'A cannot change own deck credits');
 select rls_test.throws(
   $$update public.profiles set role = 'admin' where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
   '42501', 'A cannot make themself admin');
@@ -359,6 +378,14 @@ select rls_test.ok((select array_agg(description) from public.red_flags) = array
 select rls_test.ok((select count(*) from public.reports) = 1
   and (select startup_id from public.reports) = 'aaaaaaaa-1111-4000-8000-000000000001',
   'A reads only own reports');
+select rls_test.ok((select array_agg(title) from public.pitch_decks) = array['A deck'],
+  'A reads only own pitch decks');
+select rls_test.throws(
+  $$update public.pitch_decks set access = 'pro'$$,
+  '42501', 'A cannot unlock a deck without paying');
+select rls_test.throws(
+  $$insert into public.pitch_decks (user_id, startup_id, access) values ('aaaaaaaa-0000-4000-8000-000000000001', 'aaaaaaaa-1111-4000-8000-000000000001', 'pro')$$,
+  '42501', 'A cannot create decks directly (usage limits)');
 
 select rls_test.throws(
   $$insert into public.assessments (startup_id, overall_score, band, dimension_scores, rubric_version)
@@ -485,6 +512,9 @@ select rls_test.ok(public.add_credits('aaaaaaaa-0000-4000-8000-000000000001', 3)
 select rls_test.ok(public.consume_credit('aaaaaaaa-0000-4000-8000-000000000001') = 2, 'consume_credit spends one');
 select rls_test.ok(public.consume_credit('bbbbbbbb-0000-4000-8000-000000000002') is null, 'consume_credit refuses at zero');
 select rls_test.ok(public.add_credits('aaaaaaaa-0000-4000-8000-000000000001', -5) is null, 'add_credits ignores non-positive amounts');
+select rls_test.ok(public.add_deck_credits('aaaaaaaa-0000-4000-8000-000000000001', 1) = 1, 'add_deck_credits adds a deck');
+select rls_test.ok(public.consume_deck_credit('aaaaaaaa-0000-4000-8000-000000000001') = 0, 'consume_deck_credit spends one');
+select rls_test.ok(public.consume_deck_credit('aaaaaaaa-0000-4000-8000-000000000001') is null, 'consume_deck_credit refuses at zero');
 
 set local role authenticated;
 select set_config('request.jwt.claims',
@@ -495,6 +525,9 @@ select rls_test.throws(
 select rls_test.throws(
   $$select public.consume_credit('bbbbbbbb-0000-4000-8000-000000000002')$$,
   '42501', 'A cannot spend credits directly');
+select rls_test.throws(
+  $$select public.add_deck_credits('aaaaaaaa-0000-4000-8000-000000000001', 5)$$,
+  '42501', 'A cannot grant themself deck credits');
 select rls_test.throws(
   $$update public.profiles set paystack_customer_code = 'CUS_x' where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
   '42501', 'A cannot change their Paystack customer link');

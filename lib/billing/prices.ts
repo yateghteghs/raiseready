@@ -12,9 +12,9 @@ export type Currency = "NGN" | "USD";
 export const CURRENCIES: Currency[] = ["NGN", "USD"];
 
 export const PRICES: Record<Currency, Record<PaymentProduct, number>> = {
-  NGN: { pro_monthly: 1_500_000, credits_3: 500_000, credits_10: 1_000_000 },
+  NGN: { pro_monthly: 1_500_000, credits_3: 500_000, credits_10: 1_000_000, deck_builder: 750_000 },
   // Placeholder dollar prices: confirm before switching USD on.
-  USD: { pro_monthly: 1_000, credits_3: 400, credits_10: 700 },
+  USD: { pro_monthly: 1_000, credits_3: 400, credits_10: 700, deck_builder: 500 },
 };
 
 /** Smallest charge Paystack accepts comfortably; discounted prices never go below it (except 100% off). */

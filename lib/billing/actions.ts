@@ -7,9 +7,10 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { PaystackError } from "@/lib/billing/paystack";
 import { isCurrency } from "@/lib/billing/prices";
 import { BillingError, manageSubscriptionLink, quote, startCheckout } from "@/lib/billing/service";
+import type { PaymentProduct } from "@/lib/supabase/database.types";
 import { getSiteUrl } from "@/lib/site-url";
 
-const productSchema = z.enum(["pro_monthly", "credits_3", "credits_10"]);
+const productSchema = z.enum(["pro_monthly", "credits_3", "credits_10", "deck_builder"]);
 
 const optionsSchema = z
   .object({ currency: z.enum(["NGN", "USD"]).optional(), code: z.string().max(40).optional() })
@@ -53,7 +54,7 @@ export async function manageSubscriptionAction(): Promise<{ error: string } | vo
   redirect(url);
 }
 
-export type CodePreview = { ok: true; prices: Partial<Record<"pro_monthly" | "credits_3" | "credits_10", { amount: number; list: number }>>; percentOff: number } | { ok: false; error: string };
+export type CodePreview = { ok: true; prices: Partial<Record<PaymentProduct, { amount: number; list: number }>>; percentOff: number } | { ok: false; error: string };
 
 /** Shows what each product would cost with a discount code, before paying. */
 export async function checkCodeAction(code: string, currency: string): Promise<CodePreview> {

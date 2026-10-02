@@ -35,7 +35,9 @@ export type InvestorConfidence = "low" | "medium" | "high";
 export type TurnRole = "investor" | "founder" | "system";
 export type RedFlagType = "contradiction" | "unsupported_claim" | "weak_answer" | "missing_info";
 export type Severity = "low" | "medium" | "high";
-export type PaymentProduct = "pro_monthly" | "credits_3" | "credits_10";
+export type PaymentProduct = "pro_monthly" | "credits_3" | "credits_10" | "deck_builder";
+export type DeckStatus = "generating" | "ready" | "failed";
+export type DeckAccess = "preview" | "pro" | "credit";
 export type PaymentCurrency = "NGN" | "USD";
 export type PaymentStatus = "pending" | "success" | "failed" | "abandoned" | "reversed";
 export type SubscriptionStatus = "active" | "non_renewing" | "attention" | "cancelled" | "completed";
@@ -47,6 +49,7 @@ type ProfileRow = Timestamps & {
   role: UserRole;
   plan: Plan;
   credits: number;
+  deck_credits: number;
   onboarding_complete: boolean;
   paystack_customer_code: string | null;
   status: AccountStatus;
@@ -153,6 +156,19 @@ type RedFlagRow = Timestamps & {
   severity: Severity;
   description: string;
   evidence: Json;
+};
+
+type PitchDeckRow = Timestamps & {
+  id: string;
+  user_id: string;
+  startup_id: string;
+  status: DeckStatus;
+  access: DeckAccess;
+  title: string | null;
+  content: Json | null;
+  rewrites_used: number;
+  unlocked_at: string | null;
+  error: string | null;
 };
 
 type ReportRow = Timestamps & {
@@ -364,6 +380,7 @@ export type Database = {
         | "last_seen_at"
         | "referral_code"
         | "referred_by"
+        | "deck_credits"
       >;
       startups: Table<
         StartupRow,
@@ -448,6 +465,7 @@ export type Database = {
         ReferralSettingsRow,
         "id" | "enabled" | "friend_percent_off" | "referrer_credits" | "min_spend_ngn" | "min_spend_usd" | "updated_by"
       >;
+      pitch_decks: Table<PitchDeckRow, "id" | "status" | "title" | "content" | "rewrites_used" | "unlocked_at" | "error">;
       faq_items: Table<FaqItemRow, "id" | "slug" | "locale" | "category" | "position" | "published" | "created_by">;
       report_signature: Table<ReportSignatureRow, "id" | "signer_name" | "signer_title" | "signature_path" | "enabled" | "updated_by">;
     };
@@ -455,6 +473,8 @@ export type Database = {
     Functions: {
       add_credits: { Args: { p_user_id: string; p_amount: number }; Returns: number | null };
       consume_credit: { Args: { p_user_id: string }; Returns: number | null };
+      add_deck_credits: { Args: { p_user_id: string; p_amount: number }; Returns: number | null };
+      consume_deck_credit: { Args: { p_user_id: string }; Returns: number | null };
       prune_activity: { Args: Record<string, never>; Returns: undefined };
     };
     Enums: { [_ in never]: never };

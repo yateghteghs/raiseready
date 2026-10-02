@@ -10,7 +10,7 @@ import {
   subscriptionManageLink,
   type PaystackTransaction,
 } from "@/lib/billing/paystack";
-import { CREDIT_PACKS } from "@/lib/billing/plans";
+import { CREDIT_PACKS, DECK_BUILDER } from "@/lib/billing/plans";
 import {
   availableCurrencies,
   codeProblem,
@@ -31,6 +31,7 @@ const PRODUCTS: Record<PaymentProduct, { credits: number; label: string }> = {
   pro_monthly: { credits: 0, label: "Pro (monthly)" },
   credits_3: { credits: CREDIT_PACKS[0].simulations, label: CREDIT_PACKS[0].name },
   credits_10: { credits: CREDIT_PACKS[1].simulations, label: CREDIT_PACKS[1].name },
+  deck_builder: { credits: 0, label: DECK_BUILDER.name },
 };
 
 export function productLabel(product: PaymentProduct): string {
@@ -278,6 +279,10 @@ export async function applyChargeSuccess(tx: PaystackTransaction, raw: unknown):
       await admin.from("subscriptions").insert({ user_id: payment.user_id, status, current_period_end: periodEnd });
     }
     await audit("billing.pro_started", payment.user_id, { reference: tx.reference, renews });
+  } else if (payment.product === "deck_builder") {
+    const { error } = await admin.rpc("add_deck_credits", { p_user_id: payment.user_id, p_amount: 1 });
+    if (error) throw new Error(`Could not add the deck: ${error.message}`);
+    await audit("billing.deck_added", payment.user_id, { reference: tx.reference });
   } else {
     const credits = PRODUCTS[payment.product].credits;
     const { error } = await admin.rpc("add_credits", { p_user_id: payment.user_id, p_amount: credits });

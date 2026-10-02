@@ -28,6 +28,7 @@
     "lucide-react": "^1.49.0",
     "mammoth": "^1.13.0",
     "next": "16.3.8",
+    "pptxgenjs": "^4.0.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "recharts": "^3.10.1",
@@ -49,5 +50,8 @@
   },
   "engines": {
     "node": ">=20.9"
+  },
+  "overrides": {
+    "image-size": "^2.0.4"
   }
 }

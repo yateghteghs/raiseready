@@ -11,6 +11,7 @@ const PRODUCTS = [
   { value: "pro_monthly", label: "Pro (first month)" },
   { value: "credits_3", label: "3 credits" },
   { value: "credits_10", label: "10 credits" },
+  { value: "deck_builder", label: "Pitch deck" },
 ];
 
 export function DiscountForm() {

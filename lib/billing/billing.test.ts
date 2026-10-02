@@ -110,6 +110,15 @@ describe("payments via webhook", () => {
     expect(db.profiles[0].credits).toBe(3);
   });
 
+  it("adds one deck for a deck builder purchase, once", async () => {
+    db.payments.push({ id: "p-deck", user_id: "u1", reference: "rr_deck", amount_kobo: 750_000, currency: "NGN", product: "deck_builder", status: "pending" });
+    const tx = { id: 9, status: "success", reference: "rr_deck", amount: 750_000, currency: "NGN", paid_at: "2026-10-02T00:00:00Z" };
+    expect(await applyChargeSuccess(tx, {})).toBe(true);
+    expect(await applyChargeSuccess(tx, {})).toBe(false);
+    expect(db.profiles.find((p) => p.id === "u1")?.deck_credits).toBe(1);
+    expect(db.profiles.find((p) => p.id === "u1")?.credits).toBe(0);
+  });
+
   it("upgrades the account to Pro and links the Paystack customer", async () => {
     await handlePaystackEvent(charge("rr_pro", 1_500_000, { plan: { plan_code: "PLN_pro" } }));
     expect(db.profiles[0]).toMatchObject({ plan: "pro", paystack_customer_code: "CUS_1" });

@@ -39,3 +39,20 @@ export const CREDIT_PACKS = [
   { product: "credits_3" as PaymentProduct, name: "3 simulations", priceKobo: PRICES.NGN.credits_3, simulations: 3 },
   { product: "credits_10" as PaymentProduct, name: "10 simulations", priceKobo: PRICES.NGN.credits_10, simulations: 10 },
 ] as const;
+
+/**
+ * Pitch deck builder. Pro includes a few decks a month; anyone can buy one
+ * deck at a time; everyone gets one free preview (the outline and the first
+ * few slides) that a purchase or Pro later unlocks without regenerating.
+ */
+export const DECK_BUILDER = {
+  product: "deck_builder" as PaymentProduct,
+  name: "Pitch deck",
+  priceKobo: PRICES.NGN.deck_builder,
+  proDecksPerMonth: 3,
+  /** AI rewrites of single slides. Typing changes yourself is always free. */
+  proRewritesPerDeck: 30,
+  creditRewritesPerDeck: 2,
+  previewSlides: 3,
+  freePreviews: 1,
+} as const;

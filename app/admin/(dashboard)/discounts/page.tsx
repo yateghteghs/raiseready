@@ -9,7 +9,7 @@ import { getReferralSettings } from "@/lib/billing/referral-settings";
 
 export const metadata = { title: "Discounts" };
 
-const PRODUCT_SHORT: Record<string, string> = { pro_monthly: "Pro", credits_3: "3 credits", credits_10: "10 credits" };
+const PRODUCT_SHORT: Record<string, string> = { pro_monthly: "Pro", credits_3: "3 credits", credits_10: "10 credits", deck_builder: "Pitch deck" };
 
 export default async function DiscountsPage() {
   await requireStaff("manage_discounts", "/admin/discounts");

@@ -10,7 +10,7 @@ export function CheckoutButton({
   children,
   variant = "default",
 }: {
-  product: "pro_monthly" | "credits_3" | "credits_10" | "manage";
+  product: "pro_monthly" | "credits_3" | "credits_10" | "deck_builder" | "manage";
   children: React.ReactNode;
   variant?: "default" | "outline";
 }) {
