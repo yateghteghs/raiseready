@@ -17,6 +17,7 @@ const NAV: { href: string; label: string; needs: StaffAction }[] = [
   { href: "/admin/insights", label: "Insights", needs: "view" },
   { href: "/admin/errors", label: "Errors", needs: "view" },
   { href: "/admin/notifications", label: "Notifications", needs: "notify" },
+  { href: "/admin/plans", label: "Plans", needs: "manage_discounts" },
   { href: "/admin/prices", label: "Prices", needs: "manage_discounts" },
   { href: "/admin/discounts", label: "Discounts", needs: "manage_discounts" },
   { href: "/admin/teams", label: "Teams", needs: "manage_teams" },
