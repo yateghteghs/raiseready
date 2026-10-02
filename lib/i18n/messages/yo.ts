@@ -114,6 +114,7 @@ export const yo: Messages = {
       simulationsMany: "Ìdánrawò Investor Room {n}",
       simulationsMonthly: "Ìdánrawò tó tó {n} lóṣù",
       investorsAll: "Gbogbo olùdókòwò, títí kan olùyẹ̀wò ẹ̀bùn owó",
+      listSeparator: ", ",
       investorsSome: "Àwọn olùdókòwò: {list}",
       difficultiesAll: "Gbogbo ìpele ìṣòro, títí kan èyí tó le",
       difficultiesSome: "Ìpele ìṣòro: {list}",

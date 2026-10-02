@@ -114,6 +114,7 @@ export const ig: Messages = {
       simulationsMany: "Omume Investor Room {n}",
       simulationsMonthly: "Ruo omume {n} kwa ọnwa",
       investorsAll: "Ndị niile na-etinye ego, gụnyere onye na-enyocha onyinye ego",
+      listSeparator: ", ",
       investorsSome: "Ndị na-etinye ego: {list}",
       difficultiesAll: "Ọkwa isi ike niile, gụnyere nke siri ike",
       difficultiesSome: "Ọkwa isi ike: {list}",

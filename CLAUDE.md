@@ -57,6 +57,11 @@ milestone at a time (spec section 11) and stop for review after each.
   USD only when `PAYSTACK_USD_ENABLED=true`. `payments.amount_kobo` is in the
   currency's smallest unit; revenue is always totalled per currency. Discounted
   Pro is a one-off first month, then `createSubscription` starts the plan.
+- Currency display (`lib/currency`): naira in Nigeria, US dollars elsewhere
+  (only when `PAYSTACK_USD_ENABLED`), overridable with the `rr_currency`
+  cookie; `getPriceContext` decides from the profile country or
+  `x-vercel-ip-country`. Local estimates use super-admin rates (`fx_rates`,
+  per US dollar) and are display only; charges are always NGN or USD.
 - Report share links (`lib/reports/shares.ts`): random token in the URL, only
   its SHA-256 stored; public page `/shared/[token]`.
 - Tests that touch Supabase use `test/fake-supabase.ts`.
@@ -95,7 +100,12 @@ milestone at a time (spec section 11) and stop for review after each.
   seconds.
 - Company: RaiseReady is a product of Index Prima (`SITE.company` in
   `lib/site.ts`); the footer, legal pages, billing page and PDF reports name it.
-- Plans: free / pro / pro_plus (`PLAN_LIMITS`), plus Teams. `tierOf` decides
+- Plans: free / pro / pro_plus, plus Teams. What each plan includes is a
+  `PlanRule` (`lib/billing/plan-rules.ts`, defaults `DEFAULT_PLAN_RULES`),
+  edited by super admins under Admin → Plans (table `plan_settings`, read via
+  `getPlanRules()`; `getUsage` returns them as `usage.rules`). Entitlements
+  read the rules, never hard-coded numbers, and pricing cards are generated
+  from them by `planFeatures`. `tierOf` decides
   the founder's level (an active team gives pro_plus); `getUsage` returns
   `tier` and `team`. Each subscription row records its `plan`; upgrading
   Pro → Pro Plus ends the Pro subscription (`endSubscription`) and only the

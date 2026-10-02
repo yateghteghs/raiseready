@@ -114,6 +114,7 @@ export const ha: Messages = {
       simulationsMany: "Gwaje-gwajen Investor Room {n}",
       simulationsMonthly: "Har zuwa gwaje-gwaje {n} a wata",
       investorsAll: "Duk masu zuba jari, har da mai tantance tallafi",
+      listSeparator: ", ",
       investorsSome: "Masu zuba jari: {list}",
       difficultiesAll: "Duk matakan wahala, har da mai tsanani",
       difficultiesSome: "Matakin wahala: {list}",

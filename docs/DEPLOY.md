@@ -116,9 +116,20 @@ in naira with a foreign card. To also offer dollar prices:
    placeholders: Pro $10/month, Pro Plus $25/month, 3 simulations $4, 10
    simulations $7, one pitch deck $5) and change them if needed.
 3. In Vercel, add `PAYSTACK_USD_ENABLED` = `true`, then redeploy. The Billing
-   page then offers "Pay in ₦ Naira / $ US dollars", and the pricing page
-   lists the dollar prices. The dollar Pro plan is created in Paystack
-   automatically.
+   page then offers "Pay in ₦ Naira / $ US dollars". The dollar Pro plan is
+   created in Paystack automatically.
+
+**Which currency visitors see.** While dollar payments are off, everyone sees
+(and pays) naira. Once they're on, the website and Billing page show naira to
+visitors in Nigeria and US dollars to everyone else, decided by the country
+in the founder's profile or, for visitors, the country Vercel detects from
+the request. Anyone can switch with "Show prices in naira / US dollars"
+(remembered in a cookie). To also show a rough amount in the visitor's own
+currency ("≈ KES 1,300"), add exchange rates under **Admin → Prices →
+Exchange rates** (how much of that currency one US dollar buys, e.g. KES
+129). Estimates are rounded and only for guidance; founders are always
+charged in naira or dollars. Countries without a rate see dollars only.
+Update the rates now and then.
 
 **Plans.** Free, Pro (₦15,000 / $10 a month), Pro Plus (₦35,000 / $25 a
 month) and Teams. Pro Plus has its own Paystack plan, created automatically
@@ -128,7 +139,20 @@ and 30). New premium features such as voice practice will be part of Pro
 Plus. A Pro subscriber who upgrades pays for Pro Plus straight away and
 their Pro subscription stops (unused Pro days aren't refunded). To move from
 Pro Plus to Pro, they cancel Pro Plus and subscribe to Pro after it ends.
-Allowances live in `lib/billing/plans.ts` (`PLAN_LIMITS`).
+
+
+**What each plan includes** is set by super admins under **Admin → Plans**:
+monthly simulations, pitch decks and AI rewrites, which investors and
+difficulties are included, PDF reports, progress tracking, the free deck
+preview, the short description and up to four extra selling points. The
+plan limits and the pricing cards both follow these settings, so the
+website never promises more than a plan gives. The built-in description is
+translated into every language; a description or extra line you type is
+shown as written. Changes apply straight away, including to current
+subscribers, so tell them before taking anything away. Teams members get
+whatever Pro Plus includes. The starting values are in
+`lib/billing/plan-rules.ts`. FAQ answers are written separately, so update
+any that quote allowances under **Admin → FAQ**.
 
 **Prices.** Super admins change any price, in naira and dollars, under
 **Admin → Prices**. New prices show on the website and Billing page straight
@@ -216,7 +240,8 @@ Other admin pages:
 - Each user's page shows their recent sign-ins (with failed attempts), when they were last seen and how many days they were active.
 - **Export CSV** (admin and super admin): download the Users, Simulations or Payments list. Exports contain personal data, so each download is logged; store the files securely and delete them when done.
 - **Notifications** (admin and super admin): message one founder or everyone. Messages appear under the bell in the app header. **Turn off** hides a sent message from founders without deleting it (turn it on again any time); **Delete** removes it for good.
-- **Prices** (super admin): what each plan and pack costs, in naira and dollars.
+- **Plans** (super admin): what each plan includes, with a preview of the pricing card.
+- **Prices** (super admin): what each plan and pack costs, in naira and dollars, and the exchange rates for local estimates.
 - **Teams** (super admin): create teams, share join links, manage members and see enquiries from the Teams page.
 - **Discounts** (super admin): the referral programme settings, and discount codes (create, turn off, see how often each was used).
 - **Website** (super admin): startup logos, testimonials and partners shown on the home page, `/testimonials` and `/partners`. Tick the permission box only when the company or person has agreed to appear.

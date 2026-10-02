@@ -81,10 +81,30 @@ test("legal pages are marked as drafts", async ({ page }) => {
   }
 });
 
-test("pricing shows naira prices", async ({ page }) => {
-  await page.goto("/pricing");
-  await expect(page.getByText("₦15,000").first()).toBeVisible();
-  await expect(page.getByText("₦5,000").first()).toBeVisible();
+test.describe("pricing currency", () => {
+  test.skip(Boolean(process.env.E2E_BASE_URL), "Needs dollar payments on and default prices");
+
+  test("shows naira in Nigeria", async ({ browser }) => {
+    const context = await browser.newContext({ extraHTTPHeaders: { "x-vercel-ip-country": "NG" } });
+    const page = await context.newPage();
+    await page.goto("/pricing");
+    await expect(page.getByText("₦15,000").first()).toBeVisible();
+    await expect(page.getByText("₦5,000").first()).toBeVisible();
+    await context.close();
+  });
+
+  test("shows dollars elsewhere, and visitors can switch", async ({ browser }) => {
+    const context = await browser.newContext({ extraHTTPHeaders: { "x-vercel-ip-country": "KE" } });
+    const page = await context.newPage();
+    await page.goto("/pricing");
+    await expect(page.getByText("Prices in US dollars.")).toBeVisible();
+    await expect(page.getByText("$10", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Show prices in naira" }).click();
+    await expect(page.getByText("₦15,000").first()).toBeVisible();
+    await page.reload();
+    await expect(page.getByText("Prices in naira.")).toBeVisible();
+    await context.close();
+  });
 });
 
 test("the main call to action leads to sign-up", async ({ page }) => {

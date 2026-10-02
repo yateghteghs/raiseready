@@ -113,6 +113,7 @@ export const sw: Messages = {
       simulationsMany: "Simulizi {n} za Investor Room",
       simulationsMonthly: "Hadi simulizi {n} kwa mwezi",
       investorsAll: "Wawekezaji wote, pamoja na mtathmini wa ruzuku",
+      listSeparator: ", ",
       investorsSome: "Wawekezaji: {list}",
       difficultiesAll: "Viwango vyote vya ugumu, pamoja na kigumu",
       difficultiesSome: "Ugumu: {list}",

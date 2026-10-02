@@ -114,6 +114,7 @@ export const fr: Messages = {
       simulationsMany: "{n} simulations Investor Room",
       simulationsMonthly: "Jusqu'à {n} simulations par mois",
       investorsAll: "Tous les investisseurs, y compris l'évaluateur de subventions",
+      listSeparator: ", ",
       investorsSome: "Investisseurs : {list}",
       difficultiesAll: "Toutes les difficultés, y compris exigeante",
       difficultiesSome: "Difficulté : {list}",

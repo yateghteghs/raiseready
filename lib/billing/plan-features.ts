@@ -18,12 +18,12 @@ function lines(plan: Plan, r: PlanRule, t: Texts): string[] {
     out.push(
       ALL_PERSONAS.every((p) => r.personas.includes(p))
         ? t.investorsAll
-        : fill(t.investorsSome, { list: ALL_PERSONAS.filter((p) => r.personas.includes(p)).map((p) => t.personas[p]).join(", ") }),
+        : fill(t.investorsSome, { list: ALL_PERSONAS.filter((p) => r.personas.includes(p)).map((p) => t.personas[p]).join(t.listSeparator) }),
     );
     out.push(
       ALL_DIFFICULTIES.every((d) => r.difficulties.includes(d))
         ? t.difficultiesAll
-        : fill(t.difficultiesSome, { list: ALL_DIFFICULTIES.filter((d) => r.difficulties.includes(d)).map((d) => t.difficulties[d]).join(", ") }),
+        : fill(t.difficultiesSome, { list: ALL_DIFFICULTIES.filter((d) => r.difficulties.includes(d)).map((d) => t.difficulties[d]).join(t.listSeparator) }),
     );
   }
   if (paid && r.decksPerMonth > 0) {

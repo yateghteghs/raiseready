@@ -89,6 +89,12 @@ export default function PrivacyPage() {
           <strong>Language:</strong> if you choose a language, a small cookie on your device remembers
           it for a year. It contains only the language.
         </li>
+        <li>
+          <strong>Currency:</strong> to show prices in naira or US dollars, we use the country in your
+          profile or, if you&apos;re not signed in, the country your connection appears to come from. We
+          don&apos;t store that country. If you switch currency, a small cookie remembers your choice
+          for a year.
+        </li>
       </ul>
 
       <h2>What is sent to our AI provider</h2>

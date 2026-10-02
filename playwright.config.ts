@@ -38,6 +38,6 @@ export default defineConfig({
         reuseExistingServer: !process.env.CI,
         // Public pages only. Nothing listens here, and signed-out visitors
         // never need Supabase to answer.
-        env: { NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54399", NEXT_PUBLIC_SUPABASE_ANON_KEY: "e2e-placeholder" },
+        env: { NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54399", NEXT_PUBLIC_SUPABASE_ANON_KEY: "e2e-placeholder", PAYSTACK_USD_ENABLED: "true" },
       },
 });

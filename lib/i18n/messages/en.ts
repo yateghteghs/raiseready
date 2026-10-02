@@ -116,6 +116,7 @@ export const en = {
       simulationsMany: "{n} Investor Room simulations",
       simulationsMonthly: "Up to {n} simulations a month",
       investorsAll: "All investors, including Grant Evaluator",
+      listSeparator: ", ",
       investorsSome: "Investors: {list}",
       difficultiesAll: "All difficulties, including tough",
       difficultiesSome: "Difficulty: {list}",

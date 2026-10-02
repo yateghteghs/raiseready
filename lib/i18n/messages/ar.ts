@@ -113,6 +113,7 @@ export const ar: Messages = {
       simulationsMany: "{n} محاكاة في غرفة المستثمرين",
       simulationsMonthly: "حتى {n} محاكاة شهريًا",
       investorsAll: "جميع المستثمرين، بمن فيهم مقيّم المنح",
+      listSeparator: "، ",
       investorsSome: "المستثمرون: {list}",
       difficultiesAll: "جميع مستويات الصعوبة، بما فيها الصعب",
       difficultiesSome: "الصعوبة: {list}",
