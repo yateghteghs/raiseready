@@ -9,7 +9,7 @@ import type { AccountStatus, UserRole } from "@/lib/supabase/database.types";
  * - admin: also terminates, deletes, changes roles up to support, and sends
  *   notifications
  * - super_admin: everything, including password resets, free credits,
- *   managing admins, the report signature and the public showcase
+ *   managing admins, the report signature, the public showcase and teams
  */
 export type StaffAction =
   | "view"
@@ -22,6 +22,7 @@ export type StaffAction =
   | "grant_credits"
   | "manage_content"
   | "manage_discounts"
+  | "manage_teams"
   | "export";
 
 const ADMIN_ACTIONS: StaffAction[] = ["view", "suspend", "terminate", "delete", "change_role", "notify", "export"];
@@ -31,7 +32,7 @@ const PERMISSIONS: Record<UserRole, readonly StaffAction[]> = {
   viewer: ["view"],
   support: ["view", "suspend"],
   admin: ADMIN_ACTIONS,
-  super_admin: [...ADMIN_ACTIONS, "reset_password", "grant_credits", "manage_content", "manage_discounts"],
+  super_admin: [...ADMIN_ACTIONS, "reset_password", "grant_credits", "manage_content", "manage_discounts", "manage_teams"],
 };
 
 /** Roles only a super admin may give, take away or act on. */
@@ -45,7 +46,7 @@ export const ROLES: { value: UserRole; label: string; summary: string }[] = [
   { value: "viewer", label: "Viewer", summary: "Can see the admin dashboard, nothing else." },
   { value: "support", label: "Support", summary: "Can also suspend and reactivate founders." },
   { value: "admin", label: "Admin", summary: "Also terminates and deletes users, sends notifications, and assigns roles up to Support." },
-  { value: "super_admin", label: "Super admin", summary: "Everything, including passwords, free credits, admins, report signature and website content." },
+  { value: "super_admin", label: "Super admin", summary: "Everything, including passwords, free credits, admins, teams, report signature and website content." },
 ];
 
 export const roleLabel = (role: string) => ROLES.find((r) => r.value === role)?.label ?? role;

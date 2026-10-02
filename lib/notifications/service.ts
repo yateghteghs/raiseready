@@ -72,7 +72,8 @@ export async function sendNotification(staff: Staff, input: NotificationInput): 
   return { recipient: userId ? input.email! : "everyone" };
 }
 
-async function userIdForEmail(email: string): Promise<string | null> {
+/** The account id for an email address, or null if nobody has signed up with it. */
+export async function userIdForEmail(email: string): Promise<string | null> {
   const admin = createAdminClient();
   const wanted = email.trim().toLowerCase();
   for (let page = 1; page <= 20; page++) {

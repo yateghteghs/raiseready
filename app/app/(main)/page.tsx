@@ -20,7 +20,8 @@ export const metadata: Metadata = { title: "Dashboard" };
 
 const dateFormat = new Intl.DateTimeFormat("en-NG", { day: "numeric", month: "short" });
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: PageProps<"/app">) {
+  const { joined } = await searchParams;
   const loaded = await load(async () => {
     const [profile, startup] = await Promise.all([getCurrentProfile(), getMyStartup()]);
     if (!startup) return { profile, startup, assessments: [], docs: [], knowledge: null, activity: [] };
@@ -59,6 +60,11 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-semibold tracking-tight">{firstName ? `Welcome, ${firstName}` : "Welcome"}</h1>
         <p className="text-muted-foreground mt-1">Here&apos;s where your fundraising prep stands.</p>
       </div>
+      {typeof joined === "string" && joined.length <= 100 ? (
+        <p role="status" className="border-primary/30 bg-accent text-accent-foreground rounded-xl border px-4 py-3 text-sm">
+          You&apos;ve joined {joined}. You now have RaiseReady Pro Plus.
+        </p>
+      ) : null}
 
       {latest ? (
         <div className="grid gap-4 md:grid-cols-3">

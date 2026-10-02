@@ -10,6 +10,7 @@ import { getCurrentProfile, requireUser } from "@/lib/auth/session";
 import { load } from "@/lib/data-errors";
 import { imageLink } from "@/lib/images/service";
 import { unreadCount } from "@/lib/notifications/service";
+import { ownedTeam } from "@/lib/teams/service";
 
 const NAV = [
   { href: "/app", label: "Dashboard" },
@@ -39,14 +40,17 @@ export default async function MainAppLayout({ children }: LayoutProps<"/app">) {
   if (!loaded.data?.onboarding_complete) redirect("/app/onboarding");
   const { id, last_seen_at } = loaded.data;
   after(() => touchActivity(id, last_seen_at));
-  const [avatarUrl, unread] = await Promise.all([
+  const [avatarUrl, unread, team] = await Promise.all([
     imageLink(loaded.data.id, loaded.data.avatar_path),
     unreadCount(loaded.data.id, loaded.data.created_at),
+    ownedTeam(loaded.data.id).catch(() => null),
   ]);
+  // Programme contacts get a page for their cohort.
+  const nav = team ? [...NAV.slice(0, -2), { href: "/app/team", label: "Team" }, ...NAV.slice(-2)] : NAV;
 
   return (
     <>
-      <AppHeader email={user.email} nav={NAV} admin={isStaffProfile(loaded.data)} avatarUrl={avatarUrl} unread={unread} />
+      <AppHeader email={user.email} nav={nav} admin={isStaffProfile(loaded.data)} avatarUrl={avatarUrl} unread={unread} />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">{children}</main>
       <AppFooter />
     </>

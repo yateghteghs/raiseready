@@ -8,17 +8,22 @@ import { DeleteAccountForm } from "@/components/settings/delete-account-form";
 import { getCurrentProfile, getCurrentUser } from "@/lib/auth/session";
 import { load } from "@/lib/data-errors";
 import { imageLink } from "@/lib/images/service";
+import { getMembership } from "@/lib/billing/service";
+import { isActive } from "@/lib/teams/service";
+import { LeaveTeamButton } from "@/components/teams/leave-team-button";
 
 export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
   const loaded = await load(async () => {
     const [user, profile] = await Promise.all([getCurrentUser(), getCurrentProfile()]);
-    const avatarUrl = profile ? await imageLink(profile.id, profile.avatar_path) : null;
-    return { user, profile, avatarUrl };
+    const [avatarUrl, team] = profile
+      ? await Promise.all([imageLink(profile.id, profile.avatar_path), getMembership(profile.id)])
+      : [null, null];
+    return { user, profile, avatarUrl, team, teamActive: team ? isActive(team) : false };
   });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
-  const { user, profile, avatarUrl } = loaded.data;
+  const { user, profile, avatarUrl, team, teamActive } = loaded.data;
 
   return (
     <div className="grid gap-10">
@@ -42,6 +47,25 @@ export default async function SettingsPage() {
         />
         <AccountDetailsForm initialValues={{ full_name: profile?.full_name ?? "", country: profile?.country ?? "" }} />
       </section>
+
+      {team ? (
+        <section aria-labelledby="team-h" className="bg-card grid gap-3 rounded-xl border p-5 sm:p-6">
+          <h2 id="team-h" className="text-lg font-semibold">
+            Your team
+          </h2>
+          <p className="text-sm">
+            You&apos;re a member of <span className="font-medium">{team.name}</span>.{" "}
+            {teamActive
+              ? `It gives you Pro Plus until ${new Intl.DateTimeFormat("en-NG", { day: "numeric", month: "long", year: "numeric" }).format(new Date(team.ends_at))}.`
+              : "Its RaiseReady access has ended."}{" "}
+            Its programme team can see your name, startup name, readiness score, number of practice meetings and when you were last active,
+            but not your documents, answers or reports.
+          </p>
+          <div>
+            <LeaveTeamButton name={team.name} />
+          </div>
+        </section>
+      ) : null}
 
       <section aria-labelledby="delete-h" className="border-destructive/40 grid gap-5 rounded-xl border p-5 sm:p-6">
         <div className="grid gap-2">
