@@ -43,8 +43,11 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             <span className="text-muted-foreground hidden truncate md:inline">
               {staff.email} · {roleLabel(staff.profile.role)}
             </span>
-            <Link href="/app" className="text-muted-foreground hover:text-foreground">
-              Back to app
+            <Link
+              href={staff.profile.onboarding_complete ? "/app" : "/app/onboarding?founder=1"}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              {staff.profile.onboarding_complete ? "Back to app" : "Founder app"}
             </Link>
             <form action={logout}>
               <Button type="submit" variant="outline" size="sm">

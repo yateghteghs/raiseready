@@ -14,7 +14,8 @@ import { getMyStartup } from "@/lib/startups/service";
 
 export const metadata: Metadata = { title: "Set up your startup" };
 
-export default async function OnboardingPage() {
+export default async function OnboardingPage({ searchParams }: PageProps<"/app/onboarding">) {
+  const { founder } = await searchParams;
   const user = await requireUser("/app/onboarding");
   const loaded = await load(() => Promise.all([getCurrentProfile(), getMyStartup()]));
   if (!loaded.ok) {
@@ -28,6 +29,8 @@ export default async function OnboardingPage() {
   const [profile, startup] = loaded.data;
   if (profile?.onboarding_complete) redirect("/app");
   const staff = isStaffProfile(profile);
+  // Staff go straight to the admin area; they set up a startup only if they ask to.
+  if (staff && founder !== "1") redirect("/admin");
 
   return (
     <>
@@ -41,9 +44,10 @@ export default async function OnboardingPage() {
         </div>
         {staff ? (
           <p role="note" className="border-primary/30 bg-accent mb-6 rounded-xl border px-4 py-3 text-sm">
-            You&apos;re staff, so you don&apos;t need to set up a startup to work in the admin area.{" "}
+            You&apos;re setting up a founder account to try the app. Staff don&apos;t need one for the
+            admin area.{" "}
             <Link href="/admin" className="font-medium underline underline-offset-4">
-              Go to Admin
+              Back to Admin
             </Link>
           </p>
         ) : null}

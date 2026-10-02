@@ -37,7 +37,7 @@ export default async function MainAppLayout({ children }: LayoutProps<"/app">) {
       </>
     );
   }
-  if (!loaded.data?.onboarding_complete) redirect("/app/onboarding");
+  if (!loaded.data?.onboarding_complete) redirect(isStaffProfile(loaded.data) ? "/admin" : "/app/onboarding");
   const { id, last_seen_at } = loaded.data;
   after(() => touchActivity(id, last_seen_at));
   const [avatarUrl, unread, team] = await Promise.all([

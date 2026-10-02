@@ -8,7 +8,8 @@ import { recordSignIn } from "@/lib/activity/service";
 import { REFERRAL_COOKIE } from "@/lib/referrals/code";
 import { linkReferral } from "@/lib/referrals/service";
 import { authErrorCode, friendlyAuthError, logAuthError } from "@/lib/auth/errors";
-import { safeNextPath } from "@/lib/auth/redirect";
+import { isStaffProfile } from "@/lib/admin/auth";
+import { DEFAULT_AFTER_LOGIN, safeNextPath } from "@/lib/auth/redirect";
 import {
   forgotPasswordSchema,
   loginSchema,
@@ -61,7 +62,13 @@ async function loginInEnglish(_prev: FormState, formData: FormData): Promise<For
   if (error && error.code !== "invalid_credentials") logAuthError("login", error);
   if (error) return { status: "error", message: friendlyAuthError(error), values };
 
-  redirect(safeNextPath(formData.get("next")));
+  const next = safeNextPath(formData.get("next"));
+  // Staff land in the admin area unless a link sent them somewhere specific.
+  if (next === DEFAULT_AFTER_LOGIN || next.startsWith("/app/onboarding")) {
+    const { data: profile } = await supabase.from("profiles").select("role, status").eq("id", data.user.id).maybeSingle();
+    if (isStaffProfile(profile)) redirect("/admin");
+  }
+  redirect(next);
 }
 
 /** Results are translated into the visitor's language. */
