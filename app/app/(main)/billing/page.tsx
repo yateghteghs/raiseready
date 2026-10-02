@@ -6,7 +6,8 @@ import { CheckoutButton } from "@/components/billing/checkout-button";
 import { InviteLink } from "@/components/billing/invite-card";
 import { getCurrentUser } from "@/lib/auth/session";
 import { CREDIT_PACKS, FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
-import { availableCurrencies, PRICES, REFERRAL } from "@/lib/billing/prices";
+import { availableCurrencies, inviteOfferText, PRICES } from "@/lib/billing/prices";
+import { getReferralSettings } from "@/lib/billing/referral-settings";
 import { ensureReferralCode, referralStats } from "@/lib/referrals/service";
 import { getSiteUrl } from "@/lib/site-url";
 import { getSubscription, getUsage, productLabel } from "@/lib/billing/service";
@@ -35,13 +36,14 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
     if (!user) return null;
     const startup = await getMyStartup();
     const supabase = await createClient();
-    const [usage, subscription, payments, code, referrals, siteUrl] = await Promise.all([
+    const [usage, subscription, payments, code, referrals, siteUrl, programme] = await Promise.all([
       getUsage(user.id, startup?.id ?? null),
       getSubscription(user.id),
       supabase.from("payments").select("*").neq("status", "pending").order("created_at", { ascending: false }).limit(30),
       ensureReferralCode(user.id),
       referralStats(user.id),
       getSiteUrl(),
+      getReferralSettings(),
     ]);
     const paidBefore = (payments.data ?? []).some((p) => p.status === "success");
     return {
@@ -50,12 +52,14 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
       payments: payments.data ?? [],
       referrals,
       inviteUrl: `${siteUrl}/register?ref=${code}`,
-      referralDiscount: Boolean(usage.profile.referred_by) && !paidBefore,
+      programme,
+      referralDiscount: programme.enabled && programme.friendPercentOff > 0 && Boolean(usage.profile.referred_by) && !paidBefore,
     };
   });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) return <LoadProblem code="no_startup" />;
-  const { usage, subscription, payments, referrals, inviteUrl, referralDiscount } = loaded.data;
+  const { usage, subscription, payments, referrals, inviteUrl, referralDiscount, programme } = loaded.data;
+  const inviteOffer = inviteOfferText(programme);
 
   const testMode = (process.env.PAYSTACK_SECRET_KEY ?? "").startsWith("sk_test_");
   const banner = typeof payment === "string" ? PAYMENT_MESSAGES[payment] : undefined;
@@ -133,7 +137,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
         </h2>
         <BuyOptions
           currencies={availableCurrencies()}
-          referralPercent={referralDiscount ? REFERRAL.friendPercentOff : null}
+          referralPercent={referralDiscount ? programme.friendPercentOff : null}
           options={[
             ...(usage.proActive
               ? []
@@ -164,14 +168,14 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
         />
       </section>
 
+      {programme.enabled ? (
       <section aria-labelledby="invite-heading" className="bg-card grid gap-3 rounded-xl border p-5">
         <div>
           <h2 id="invite-heading" className="text-lg font-semibold">
             Invite founders
           </h2>
           <p className="text-muted-foreground text-sm">
-            Share your link. Founders who join with it get {REFERRAL.friendPercentOff}% off their first purchase, and you get{" "}
-            {REFERRAL.referrerCredits} free simulation credits when they first pay.
+            Share your link with other founders.{inviteOffer ? ` ${inviteOffer}` : ""}
           </p>
         </div>
         <InviteLink url={inviteUrl} />
@@ -181,6 +185,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
             : `${referrals.joined} ${referrals.joined === 1 ? "founder has" : "founders have"} joined with your link · ${referrals.creditsEarned} credits earned.`}
         </p>
       </section>
+      ) : null}
 
       <section aria-labelledby="history-heading" className="grid gap-4">
         <h2 id="history-heading" className="text-lg font-semibold">

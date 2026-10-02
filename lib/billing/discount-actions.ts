@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getStaff } from "@/lib/admin/auth";
 import { can } from "@/lib/admin/permissions";
 import { createDiscountCode, DiscountCodeError, discountCodeSchema, setDiscountCodeActive } from "@/lib/billing/discount-codes";
+import { referralSettingsSchema, saveReferralSettings } from "@/lib/billing/referral-settings";
 import { formValues, validationFailed, type FormState } from "@/lib/forms";
 
 async function manager() {
@@ -35,4 +36,26 @@ export async function toggleDiscountCodeAction(id: string, active: boolean): Pro
   if (!staff || !z.uuid().safeParse(id).success) return;
   await setDiscountCodeActive(staff, id, active);
   revalidatePath("/admin/discounts");
+}
+
+export async function saveReferralSettingsAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const staff = await manager();
+  if (!staff) return { status: "error", message: "Only a super admin can change the referral programme." };
+  const values = formValues(formData);
+  const parsed = referralSettingsSchema.safeParse(values);
+  if (!parsed.success) return validationFailed(parsed.error, values);
+  try {
+    await saveReferralSettings(staff, parsed.data);
+  } catch (error) {
+    console.error("[referrals] save failed:", error);
+    return { status: "error", message: "Something went wrong. Nothing was saved.", values };
+  }
+  revalidatePath("/admin/discounts");
+  revalidatePath("/app/billing");
+  return {
+    status: "success",
+    message: parsed.data.enabled
+      ? `Saved. Invited founders now get ${parsed.data.friend_percent_off}% off; inviters get ${parsed.data.referrer_credits} credits. Payments already started keep their price.`
+      : "Saved. The referral programme is off: no new discounts or rewards.",
+  };
 }

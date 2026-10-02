@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { availableCurrencies, codeProblem, discounted, normaliseCode, priceOf } from "@/lib/billing/prices";
+import { availableCurrencies, codeProblem, discounted, inviteOfferText, normaliseCode, priceOf } from "@/lib/billing/prices";
 
 describe("prices", () => {
   it("keeps USD hidden until it is switched on", () => {
@@ -33,5 +33,18 @@ describe("prices", () => {
 
   it("normalises typed codes", () => {
     expect(normaliseCode("  launch 20 ")).toBe("LAUNCH20");
+  });
+});
+
+describe("invite card text", () => {
+  it("describes whichever rewards are on", () => {
+    expect(inviteOfferText({ enabled: true, friendPercentOff: 10, referrerCredits: 2 })).toBe(
+      "Founders who join with it get 10% off their first purchase, and you get 2 free simulation credits when they first pay.",
+    );
+    expect(inviteOfferText({ enabled: true, friendPercentOff: 15, referrerCredits: 0 })).toBe("Founders who join with it get 15% off their first purchase.");
+    expect(inviteOfferText({ enabled: true, friendPercentOff: 0, referrerCredits: 1 })).toBe(
+      "You get 1 free simulation credit when a founder who joins with it first pays.",
+    );
+    expect(inviteOfferText({ enabled: true, friendPercentOff: 0, referrerCredits: 0 })).toBe("");
   });
 });

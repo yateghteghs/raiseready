@@ -1,10 +1,11 @@
 import { DiscountForm } from "@/components/admin/discount-form";
+import { ReferralSettingsForm } from "@/components/admin/referral-settings-form";
 import { adminDate, PageTitle, Table } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { requireStaff } from "@/lib/admin/auth";
 import { toggleDiscountCodeAction } from "@/lib/billing/discount-actions";
 import { listDiscountCodes } from "@/lib/billing/discount-codes";
-import { REFERRAL } from "@/lib/billing/prices";
+import { getReferralSettings } from "@/lib/billing/referral-settings";
 
 export const metadata = { title: "Discounts" };
 
@@ -12,13 +13,15 @@ const PRODUCT_SHORT: Record<string, string> = { pro_monthly: "Pro", credits_3: "
 
 export default async function DiscountsPage() {
   await requireStaff("manage_discounts", "/admin/discounts");
-  const codes = await listDiscountCodes();
+  const [codes, referral] = await Promise.all([listDiscountCodes(), getReferralSettings()]);
   return (
     <>
       <PageTitle
         title="Discounts"
-        description={`Codes founders type on the Billing page. A code on Pro discounts the first month only; later months are full price. Referrals are automatic: invited founders get ${REFERRAL.friendPercentOff}% off their first purchase and the inviter gets ${REFERRAL.referrerCredits} credits.`}
+        description="Codes founders type on the Billing page, and the referral programme. A discount on Pro covers the first month only; later months are full price."
       />
+      <ReferralSettingsForm initial={referral} />
+      <h2 className="font-semibold">Discount codes</h2>
       <DiscountForm />
       <Table
         caption="Discount codes"

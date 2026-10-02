@@ -147,6 +147,30 @@ describe("referrals", () => {
     expect(db.referral_rewards).toHaveLength(1);
   });
 
+  it("follows the super admin's referral settings", async () => {
+    db.referral_settings = [{ id: 1, enabled: true, friend_percent_off: 25, referrer_credits: 5 }];
+    expect(await quote("u1", "credits_3", "NGN")).toMatchObject({ amount: 375_000, percentOff: 25 });
+    await startCheckout(founder, "credits_3", "https://x/cb");
+    await pay(375_000);
+    expect(db.profiles.find((p) => p.id === "ref")!.credits).toBe(5);
+  });
+
+  it("gives no discount or reward while the programme is off", async () => {
+    db.referral_settings = [{ id: 1, enabled: false, friend_percent_off: 25, referrer_credits: 5 }];
+    expect(await quote("u1", "credits_3", "NGN")).toMatchObject({ amount: 500_000, source: null });
+    await startCheckout(founder, "credits_3", "https://x/cb");
+    await pay(500_000);
+    expect(db.referral_rewards).toHaveLength(0);
+  });
+
+  it("can reward the inviter without discounting the invited founder", async () => {
+    db.referral_settings = [{ id: 1, enabled: true, friend_percent_off: 0, referrer_credits: 1 }];
+    expect(await quote("u1", "credits_3", "NGN")).toMatchObject({ amount: 500_000 });
+    await startCheckout(founder, "credits_3", "https://x/cb");
+    await pay(500_000);
+    expect(db.profiles.find((p) => p.id === "ref")!.credits).toBe(1);
+  });
+
   it("doesn't reward a suspended referrer", async () => {
     db.profiles.find((p) => p.id === "ref")!.status = "suspended";
     await startCheckout(founder, "credits_3", "https://x/cb");

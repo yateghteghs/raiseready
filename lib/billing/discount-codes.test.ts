@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { discountCodeSchema } from "@/lib/billing/discount-codes";
+import { referralSettingsSchema } from "@/lib/billing/referral-settings";
 
 describe("discount code form", () => {
   it("normalises the code and accepts optional limits", () => {
@@ -13,5 +14,19 @@ describe("discount code form", () => {
     expect(discountCodeSchema.safeParse({ code: "OK20", percent_off: "0", products: ["credits_3"] }).success).toBe(false);
     expect(discountCodeSchema.safeParse({ code: "OK20", percent_off: "101", products: ["credits_3"] }).success).toBe(false);
     expect(discountCodeSchema.safeParse({ code: "OK20", percent_off: "20", products: [] }).success).toBe(false);
+  });
+});
+
+describe("referral settings form", () => {
+  it("accepts 0-100% and 0-50 credits, with the on/off checkbox", () => {
+    expect(referralSettingsSchema.parse({ enabled: "on", friend_percent_off: "15", referrer_credits: "3" })).toEqual({
+      enabled: true,
+      friend_percent_off: 15,
+      referrer_credits: 3,
+    });
+    expect(referralSettingsSchema.parse({ friend_percent_off: "0", referrer_credits: "0" }).enabled).toBe(false);
+    expect(referralSettingsSchema.safeParse({ friend_percent_off: "101", referrer_credits: "1" }).success).toBe(false);
+    expect(referralSettingsSchema.safeParse({ friend_percent_off: "10", referrer_credits: "51" }).success).toBe(false);
+    expect(referralSettingsSchema.safeParse({ friend_percent_off: "7.5", referrer_credits: "1" }).success).toBe(false);
   });
 });

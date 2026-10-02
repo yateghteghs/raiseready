@@ -19,13 +19,19 @@ export const PRICES: Record<Currency, Record<PaymentProduct, number>> = {
 /** Smallest charge Paystack accepts comfortably; discounted prices never go below it (except 100% off). */
 export const MIN_CHARGE: Record<Currency, number> = { NGN: 10_000, USD: 100 };
 
-/** Referral programme: what the new founder and the founder who invited them get. */
-export const REFERRAL = {
+/**
+ * Referral programme defaults. Super admins change the live values under
+ * Admin → Discounts (stored in referral_settings); these apply until then.
+ */
+export const DEFAULT_REFERRAL = {
+  enabled: true,
   /** Off the referred founder's first purchase, when no better code is used. */
   friendPercentOff: 10,
   /** Simulation credits for the referrer once the referred founder first pays. */
   referrerCredits: 2,
-} as const;
+};
+
+export type ReferralSettings = typeof DEFAULT_REFERRAL;
 
 export function usdEnabled(env: Record<string, string | undefined> = process.env): boolean {
   return env.PAYSTACK_USD_ENABLED === "true";
@@ -76,4 +82,14 @@ export function codeProblem(
 /** Normalises what a founder types: trims, upper-cases, drops spaces. */
 export function normaliseCode(input: string): string {
   return input.trim().toUpperCase().replace(/\s+/g, "");
+}
+
+/** The invite card's description of the programme, e.g. "Founders who join … and you get …". */
+export function inviteOfferText(p: ReferralSettings): string {
+  const credits = `${p.referrerCredits} free simulation ${p.referrerCredits === 1 ? "credit" : "credits"}`;
+  const friend = p.friendPercentOff > 0 ? `Founders who join with it get ${p.friendPercentOff}% off their first purchase` : "";
+  if (friend && p.referrerCredits > 0) return `${friend}, and you get ${credits} when they first pay.`;
+  if (friend) return `${friend}.`;
+  if (p.referrerCredits > 0) return `You get ${credits} when a founder who joins with it first pays.`;
+  return "";
 }

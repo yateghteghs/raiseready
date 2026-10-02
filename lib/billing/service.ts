@@ -18,9 +18,9 @@ import {
   isCurrency,
   normaliseCode,
   priceOf,
-  REFERRAL,
   type Currency,
 } from "@/lib/billing/prices";
+import { getReferralSettings } from "@/lib/billing/referral-settings";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Json, PaymentProduct, SubscriptionStatus, Tables } from "@/lib/supabase/database.types";
 
@@ -147,8 +147,11 @@ export async function quote(userId: string, product: PaymentProduct, currency: C
   }
 
   const { data: profile } = await admin.from("profiles").select("referred_by").eq("id", userId).maybeSingle();
-  if (profile?.referred_by && REFERRAL.friendPercentOff > best.percent && !(await hasPaid(userId))) {
-    best = { percent: REFERRAL.friendPercentOff, source: { kind: "referral" } };
+  if (profile?.referred_by) {
+    const referral = await getReferralSettings();
+    if (referral.enabled && referral.friendPercentOff > best.percent && !(await hasPaid(userId))) {
+      best = { percent: referral.friendPercentOff, source: { kind: "referral" } };
+    }
   }
 
   const { amount, discount } = discounted(list, best.percent, currency);
@@ -316,15 +319,17 @@ async function rewardReferrer(userId: string, reference: string): Promise<void> 
   if (!referrerId) return;
   const { data: referrer } = await admin.from("profiles").select("status").eq("id", referrerId).maybeSingle();
   if (!referrer || referrer.status !== "active") return;
+  const { enabled, referrerCredits: credits } = await getReferralSettings();
+  if (!enabled || credits <= 0) return;
   const { data: earlier } = await admin.from("referral_rewards").select("id").eq("referred_id", userId).maybeSingle();
   if (earlier) return;
   // The unique index on referred_id also stops two simultaneous rewards.
   const { error } = await admin
     .from("referral_rewards")
-    .insert({ referrer_id: referrerId, referred_id: userId, credits: REFERRAL.referrerCredits, payment_reference: reference });
+    .insert({ referrer_id: referrerId, referred_id: userId, credits, payment_reference: reference });
   if (error) return;
-  await admin.rpc("add_credits", { p_user_id: referrerId, p_amount: REFERRAL.referrerCredits });
-  await audit("billing.referral_rewarded", referrerId, { referred_id: userId, credits: REFERRAL.referrerCredits });
+  await admin.rpc("add_credits", { p_user_id: referrerId, p_amount: credits });
+  await audit("billing.referral_rewarded", referrerId, { referred_id: userId, credits });
 }
 
 /** A Pro renewal charge: Paystack creates the reference, so we record it now. */
