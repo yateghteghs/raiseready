@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
-import { CheckIcon } from "lucide-react";
 
 import { LoadProblem } from "@/components/app/load-problem";
+import { BuyOptions } from "@/components/billing/buy-options";
 import { CheckoutButton } from "@/components/billing/checkout-button";
+import { InviteLink } from "@/components/billing/invite-card";
 import { getCurrentUser } from "@/lib/auth/session";
 import { CREDIT_PACKS, FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
+import { availableCurrencies, PRICES, REFERRAL } from "@/lib/billing/prices";
+import { ensureReferralCode, referralStats } from "@/lib/referrals/service";
+import { getSiteUrl } from "@/lib/site-url";
 import { getSubscription, getUsage, productLabel } from "@/lib/billing/service";
 import { load } from "@/lib/data-errors";
 import { formatMoney, koboToNaira } from "@/lib/format";
@@ -15,7 +19,6 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Billing" };
 
 const dateFormat = new Intl.DateTimeFormat("en-NG", { day: "numeric", month: "short", year: "numeric" });
-const naira = (kobo: number) => formatMoney(koboToNaira(kobo));
 
 const PAYMENT_MESSAGES: Record<string, { text: string; ok: boolean }> = {
   success: { text: "Payment received. Thank you! Your account has been updated.", ok: true },
@@ -32,16 +35,27 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
     if (!user) return null;
     const startup = await getMyStartup();
     const supabase = await createClient();
-    const [usage, subscription, payments] = await Promise.all([
+    const [usage, subscription, payments, code, referrals, siteUrl] = await Promise.all([
       getUsage(user.id, startup?.id ?? null),
       getSubscription(user.id),
       supabase.from("payments").select("*").neq("status", "pending").order("created_at", { ascending: false }).limit(30),
+      ensureReferralCode(user.id),
+      referralStats(user.id),
+      getSiteUrl(),
     ]);
-    return { usage, subscription, payments: payments.data ?? [] };
+    const paidBefore = (payments.data ?? []).some((p) => p.status === "success");
+    return {
+      usage,
+      subscription,
+      payments: payments.data ?? [],
+      referrals,
+      inviteUrl: `${siteUrl}/register?ref=${code}`,
+      referralDiscount: Boolean(usage.profile.referred_by) && !paidBefore,
+    };
   });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) return <LoadProblem code="no_startup" />;
-  const { usage, subscription, payments } = loaded.data;
+  const { usage, subscription, payments, referrals, inviteUrl, referralDiscount } = loaded.data;
 
   const testMode = (process.env.PAYSTACK_SECRET_KEY ?? "").startsWith("sk_test_");
   const banner = typeof payment === "string" ? PAYMENT_MESSAGES[payment] : undefined;
@@ -117,40 +131,55 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
         <h2 id="buy-heading" className="text-lg font-semibold">
           {usage.proActive ? "Need more sessions?" : "Upgrade"}
         </h2>
-        <div className="grid gap-4 md:grid-cols-3">
-          {!usage.proActive ? (
-            <div className="bg-card border-primary ring-primary/20 flex flex-col gap-3 rounded-xl border p-5 ring-4">
-              <h3 className="font-semibold">Pro</h3>
-              <p>
-                <span className="text-3xl font-semibold">{naira(PRO_PLAN.priceKobo)}</span>
-                <span className="text-muted-foreground text-sm"> / month</span>
-              </p>
-              <ul className="grid gap-2 text-sm">
-                {["Unlimited assessments", `Up to ${PRO_PLAN.simulationsPerMonth} simulations a month`, "Every investor and difficulty", "PDF reports and progress tracking"].map((f) => (
-                  <li key={f} className="flex gap-2">
-                    <CheckIcon className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-auto">
-                <CheckoutButton product="pro_monthly">Upgrade to Pro</CheckoutButton>
-              </div>
-            </div>
-          ) : null}
-          {CREDIT_PACKS.map((pack) => (
-            <div key={pack.product} className="bg-card flex flex-col gap-3 rounded-xl border p-5">
-              <h3 className="font-semibold">{pack.simulations} simulation credits</h3>
-              <p className="text-3xl font-semibold">{naira(pack.priceKobo)}</p>
-              <p className="text-muted-foreground text-sm">One-off payment. No subscription.</p>
-              <div className="mt-auto">
-                <CheckoutButton product={pack.product as "credits_3" | "credits_10"} variant="outline">
-                  Buy {pack.simulations} credits
-                </CheckoutButton>
-              </div>
-            </div>
-          ))}
+        <BuyOptions
+          currencies={availableCurrencies()}
+          referralPercent={referralDiscount ? REFERRAL.friendPercentOff : null}
+          options={[
+            ...(usage.proActive
+              ? []
+              : [
+                  {
+                    product: "pro_monthly" as const,
+                    title: "Pro",
+                    perMonth: true,
+                    highlight: true,
+                    buttonLabel: "Upgrade to Pro",
+                    prices: { NGN: PRICES.NGN.pro_monthly, USD: PRICES.USD.pro_monthly },
+                    features: [
+                      "Unlimited assessments",
+                      `Up to ${PRO_PLAN.simulationsPerMonth} simulations a month`,
+                      "Every investor and difficulty",
+                      "PDF reports and progress tracking",
+                    ],
+                  },
+                ]),
+            ...CREDIT_PACKS.map((pack) => ({
+              product: pack.product,
+              title: `${pack.simulations} simulation credits`,
+              buttonLabel: `Buy ${pack.simulations} credits`,
+              note: "One-off payment. No subscription.",
+              prices: { NGN: PRICES.NGN[pack.product], USD: PRICES.USD[pack.product] },
+            })),
+          ]}
+        />
+      </section>
+
+      <section aria-labelledby="invite-heading" className="bg-card grid gap-3 rounded-xl border p-5">
+        <div>
+          <h2 id="invite-heading" className="text-lg font-semibold">
+            Invite founders
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            Share your link. Founders who join with it get {REFERRAL.friendPercentOff}% off their first purchase, and you get{" "}
+            {REFERRAL.referrerCredits} free simulation credits when they first pay.
+          </p>
         </div>
+        <InviteLink url={inviteUrl} />
+        <p className="text-muted-foreground text-sm">
+          {referrals.joined === 0
+            ? "Nobody has joined with your link yet."
+            : `${referrals.joined} ${referrals.joined === 1 ? "founder has" : "founders have"} joined with your link · ${referrals.creditsEarned} credits earned.`}
+        </p>
       </section>
 
       <section aria-labelledby="history-heading" className="grid gap-4">

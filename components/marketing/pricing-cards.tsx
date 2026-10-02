@@ -3,6 +3,7 @@ import { CheckIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { CREDIT_PACKS, FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
+import { PRICES, usdEnabled } from "@/lib/billing/prices";
 import { formatMoney, koboToNaira } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -44,49 +45,80 @@ const TIERS = [
     price: `From ${naira(CREDIT_PACKS[0].priceKobo)}`,
     period: "",
     description: "Pay as you go. No subscription.",
-    features: CREDIT_PACKS.map((p) => `${naira(p.priceKobo)} for ${p.simulations} simulations`),
+    features: CREDIT_PACKS.map(
+      (p) => `${naira(p.priceKobo)} for ${p.simulations} simulations`,
+    ),
     cta: "Get started",
     highlighted: false,
   },
 ];
 
+const usd = (cents: number) => formatMoney(cents / 100, "USD");
+
 export function PricingCards() {
   return (
-    <div className="grid gap-6 md:grid-cols-3">
-      {TIERS.map((tier) => (
-        <div
-          key={tier.name}
-          className={cn(
-            "bg-card flex flex-col rounded-xl border p-6",
-            tier.highlighted && "border-primary ring-primary/20 ring-4",
-          )}
-        >
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">{tier.name}</h3>
-            {tier.highlighted ? (
-              <span className="bg-primary text-primary-foreground rounded-full px-2.5 py-0.5 text-xs font-medium">
-                Most popular
+    <div className="grid gap-4">
+      <div className="grid gap-6 md:grid-cols-3">
+        {TIERS.map((tier) => (
+          <div
+            key={tier.name}
+            className={cn(
+              "bg-card flex flex-col rounded-xl border p-6",
+              tier.highlighted && "border-primary ring-primary/20 ring-4",
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">{tier.name}</h3>
+              {tier.highlighted ? (
+                <span className="bg-primary text-primary-foreground rounded-full px-2.5 py-0.5 text-xs font-medium">
+                  Most popular
+                </span>
+              ) : null}
+            </div>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {tier.description}
+            </p>
+            <p className="mt-6">
+              <span className="text-3xl font-semibold tracking-tight">
+                {tier.price}
               </span>
-            ) : null}
+              {tier.period ? (
+                <span className="text-muted-foreground ml-1 text-sm">
+                  {tier.period}
+                </span>
+              ) : null}
+            </p>
+            <ul className="mt-6 grid flex-1 content-start gap-3 text-sm">
+              {tier.features.map((f) => (
+                <li key={f} className="flex gap-2">
+                  <CheckIcon
+                    className="text-primary mt-0.5 size-4 shrink-0"
+                    aria-hidden="true"
+                  />
+                  {f}
+                </li>
+              ))}
+            </ul>
+            <Button
+              asChild
+              className="mt-8"
+              variant={tier.highlighted ? "default" : "outline"}
+            >
+              <Link href="/register">{tier.cta}</Link>
+            </Button>
           </div>
-          <p className="text-muted-foreground mt-1 text-sm">{tier.description}</p>
-          <p className="mt-6">
-            <span className="text-3xl font-semibold tracking-tight">{tier.price}</span>
-            {tier.period ? <span className="text-muted-foreground ml-1 text-sm">{tier.period}</span> : null}
-          </p>
-          <ul className="mt-6 grid flex-1 content-start gap-3 text-sm">
-            {tier.features.map((f) => (
-              <li key={f} className="flex gap-2">
-                <CheckIcon className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                {f}
-              </li>
-            ))}
-          </ul>
-          <Button asChild className="mt-8" variant={tier.highlighted ? "default" : "outline"}>
-            <Link href="/register">{tier.cta}</Link>
-          </Button>
-        </div>
-      ))}
+        ))}
+      </div>
+      {usdEnabled() ? (
+        <p className="text-muted-foreground text-sm">
+          Outside Nigeria? You can also pay in US dollars: Pro{" "}
+          {usd(PRICES.USD.pro_monthly)} a month,{" "}
+          {CREDIT_PACKS.map(
+            (p) => `${p.simulations} simulations ${usd(PRICES.USD[p.product])}`,
+          ).join(", ")}
+          .
+        </p>
+      ) : null}
     </div>
   );
 }
