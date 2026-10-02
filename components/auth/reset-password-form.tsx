@@ -10,13 +10,14 @@ import { initialFormState } from "@/lib/forms";
 import type { Messages } from "@/lib/i18n/messages/en";
 import { fill } from "@/lib/i18n/text";
 
-export function ResetPasswordForm({ t }: { t: Messages["auth"] }) {
+export function ResetPasswordForm({ t, next }: { t: Messages["auth"]; next?: string }) {
   const [state, action] = useActionState(resetPassword, initialFormState);
   const errors = state.fieldErrors;
 
   return (
     <form action={action} className="grid gap-4">
       <FormMessage status={state.status} message={state.message} />
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       <TextField
         name="password"
         label={t.reset.newPassword}

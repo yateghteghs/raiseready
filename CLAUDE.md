@@ -70,7 +70,10 @@ milestone at a time (spec section 11) and stop for review after each.
 - Staff: roles founder/viewer/support/admin/super_admin; permissions are pure rules in
   `lib/admin/permissions.ts`. Admin pages call `requireStaff(action)`; user
   actions go through `applyUserAction` (`lib/admin/users.ts`), which checks
-  permissions and audit-logs. Staff sign in at `/admin/login`.
+  permissions and audit-logs. Staff sign in at `/admin/login`. Staff are
+  created by invite (`lib/admin/staff.ts`, Admin → Users → Staff), never via
+  founder sign-up; invite links land on `/admin/welcome`. Staff skip founder
+  onboarding and are sent to `/admin`.
 - Account status (active/suspended/terminated) is enforced in `getSession`
   (`lib/auth/session.ts`) on every request, plus a Supabase Auth ban.
 - Notifications: `lib/notifications` (staff → one founder or everyone; RLS

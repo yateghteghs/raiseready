@@ -209,6 +209,16 @@ super admin in **Supabase → SQL Editor**:
 select private.set_user_role('you@example.com', 'super_admin');
 ```
 
+After that, add staff from **Admin → Users → Staff → Invite a staff member**
+(name, email, role). Staff don't sign up on the website: the invite creates
+their account and gives you a one-time link to send them (by email or
+WhatsApp). They choose a password on the admin welcome page and land in the
+admin area, with no founder onboarding. Links expire after an hour by
+default (Supabase → Authentication → Emails → "Email OTP expiration" sets
+this); a super admin can make a new one with **New sign-in link** on the
+Staff tab. Admins can invite viewers and support; only super admins can
+invite admins and super admins.
+
 Staff sign in at **`/admin/login`** with their RaiseReady email and password.
 Founder accounts are turned away there. Signed-in staff also see an **Admin**
 link in the app header.

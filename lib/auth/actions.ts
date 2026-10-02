@@ -164,7 +164,9 @@ async function resetPasswordInEnglish(_prev: FormState, formData: FormData): Pro
   if (error) logAuthError("password update", error);
   if (error) return { status: "error", message: friendlyAuthError(error) };
 
-  redirect("/app");
+  // Staff setting their first password continue to the admin area.
+  const next = safeNextPath(formData.get("next"));
+  redirect(next.startsWith("/admin") ? "/admin" : "/app");
 }
 
 export async function logout(): Promise<void> {

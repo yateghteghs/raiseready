@@ -120,6 +120,10 @@ export function createFakeDb() {
         filters.push((r) => r[col] === v);
         return builder;
       },
+      neq(col: string, v: unknown) {
+        filters.push((r) => r[col] !== v);
+        return builder;
+      },
       in(col: string, vs: unknown[]) {
         filters.push((r) => vs.includes(r[col]));
         return builder;

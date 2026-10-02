@@ -111,7 +111,8 @@ function rangeOf(paging: Paging): [number, number] {
 }
 
 /** Users, newest first, with their email and startup. `q` searches email, name and startup name. */
-export async function usersList(paging: Paging, q = "") {
+/** Founders and staff are listed separately; `kind` picks which. */
+export async function usersList(paging: Paging, q = "", kind: "founders" | "staff" | "all" = "all") {
   const admin = createAdminClient();
   const emails = await emailsById();
   const term = q.trim().toLowerCase().slice(0, 100);
@@ -135,6 +136,8 @@ export async function usersList(paging: Paging, q = "") {
   const [from, to] = rangeOf(paging);
   let query = admin.from("profiles").select("*", { count: "exact" }).order("created_at", { ascending: false }).range(from, to);
   if (ids) query = query.in("id", ids);
+  if (kind === "founders") query = query.eq("role", "founder");
+  if (kind === "staff") query = query.neq("role", "founder");
   const profiles = await query;
   const rows = rowsOf(profiles, "users");
   const startups = rows.length
