@@ -154,6 +154,11 @@ select rls_test.throws(
 insert into public.report_signature (id, signer_name, enabled) values (1, 'Signer', true);
 
 insert into public.discount_codes (code, percent_off) values ('LAUNCH20', 20);
+select rls_test.ok(
+  (select enabled and friend_percent_off = 10 and referrer_credits = 2 from public.referral_settings where id = 1),
+  'referral programme starts on, at 10% off and 2 credits');
+select rls_test.throws($$update public.referral_settings set friend_percent_off = 150$$, '23514', 'referral discount is 0-100%');
+select rls_test.throws($$insert into public.referral_settings (id) values (2)$$, '23514', 'there is only one referral settings row');
 select rls_test.throws($$insert into public.discount_codes (code, percent_off) values ('bad code!', 10)$$, '23514', 'discount codes are letters, digits, - and _');
 select rls_test.throws($$insert into public.discount_codes (code, percent_off) values ('FREE', 0)$$, '23514', 'discounts are 1-100%');
 select rls_test.throws(
@@ -423,6 +428,7 @@ select rls_test.throws(
   '42501', 'A cannot write activity records');
 select rls_test.throws('select * from public.app_errors', '42501', 'A cannot read the error log');
 select rls_test.throws('select * from public.discount_codes', '42501', 'A cannot list discount codes');
+select rls_test.throws($$update public.referral_settings set friend_percent_off = 100$$, '42501', 'A cannot change the referral programme');
 select rls_test.throws('select * from public.referral_rewards', '42501', 'A cannot read referral rewards directly');
 select rls_test.ok(
   (select array_agg(token_hash) from public.report_shares) = array['share-a'],

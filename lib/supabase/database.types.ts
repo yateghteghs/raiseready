@@ -313,6 +313,14 @@ type ReportShareRow = Timestamps & {
   last_viewed_at: string | null;
 };
 
+type ReferralSettingsRow = Timestamps & {
+  id: number;
+  enabled: boolean;
+  friend_percent_off: number;
+  referrer_credits: number;
+  updated_by: string | null;
+};
+
 type Table<Row, Optional extends keyof Row> = {
   Row: Row;
   Insert: InsertOf<Row, Optional>;
@@ -416,6 +424,7 @@ export type Database = {
       discount_redemptions: PlainTable<DiscountRedemptionRow, "id" | "user_id" | "payment_reference" | "created_at">;
       referral_rewards: PlainTable<ReferralRewardRow, "id" | "referrer_id" | "referred_id" | "payment_reference" | "created_at">;
       report_shares: Table<ReportShareRow, "id" | "revoked_at" | "views" | "last_viewed_at">;
+      referral_settings: Table<ReferralSettingsRow, "id" | "enabled" | "friend_percent_off" | "referrer_credits" | "updated_by">;
       report_signature: Table<ReportSignatureRow, "id" | "signer_name" | "signer_title" | "signature_path" | "enabled" | "updated_by">;
     };
     Views: { [_ in never]: never };
