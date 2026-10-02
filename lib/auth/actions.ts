@@ -1,10 +1,12 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 
 import { recordSignIn } from "@/lib/activity/service";
+import { REFERRAL_COOKIE } from "@/lib/referrals/code";
+import { linkReferral } from "@/lib/referrals/service";
 import { authErrorCode, friendlyAuthError, logAuthError } from "@/lib/auth/errors";
 import { safeNextPath } from "@/lib/auth/redirect";
 import {
@@ -76,6 +78,12 @@ export async function register(_prev: FormState, formData: FormData): Promise<Fo
     logAuthError("sign-up", error);
     return { status: "error", message: friendlyAuthError(error), values };
   }
+
+  // Arrived through a founder's invite link? Link the accounts. Supabase
+  // returns a user with no identities when the email is already registered,
+  // so existing accounts are never re-linked.
+  const ref = (await cookies()).get(REFERRAL_COOKIE)?.value;
+  if (ref && data.user && (data.user.identities?.length ?? 0) > 0) await linkReferral(data.user.id, ref);
 
   // With email confirmation off, Supabase signs the user in immediately.
   if (data.session) redirect("/app/onboarding");
