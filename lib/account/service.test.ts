@@ -60,9 +60,10 @@ beforeEach(() => {
     { id: "s2", user_id: USER, provider_subscription_code: "SUB_old", status: "cancelled" },
   ];
   db.payments = [
-    { id: "p1", user_id: USER, amount_kobo: 1_500_000, status: "success" },
-    { id: "p2", user_id: USER, amount_kobo: 500_000, status: "failed" },
-    { id: "p3", user_id: "someone-else", amount_kobo: 1_000_000, status: "success" },
+    { id: "p1", user_id: USER, amount_kobo: 1_500_000, status: "success", currency: "NGN" },
+    { id: "p2", user_id: USER, amount_kobo: 500_000, status: "failed", currency: "NGN" },
+    { id: "p3", user_id: "someone-else", amount_kobo: 1_000_000, status: "success", currency: "NGN" },
+    { id: "p4", user_id: USER, amount_kobo: 1_000, status: "success", currency: "USD" },
   ];
 });
 
@@ -82,8 +83,8 @@ describe("deleteAccount", () => {
         action: "account.deleted",
         target_id: USER,
         metadata: {
-          payments: 1,
-          paid_kobo: 1_500_000,
+          payments: 2,
+          paid: { NGN: 1_500_000, USD: 1_000 },
           files_removed: { documents: 2, reports: 1, images: 1 },
           subscriptions_cancelled: 1,
           by: "founder",

@@ -66,7 +66,7 @@ export async function overviewMetrics() {
       headCount(admin.from("simulations").select("id", head).eq("mode", "full")),
       admin.from("simulations").select("overall_score").eq("mode", "full").eq("status", "completed").limit(MAX_ROWS),
       headCount(admin.from("profiles").select("id", head).eq("plan", "pro")),
-      admin.from("payments").select("amount_kobo, product, status, created_at").limit(MAX_ROWS),
+      admin.from("payments").select("amount_kobo, product, status, created_at, currency").limit(MAX_ROWS),
       admin
         .from("ai_calls")
         .select("purpose, model, input_tokens, output_tokens, latency_ms, success, created_at, user_id")
@@ -92,7 +92,8 @@ export async function overviewMetrics() {
     simsCompleted: rowsOf(simsCompleted, "simulations").length,
     avgSimulation: avg(rowsOf(simsCompleted, "simulations")),
     pro,
-    revenue: revenueSummary(rowsOf(payments, "payments"), lagosMonthStart().toISOString()),
+    revenue: revenueSummary(rowsOf(payments, "payments"), lagosMonthStart().toISOString(), "NGN"),
+    revenueUsd: revenueSummary(rowsOf(payments, "payments"), lagosMonthStart().toISOString(), "USD"),
     ai: summariseAiCalls(rowsOf(aiCalls, "AI calls") as AiCallRow[]).total,
   };
 }
@@ -171,11 +172,18 @@ export async function paymentsList(paging: Paging) {
       .order("created_at", { ascending: false })
       .range(from, to),
     // Totals cover every payment, not just this page.
-    admin.from("payments").select("amount_kobo, product, status, created_at").limit(EXPORT_MAX),
+    admin.from("payments").select("amount_kobo, product, status, created_at, currency").limit(EXPORT_MAX),
     emailsById(),
   ]);
   const rows = rowsOf(payments, "payments").map((p) => ({ ...p, email: emails.get(p.user_id) ?? "" }));
-  return { rows, total: payments.count ?? rows.length, summary: revenueSummary(rowsOf(all, "payments"), lagosMonthStart().toISOString()) };
+  const allRows = rowsOf(all, "payments");
+  const monthStart = lagosMonthStart().toISOString();
+  return {
+    rows,
+    total: payments.count ?? rows.length,
+    summary: revenueSummary(allRows, monthStart, "NGN"),
+    summaryUsd: revenueSummary(allRows, monthStart, "USD"),
+  };
 }
 
 export async function aiUsage(days: number) {
@@ -218,7 +226,7 @@ export async function userDetail(userId: string) {
   const [authUser, startups, payments, history] = await Promise.all([
     admin.auth.admin.getUserById(userId),
     admin.from("startups").select("id, owner_id, name, stage, industry, country, logo_path").eq("owner_id", userId),
-    admin.from("payments").select("amount_kobo, status").eq("user_id", userId),
+    admin.from("payments").select("amount_kobo, status, currency").eq("user_id", userId),
     admin.from("audit_logs").select("action, actor_id, metadata, created_at").eq("target_id", userId).order("created_at", { ascending: false }).limit(20),
   ]);
   const startupRows = rowsOf(startups, "startups");
@@ -247,7 +255,8 @@ export async function userDetail(userId: string) {
       documents,
       assessments,
       simulations,
-      paidKobo: rowsOf(payments, "payments").filter((p) => p.status === "success").reduce((s, p) => s + p.amount_kobo, 0),
+      paidKobo: rowsOf(payments, "payments").filter((p) => p.status === "success" && p.currency !== "USD").reduce((s, p) => s + p.amount_kobo, 0),
+      paidCents: rowsOf(payments, "payments").filter((p) => p.status === "success" && p.currency === "USD").reduce((s, p) => s + p.amount_kobo, 0),
     },
     history: historyRows.map((h) => ({ ...h, actor: h.actor_id ? (actors.get(h.actor_id) ?? "Staff") : "System or the user" })),
   };

@@ -124,8 +124,13 @@ export function redFlagCounts(flags: { type: string; severity: string }[]) {
   });
 }
 
-export function revenueSummary(payments: { amount_kobo: number; product: string; status: string; created_at: string }[], monthStartIso: string) {
-  const paid = payments.filter((p) => p.status === "success");
+/** Revenue in one currency (amounts in its smallest unit). Payments without a currency count as naira. */
+export function revenueSummary(
+  payments: { amount_kobo: number; product: string; status: string; created_at: string; currency?: string | null }[],
+  monthStartIso: string,
+  currency: "NGN" | "USD" = "NGN",
+) {
+  const paid = payments.filter((p) => p.status === "success" && (p.currency ?? "NGN") === currency);
   const sum = (rows: typeof paid) => rows.reduce((s, p) => s + p.amount_kobo, 0);
   return {
     allTimeKobo: sum(paid),

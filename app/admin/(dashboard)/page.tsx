@@ -51,7 +51,11 @@ export default async function AdminOverview() {
         <h2 id="money-h" className="font-semibold">Revenue and AI cost</h2>
         <StatGrid>
           <Stat label="Revenue this month" value={formatMoney(koboToNaira(m.revenue.thisMonthKobo))} />
-          <Stat label="Revenue all time" value={formatMoney(koboToNaira(m.revenue.allTimeKobo))} />
+          <Stat
+            label="Revenue all time"
+            value={formatMoney(koboToNaira(m.revenue.allTimeKobo))}
+            hint={m.revenueUsd.allTimeKobo ? `plus ${formatMoney(m.revenueUsd.allTimeKobo / 100, "USD")} in dollars` : undefined}
+          />
           <Stat label="AI calls (30 days)" value={num(m.ai.calls)} hint={`${pct(m.ai.failureRate)} failed`} />
           <Stat label="Estimated AI cost (30 days)" value={usd(m.ai.costUsd)} hint={m.ai.unpricedCalls ? `${m.ai.unpricedCalls} calls on unpriced models` : undefined} />
         </StatGrid>

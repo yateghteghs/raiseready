@@ -108,7 +108,11 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
           hint={activity.failedLast30 >= 5 ? "Unusually many: check with them" : undefined}
         />
         <Stat label="Credits" value={num(profile.credits)} />
-        <Stat label="Paid in total" value={formatMoney(koboToNaira(user.counts.paidKobo))} />
+        <Stat
+          label="Paid in total"
+          value={formatMoney(koboToNaira(user.counts.paidKobo))}
+          hint={user.counts.paidCents ? `plus ${formatMoney(user.counts.paidCents / 100, "USD")}` : undefined}
+        />
         <Stat label="Documents" value={num(user.counts.documents)} />
         <Stat label="Assessments" value={num(user.counts.assessments)} />
         <Stat label="Simulations" value={num(user.counts.simulations)} />

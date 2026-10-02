@@ -14,7 +14,7 @@ const STATUS: Record<string, string> = { pending: "Pending", success: "Paid", fa
 export default async function AdminPayments({ searchParams }: PageProps<"/admin/payments">) {
   const staff = await requireStaff("view", "/admin/payments");
   const page = pageParam((await searchParams).page);
-  const { rows, total, summary } = await paymentsList({ page });
+  const { rows, total, summary, summaryUsd } = await paymentsList({ page });
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -24,8 +24,14 @@ export default async function AdminPayments({ searchParams }: PageProps<"/admin/
       <StatGrid>
         <Stat label="This month" value={formatMoney(koboToNaira(summary.thisMonthKobo))} />
         <Stat label="All time" value={formatMoney(koboToNaira(summary.allTimeKobo))} />
+        {summaryUsd.allTimeKobo ? (
+          <>
+            <Stat label="This month (USD)" value={formatMoney(summaryUsd.thisMonthKobo / 100, "USD")} />
+            <Stat label="All time (USD)" value={formatMoney(summaryUsd.allTimeKobo / 100, "USD")} />
+          </>
+        ) : null}
         {summary.byProduct.map((p) => (
-          <Stat key={p.product} label={productLabel(p.product)} value={formatMoney(koboToNaira(p.kobo))} hint={`${num(p.count)} paid`} />
+          <Stat key={p.product} label={productLabel(p.product)} value={formatMoney(koboToNaira(p.kobo))} hint={`${num(p.count)} paid in naira`} />
         ))}
       </StatGrid>
       <Table

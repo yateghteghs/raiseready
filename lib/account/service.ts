@@ -91,7 +91,7 @@ export async function deleteAccount(userId: string, options: { actorId?: string 
 
   const { data: payments, error: paymentsError } = await admin
     .from("payments")
-    .select("amount_kobo, status")
+    .select("amount_kobo, status, currency")
     .eq("user_id", userId);
   if (paymentsError) throw new Error(`Could not load payments: ${paymentsError.message}`);
   const paid = (payments ?? []).filter((p) => p.status === "success");
@@ -112,7 +112,8 @@ export async function deleteAccount(userId: string, options: { actorId?: string 
     target_id: userId,
     metadata: {
       payments: paid.length,
-      paid_kobo: paid.reduce((sum, p) => sum + p.amount_kobo, 0),
+      // Per currency, in each currency's smallest unit (kobo, cents).
+      paid: paid.reduce<Record<string, number>>((by, p) => ({ ...by, [p.currency]: (by[p.currency] ?? 0) + p.amount_kobo }), {}),
       files_removed: { documents, reports, images },
       subscriptions_cancelled: cancelled,
       by: options.actorId ? "staff" : "founder",
