@@ -154,6 +154,8 @@ select rls_test.throws(
 insert into public.report_signature (id, signer_name, enabled) values (1, 'Signer', true);
 
 insert into public.discount_codes (code, percent_off) values ('LAUNCH20', 20);
+insert into public.faq_items (locale, question, answer, published) values ('fr', 'Brouillon ?', 'Pas encore.', false);
+select rls_test.throws($$insert into public.faq_items (locale, question, answer) values ('de', 'Q', 'A')$$, '23514', 'FAQ entries use a supported language');
 select rls_test.ok(
   (select enabled and friend_percent_off = 10 and referrer_credits = 2 from public.referral_settings where id = 1),
   'referral programme starts on, at 10% off and 2 credits');
@@ -240,6 +242,9 @@ select rls_test.throws('select * from public.sign_in_events', '42501', 'anon can
 select rls_test.throws('select * from public.app_errors', '42501', 'anon cannot read the error log');
 select rls_test.throws('select public.prune_activity()', '42501', 'anon cannot prune activity');
 select rls_test.throws('select * from public.discount_codes', '42501', 'anon cannot read discount codes');
+select rls_test.ok((select count(*) from public.faq_items where locale = 'en') >= 10, 'anon can read the seeded FAQ');
+select rls_test.ok((select count(*) from public.faq_items where locale = 'fr') = 0, 'anon cannot see unpublished FAQ drafts');
+select rls_test.throws($$insert into public.faq_items (question, answer) values ('Spam?', 'Yes')$$, '42501', 'anon cannot add FAQ entries');
 select rls_test.throws('select * from public.report_shares', '42501', 'anon cannot read share links (the server checks them)');
 select rls_test.throws(
   $$insert into public.showcase_items (kind, name) values ('logo', 'Spam')$$,
@@ -434,6 +439,7 @@ select rls_test.throws(
   '42501', 'A cannot write activity records');
 select rls_test.throws('select * from public.app_errors', '42501', 'A cannot read the error log');
 select rls_test.throws('select * from public.discount_codes', '42501', 'A cannot list discount codes');
+select rls_test.throws($$update public.faq_items set answer = 'hacked'$$, '42501', 'A cannot edit the FAQ');
 select rls_test.throws($$update public.referral_settings set friend_percent_off = 100$$, '42501', 'A cannot change the referral programme');
 select rls_test.throws('select * from public.referral_rewards', '42501', 'A cannot read referral rewards directly');
 select rls_test.ok(

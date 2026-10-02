@@ -326,6 +326,18 @@ type ReferralSettingsRow = Timestamps & {
   updated_by: string | null;
 };
 
+type FaqItemRow = Timestamps & {
+  id: string;
+  slug: string | null;
+  locale: string;
+  category: string;
+  question: string;
+  answer: string;
+  position: number;
+  published: boolean;
+  created_by: string | null;
+};
+
 type Table<Row, Optional extends keyof Row> = {
   Row: Row;
   Insert: InsertOf<Row, Optional>;
@@ -436,6 +448,7 @@ export type Database = {
         ReferralSettingsRow,
         "id" | "enabled" | "friend_percent_off" | "referrer_credits" | "min_spend_ngn" | "min_spend_usd" | "updated_by"
       >;
+      faq_items: Table<FaqItemRow, "id" | "slug" | "locale" | "category" | "position" | "published" | "created_by">;
       report_signature: Table<ReportSignatureRow, "id" | "signer_name" | "signer_title" | "signature_path" | "enabled" | "updated_by">;
     };
     Views: { [_ in never]: never };
