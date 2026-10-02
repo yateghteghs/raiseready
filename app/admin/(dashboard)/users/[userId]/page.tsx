@@ -28,6 +28,8 @@ const HISTORY_LABELS: Record<string, string> = {
   "billing.amount_mismatch": "Payment amount mismatch",
   "admin.password_reset_sent": "Password reset email sent",
   "admin.credits_granted": "Free credits added",
+  "billing.referral_rewarded": "Referral credits earned",
+  "billing.renewal_not_started": "Pro won't renew (discounted month)",
 };
 
 export default async function AdminUserPage({ params }: PageProps<"/admin/users/[userId]">) {
@@ -117,6 +119,7 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
         <Stat label="Assessments" value={num(user.counts.assessments)} />
         <Stat label="Simulations" value={num(user.counts.simulations)} />
         <Stat label="Country" value={profile.country ?? "–"} />
+        <Stat label="Founders invited" value={num(user.referrals.invited)} hint={user.referrals.invitedBy ? `Invited by ${user.referrals.invitedBy}` : undefined} />
       </StatGrid>
 
       <section className="grid gap-3" aria-labelledby="startup-h">

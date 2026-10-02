@@ -21,6 +21,7 @@ export type StaffAction =
   | "reset_password"
   | "grant_credits"
   | "manage_content"
+  | "manage_discounts"
   | "export";
 
 const ADMIN_ACTIONS: StaffAction[] = ["view", "suspend", "terminate", "delete", "change_role", "notify", "export"];
@@ -30,7 +31,7 @@ const PERMISSIONS: Record<UserRole, readonly StaffAction[]> = {
   viewer: ["view"],
   support: ["view", "suspend"],
   admin: ADMIN_ACTIONS,
-  super_admin: [...ADMIN_ACTIONS, "reset_password", "grant_credits", "manage_content"],
+  super_admin: [...ADMIN_ACTIONS, "reset_password", "grant_credits", "manage_content", "manage_discounts"],
 };
 
 /** Roles only a super admin may give, take away or act on. */

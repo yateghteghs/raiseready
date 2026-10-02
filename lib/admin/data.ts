@@ -233,7 +233,13 @@ export async function userDetail(userId: string) {
   const startupIds = startupRows.map((s) => s.id);
   const count = (table: "documents" | "assessments" | "simulations") =>
     startupIds.length ? headCount(admin.from(table).select("id", { count: "exact", head: true }).in("startup_id", startupIds)) : Promise.resolve(0);
-  const [documents, assessments, simulations] = await Promise.all([count("documents"), count("assessments"), count("simulations")]);
+  const [documents, assessments, simulations, invited, invitedBy] = await Promise.all([
+    count("documents"),
+    count("assessments"),
+    count("simulations"),
+    headCount(admin.from("profiles").select("id", { count: "exact", head: true }).eq("referred_by", userId)),
+    profile.referred_by ? admin.auth.admin.getUserById(profile.referred_by).then((r) => r.data.user?.email ?? "a deleted account") : Promise.resolve(null),
+  ]);
 
   const startup = startupRows[0] ?? null;
   const links = await imageLinks([
@@ -251,6 +257,7 @@ export async function userDetail(userId: string) {
     startup,
     avatarUrl: profile.avatar_path ? (links[profile.avatar_path] ?? null) : null,
     logoUrl: startup?.logo_path ? (links[startup.logo_path] ?? null) : null,
+    referrals: { invited, invitedBy },
     counts: {
       documents,
       assessments,
