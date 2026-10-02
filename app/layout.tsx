@@ -1,11 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { dirOf } from "@/lib/i18n/config";
+import { getLocale } from "@/lib/i18n/server";
+
 import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  // latin-ext and vietnamese cover Yoruba and Igbo letters such as ẹ, ọ, ṣ and ụ.
+  subsets: ["latin", "latin-ext", "vietnamese"],
 });
 
 const geistMono = Geist_Mono({
@@ -27,10 +31,12 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await getLocale();
   return (
     <html
-      lang="en"
+      lang={locale}
+      dir={dirOf(locale)}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">{children}</body>

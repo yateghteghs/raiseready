@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/client";
  * dashboard; everyone else sees log in / sign up. The page stays static: the
  * session is read in the browser after load.
  */
-export function AuthActions() {
+export function AuthActions({ labels }: { labels: { logIn: string; getStarted: string; goToDashboard: string } }) {
   const [signedIn, setSignedIn] = useState(false);
 
   useEffect(() => {
@@ -32,17 +32,17 @@ export function AuthActions() {
   if (signedIn) {
     return (
       <Button asChild size="sm">
-        <Link href="/app">Go to dashboard</Link>
+        <Link href="/app">{labels.goToDashboard}</Link>
       </Button>
     );
   }
   return (
     <>
       <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-        <Link href="/login">Log in</Link>
+        <Link href="/login">{labels.logIn}</Link>
       </Button>
       <Button asChild size="sm">
-        <Link href="/register">Get started</Link>
+        <Link href="/register">{labels.getStarted}</Link>
       </Button>
     </>
   );

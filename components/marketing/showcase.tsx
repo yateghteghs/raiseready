@@ -16,13 +16,13 @@ function Logo({ item, className }: { item: ShowcaseItem; className: string }) {
 }
 
 /** "Founders who practised with RaiseReady" strip of startup logos. */
-export function LogoStrip({ items }: { items: ShowcaseItem[] }) {
+export function LogoStrip({ items, title }: { items: ShowcaseItem[]; title: string }) {
   if (!items.length) return null;
   return (
     <section aria-labelledby="logos-h" className="border-b">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <h2 id="logos-h" className="text-muted-foreground text-center text-sm font-medium">
-          Founders from these startups have practised with RaiseReady
+          {title}
         </h2>
         <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
           {items.map((i) => (

@@ -7,8 +7,10 @@ import { FormMessage, TextField } from "@/components/forms/fields";
 import { resetPassword } from "@/lib/auth/actions";
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/schemas";
 import { initialFormState } from "@/lib/forms";
+import type { Messages } from "@/lib/i18n/messages/en";
+import { fill } from "@/lib/i18n/text";
 
-export function ResetPasswordForm() {
+export function ResetPasswordForm({ t }: { t: Messages["auth"] }) {
   const [state, action] = useActionState(resetPassword, initialFormState);
   const errors = state.fieldErrors;
 
@@ -17,22 +19,22 @@ export function ResetPasswordForm() {
       <FormMessage status={state.status} message={state.message} />
       <TextField
         name="password"
-        label="New password"
+        label={t.reset.newPassword}
         type="password"
         autoComplete="new-password"
         minLength={PASSWORD_MIN_LENGTH}
-        hint={`At least ${PASSWORD_MIN_LENGTH} characters.`}
+        hint={fill(t.passwordHint, { min: PASSWORD_MIN_LENGTH })}
         errors={errors}
       />
       <TextField
         name="confirm_password"
-        label="Confirm new password"
+        label={t.reset.confirm}
         type="password"
         autoComplete="new-password"
         errors={errors}
       />
-      <SubmitButton pendingText="Saving…" className="w-full">
-        Set new password
+      <SubmitButton pendingText={t.reset.pending} className="w-full">
+        {t.reset.submit}
       </SubmitButton>
     </form>
   );

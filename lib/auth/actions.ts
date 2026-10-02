@@ -17,6 +17,7 @@ import {
 } from "@/lib/auth/schemas";
 import { isSupabaseConfigured } from "@/lib/env";
 import { formValues, validationFailed, type FormState } from "@/lib/forms";
+import { localiseState } from "@/lib/i18n/server";
 import { getSiteUrl } from "@/lib/site-url";
 import { createClient } from "@/lib/supabase/server";
 
@@ -33,7 +34,12 @@ function safeValues(formData: FormData) {
   return values;
 }
 
-export async function login(_prev: FormState, formData: FormData): Promise<FormState> {
+/** Results are translated into the visitor's language. */
+export async function login(prev: FormState, formData: FormData): Promise<FormState> {
+  return localiseState(await loginInEnglish(prev, formData));
+}
+
+async function loginInEnglish(_prev: FormState, formData: FormData): Promise<FormState> {
   if (!isSupabaseConfigured()) return NOT_CONFIGURED;
   const values = safeValues(formData);
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
@@ -58,7 +64,12 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
   redirect(safeNextPath(formData.get("next")));
 }
 
-export async function register(_prev: FormState, formData: FormData): Promise<FormState> {
+/** Results are translated into the visitor's language. */
+export async function register(prev: FormState, formData: FormData): Promise<FormState> {
+  return localiseState(await registerInEnglish(prev, formData));
+}
+
+async function registerInEnglish(_prev: FormState, formData: FormData): Promise<FormState> {
   if (!isSupabaseConfigured()) return NOT_CONFIGURED;
   const values = safeValues(formData);
   const parsed = registerSchema.safeParse(Object.fromEntries(formData));
@@ -94,10 +105,12 @@ export async function register(_prev: FormState, formData: FormData): Promise<Fo
   };
 }
 
-export async function requestPasswordReset(
-  _prev: FormState,
-  formData: FormData,
-): Promise<FormState> {
+/** Results are translated into the visitor's language. */
+export async function requestPasswordReset(prev: FormState, formData: FormData): Promise<FormState> {
+  return localiseState(await requestPasswordResetInEnglish(prev, formData));
+}
+
+async function requestPasswordResetInEnglish(_prev: FormState, formData: FormData): Promise<FormState> {
   if (!isSupabaseConfigured()) return NOT_CONFIGURED;
   const values = safeValues(formData);
   const parsed = forgotPasswordSchema.safeParse(Object.fromEntries(formData));
@@ -121,7 +134,12 @@ export async function requestPasswordReset(
   };
 }
 
-export async function resetPassword(_prev: FormState, formData: FormData): Promise<FormState> {
+/** Results are translated into the visitor's language. */
+export async function resetPassword(prev: FormState, formData: FormData): Promise<FormState> {
+  return localiseState(await resetPasswordInEnglish(prev, formData));
+}
+
+async function resetPasswordInEnglish(_prev: FormState, formData: FormData): Promise<FormState> {
   if (!isSupabaseConfigured()) return NOT_CONFIGURED;
   const parsed = resetPasswordSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return validationFailed(parsed.error, {});

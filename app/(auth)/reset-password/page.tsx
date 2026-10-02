@@ -4,33 +4,37 @@ import Link from "next/link";
 import { AuthCard } from "@/components/auth/auth-card";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 import { getCurrentUser } from "@/lib/auth/session";
+import { getMessages } from "@/lib/i18n/server";
+import { fill } from "@/lib/i18n/text";
 
-export const metadata: Metadata = { title: "Set a new password" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await getMessages();
+  return { title: m.auth.reset.title };
+}
 
 export default async function ResetPasswordPage() {
-  const user = await getCurrentUser();
+  const [user, { m }] = await Promise.all([getCurrentUser(), getMessages()]);
+  const t = m.auth.reset;
 
   if (!user) {
     return (
       <AuthCard
-        title="Link expired"
-        description="This password reset link is invalid or has expired."
+        title={t.expiredTitle}
+        description={t.expiredDescription}
         footer={
           <Link href="/forgot-password" className="text-foreground font-medium underline-offset-4 hover:underline">
-            Request a new link
+            {t.requestNew}
           </Link>
         }
       >
-        <p className="text-muted-foreground text-sm">
-          Reset links can only be used once and expire after a short time.
-        </p>
+        <p className="text-muted-foreground text-sm">{t.expiredBody}</p>
       </AuthCard>
     );
   }
 
   return (
-    <AuthCard title="Set a new password" description={user.email ? `For ${user.email}` : undefined}>
-      <ResetPasswordForm />
+    <AuthCard title={t.title} description={user.email ? fill(t.forEmail, { email: user.email }) : undefined}>
+      <ResetPasswordForm t={m.auth} />
     </AuthCard>
   );
 }

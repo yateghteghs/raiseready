@@ -92,3 +92,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Arabic script needs more room between lines than Latin headings get. */
+:lang(ar) :is(h1, h2, h3) {
+  line-height: 1.45;
+}

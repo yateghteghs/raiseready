@@ -3,34 +3,50 @@ import Link from "next/link";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { RegisterForm } from "@/components/auth/register-form";
+import { getMessages } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Create your account" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await getMessages();
+  return { title: m.auth.register.title };
+}
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  const { m } = await getMessages();
+  const t = m.auth.register;
+  // "{terms}" and "{privacy}" become links; the words around them come from the translation.
+  const [before, middle, after] = t.agree.split(/\{terms\}|\{privacy\}/);
+  const termsFirst = t.agree.indexOf("{terms}") < t.agree.indexOf("{privacy}");
+  const terms = (
+    <Link href="/terms" className="underline underline-offset-4">
+      {t.terms}
+    </Link>
+  );
+  const privacy = (
+    <Link href="/privacy" className="underline underline-offset-4">
+      {t.privacy}
+    </Link>
+  );
+
   return (
     <AuthCard
-      title="Create your account"
-      description="Test your fundraising readiness before you meet investors."
+      title={t.title}
+      description={t.description}
       footer={
         <p>
-          Already have an account?{" "}
+          {t.haveAccount}{" "}
           <Link href="/login" className="text-foreground font-medium underline-offset-4 hover:underline">
-            Log in
+            {t.logIn}
           </Link>
         </p>
       }
     >
-      <RegisterForm />
+      <RegisterForm t={m.auth} />
       <p className="text-muted-foreground mt-4 text-xs">
-        By creating an account you agree to our{" "}
-        <Link href="/terms" className="underline underline-offset-4">
-          Terms
-        </Link>{" "}
-        and{" "}
-        <Link href="/privacy" className="underline underline-offset-4">
-          Privacy Policy
-        </Link>
-        .
+        {before}
+        {termsFirst ? terms : privacy}
+        {middle}
+        {termsFirst ? privacy : terms}
+        {after}
       </p>
     </AuthCard>
   );

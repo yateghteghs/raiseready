@@ -1,59 +1,59 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { PricingCards } from "@/components/marketing/pricing-cards";
 import { PageHero, Section } from "@/components/marketing/section";
 import { FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
+import { publishedFaq } from "@/lib/faq/service";
+import { getMessages } from "@/lib/i18n/server";
+import { fill } from "@/lib/i18n/text";
 
 export const metadata: Metadata = {
   title: "Pricing",
   description: "Start free. Upgrade to Pro or buy simulation credits when you're actively raising.",
 };
 
-const FAQ = [
-  {
-    q: "What counts as a simulation?",
-    a: "One full Investor Room session with one investor, from the first question to your results.",
-  },
-  {
-    q: "Do credits expire?",
-    a: "Credits are for pay-as-you-go use without a subscription. We'll show any expiry terms clearly before you buy.",
-  },
-  {
-    q: "How do I pay?",
-    a: "Payments are in naira and handled by Paystack. RaiseReady never sees or stores your card details.",
-  },
-  {
-    q: "Can I cancel Pro?",
-    a: "Yes. You keep Pro until the end of the month you've paid for, then return to the Free plan.",
-  },
-];
+/** FAQ entries shown under the prices, by slug, in this order. */
+const PRICING_QUESTIONS = ["free-plan", "pro-plan", "credits", "how-to-pay", "cancel-pro", "discounts-invites"];
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const { locale, m } = await getMessages();
+  const t = m.pricingPage;
+  const faq = await publishedFaq(locale);
+  const items = faq.sections
+    .flatMap((s) => s.items)
+    .filter((i) => i.slug && PRICING_QUESTIONS.includes(i.slug))
+    .sort((a, b) => PRICING_QUESTIONS.indexOf(a.slug!) - PRICING_QUESTIONS.indexOf(b.slug!));
+
   return (
     <>
-      <PageHero eyebrow="Pricing" title="Practise as much as you need">
-        Start with a free assessment and simulation. Upgrade when you&apos;re preparing for real meetings.
+      <PageHero eyebrow={t.eyebrow} title={t.title}>
+        {t.intro}
       </PageHero>
       <Section>
-        <PricingCards />
+        <PricingCards t={m.pricing} />
         <p className="text-muted-foreground mt-6 text-sm">
-          Free includes {FREE_PLAN.assessments} assessment and {FREE_PLAN.simulations} simulation in total.
-          Pro includes up to {PRO_PLAN.simulationsPerMonth} simulations each month. Prices are in Nigerian
-          naira.
+          {fill(t.note, { assessments: FREE_PLAN.assessments, simulations: FREE_PLAN.simulations, pro: PRO_PLAN.simulationsPerMonth })}
         </p>
       </Section>
-      <div className="bg-muted/40 border-t">
-        <Section title="Questions">
-          <dl className="grid gap-8 md:grid-cols-2">
-            {FAQ.map((item) => (
-              <div key={item.q}>
-                <dt className="font-semibold">{item.q}</dt>
-                <dd className="text-muted-foreground mt-2 text-sm">{item.a}</dd>
-              </div>
-            ))}
-          </dl>
-        </Section>
-      </div>
+      {items.length ? (
+        <div className="bg-muted/40 border-t">
+          <Section title={t.questions}>
+            {faq.locale !== locale ? <p className="text-muted-foreground -mt-4 mb-8 text-sm">{m.faq.inEnglish}</p> : null}
+            <dl className="grid gap-8 md:grid-cols-2" lang={faq.locale}>
+              {items.map((item) => (
+                <div key={item.id}>
+                  <dt className="font-semibold">{item.question}</dt>
+                  <dd className="text-muted-foreground mt-2 text-sm whitespace-pre-line">{item.answer}</dd>
+                </div>
+              ))}
+            </dl>
+            <Link href="/faq" className="text-primary mt-8 inline-block text-sm font-medium underline-offset-4 hover:underline">
+              {t.allQuestions}
+            </Link>
+          </Section>
+        </div>
+      ) : null}
     </>
   );
 }

@@ -7,8 +7,10 @@ import { FormMessage, TextField } from "@/components/forms/fields";
 import { register } from "@/lib/auth/actions";
 import { PASSWORD_MIN_LENGTH } from "@/lib/auth/schemas";
 import { initialFormState } from "@/lib/forms";
+import type { Messages } from "@/lib/i18n/messages/en";
+import { fill } from "@/lib/i18n/text";
 
-export function RegisterForm() {
+export function RegisterForm({ t }: { t: Messages["auth"] }) {
   const [state, action] = useActionState(register, initialFormState);
   const errors = state.fieldErrors;
 
@@ -21,14 +23,14 @@ export function RegisterForm() {
       <FormMessage status={state.status} message={state.message} />
       <TextField
         name="full_name"
-        label="Full name"
+        label={t.fullName}
         autoComplete="name"
         defaultValue={state.values?.full_name}
         errors={errors}
       />
       <TextField
         name="email"
-        label="Email"
+        label={t.email}
         type="email"
         autoComplete="email"
         defaultValue={state.values?.email}
@@ -36,15 +38,15 @@ export function RegisterForm() {
       />
       <TextField
         name="password"
-        label="Password"
+        label={t.password}
         type="password"
         autoComplete="new-password"
         minLength={PASSWORD_MIN_LENGTH}
-        hint={`At least ${PASSWORD_MIN_LENGTH} characters.`}
+        hint={fill(t.passwordHint, { min: PASSWORD_MIN_LENGTH })}
         errors={errors}
       />
-      <SubmitButton pendingText="Creating account…" className="w-full">
-        Create account
+      <SubmitButton pendingText={t.register.pending} className="w-full">
+        {t.register.submit}
       </SubmitButton>
     </form>
   );

@@ -6,12 +6,12 @@ import { publishedShowcase } from "@/lib/showcase/service";
 import { SITE } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Partners", description: "Organisations RaiseReady works with." };
-export const revalidate = 3600;
 
 export default async function PartnersPage() {
   const partners = await publishedShowcase("partner");
   return (
-    <>
+    // Not translated yet: keep English text left to right in every language.
+    <div lang="en" dir="ltr">
       <PageHero eyebrow="Partners" title="Who we work with">
         Accelerators, hubs and programmes that help founders get investor-ready with RaiseReady.
       </PageHero>
@@ -25,6 +25,6 @@ export default async function PartnersPage() {
           </p>
         )}
       </Section>
-    </>
+    </div>
   );
 }

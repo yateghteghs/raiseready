@@ -7,8 +7,9 @@ import { SubmitButton } from "@/components/auth/submit-button";
 import { FormMessage, TextField } from "@/components/forms/fields";
 import { login } from "@/lib/auth/actions";
 import { initialFormState } from "@/lib/forms";
+import type { Messages } from "@/lib/i18n/messages/en";
 
-export function LoginForm({ next }: { next?: string }) {
+export function LoginForm({ next, t }: { next?: string; t: Messages["auth"] }) {
   const [state, action] = useActionState(login, initialFormState);
   const errors = state.fieldErrors;
 
@@ -18,7 +19,7 @@ export function LoginForm({ next }: { next?: string }) {
       <FormMessage status={state.status} message={state.message} />
       <TextField
         name="email"
-        label="Email"
+        label={t.email}
         type="email"
         autoComplete="email"
         defaultValue={state.values?.email}
@@ -27,7 +28,7 @@ export function LoginForm({ next }: { next?: string }) {
       <div className="grid gap-2">
         <TextField
           name="password"
-          label="Password"
+          label={t.password}
           type="password"
           autoComplete="current-password"
           errors={errors}
@@ -36,11 +37,11 @@ export function LoginForm({ next }: { next?: string }) {
           href="/forgot-password"
           className="text-muted-foreground hover:text-foreground justify-self-end text-sm underline-offset-4 hover:underline"
         >
-          Forgot password?
+          {t.login.forgot}
         </Link>
       </div>
-      <SubmitButton pendingText="Logging in…" className="w-full">
-        Log in
+      <SubmitButton pendingText={t.login.pending} className="w-full">
+        {t.login.submit}
       </SubmitButton>
     </form>
   );

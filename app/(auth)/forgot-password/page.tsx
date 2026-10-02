@@ -3,21 +3,27 @@ import Link from "next/link";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
+import { getMessages } from "@/lib/i18n/server";
 
-export const metadata: Metadata = { title: "Reset your password" };
+export async function generateMetadata(): Promise<Metadata> {
+  const { m } = await getMessages();
+  return { title: m.auth.forgot.title };
+}
 
-export default function ForgotPasswordPage() {
+export default async function ForgotPasswordPage() {
+  const { m } = await getMessages();
+  const t = m.auth.forgot;
   return (
     <AuthCard
-      title="Reset your password"
-      description="Enter your email and we'll send you a link to set a new password."
+      title={t.title}
+      description={t.description}
       footer={
         <Link href="/login" className="text-foreground font-medium underline-offset-4 hover:underline">
-          Back to log in
+          {t.back}
         </Link>
       }
     >
-      <ForgotPasswordForm />
+      <ForgotPasswordForm t={m.auth} />
     </AuthCard>
   );
 }

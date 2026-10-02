@@ -22,7 +22,7 @@ export default async function SharedReportPage({ params }: PageProps<"/shared/[t
   if (!shared) notFound();
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div lang="en" dir="ltr" className="flex flex-1 flex-col">
       <header className="border-b">
         <div className="mx-auto flex h-16 max-w-3xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link href="/" aria-label="RaiseReady home">

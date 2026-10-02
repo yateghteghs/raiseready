@@ -40,7 +40,8 @@ const PERSONAS = [
 
 export default function HowItWorksPage() {
   return (
-    <>
+    // Not translated yet: keep English text left to right in every language.
+    <div lang="en" dir="ltr">
       <PageHero eyebrow="How it works" title="From pitch deck to pitch that holds up">
         RaiseReady gives you the questions investors will ask, before you&apos;re in the room.
       </PageHero>
@@ -102,6 +103,6 @@ export default function HowItWorksPage() {
           </Button>
         </div>
       </Section>
-    </>
+    </div>
   );
 }

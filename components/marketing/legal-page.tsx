@@ -13,7 +13,7 @@ export function ContactEmail() {
 
 export function LegalPage({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <article className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
+    <article lang="en" dir="ltr" className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-20">
       <div
         role="note"
         className="border-warning bg-warning/15 mb-8 rounded-lg border px-4 py-3 text-sm font-medium"

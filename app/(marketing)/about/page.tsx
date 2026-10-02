@@ -26,7 +26,8 @@ const PRINCIPLES = [
 
 export default function AboutPage() {
   return (
-    <>
+    // Not translated yet: keep English text left to right in every language.
+    <div lang="en" dir="ltr">
       <PageHero eyebrow="About" title="Every founder deserves a practice round">
         Most founders get very few chances in front of investors. A meeting that goes badly because
         of an unprepared answer is a chance you rarely get back.
@@ -67,6 +68,6 @@ export default function AboutPage() {
           </Button>
         </div>
       </Section>
-    </>
+    </div>
   );
 }

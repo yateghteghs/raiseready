@@ -69,6 +69,10 @@ export default function PrivacyPage() {
           <strong>Messages:</strong> notifications the RaiseReady team sends you in the app, and
           whether you have read them.
         </li>
+        <li>
+          <strong>Language:</strong> if you choose a language, a small cookie on your device remembers
+          it for a year. It contains only the language.
+        </li>
       </ul>
 
       <h2>What is sent to our AI provider</h2>

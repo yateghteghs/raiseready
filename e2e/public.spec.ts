@@ -16,6 +16,7 @@ const PUBLIC_PAGES = [
   "/admin/login",
   "/testimonials",
   "/partners",
+  "/faq",
 ];
 
 for (const path of PUBLIC_PAGES) {
@@ -35,6 +36,35 @@ for (const path of PUBLIC_PAGES) {
     expect(errors, "no script errors or blocked resources").toEqual([]);
   });
 }
+
+// Translated pages in a right-to-left language and one with many accents.
+for (const locale of ["ar", "yo"]) {
+  for (const path of ["/", "/pricing", "/faq", "/login", "/register"]) {
+    test(`${path} in ${locale} loads and fits the screen`, async ({ page, context, baseURL }) => {
+      await context.addCookies([{ name: "rr_locale", value: locale, url: baseURL! }]);
+      const errors: string[] = [];
+      page.on("pageerror", (e) => errors.push(e.message));
+      await page.goto(path);
+      await expect(page.locator("html")).toHaveAttribute("lang", locale);
+      await expect(page.locator("html")).toHaveAttribute("dir", locale === "ar" ? "rtl" : "ltr");
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      expect(overflow, "no sideways scrolling").toBeLessThanOrEqual(0);
+      expect(errors).toEqual([]);
+    });
+  }
+}
+
+test("visitors can switch language, and untranslated pages stay in English", async ({ page }) => {
+  await page.goto("/");
+  await page.locator("footer select[name=locale]").selectOption("fr");
+  await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Entraînez-vous d'abord avec l'IA/);
+  await page.goto("/privacy");
+  await expect(page.locator("article")).toHaveAttribute("lang", "en");
+  await page.locator("footer select[name=locale]").selectOption("en");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+});
 
 test("legal pages are marked as drafts", async ({ page }) => {
   for (const path of ["/privacy", "/terms"]) {

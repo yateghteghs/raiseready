@@ -16,7 +16,7 @@ export default async function AdminLoginPage({ searchParams }: PageProps<"/admin
   if (await getStaff()) redirect(next?.startsWith("/admin") ? next : "/admin");
 
   return (
-    <div className="bg-muted/40 flex flex-1 flex-col">
+    <div lang="en" dir="ltr" className="bg-muted/40 flex flex-1 flex-col">
       <header className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-6">
         <Link href="/" aria-label="RaiseReady home" className="inline-flex items-center gap-2">
           <Logo />

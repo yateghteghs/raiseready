@@ -151,7 +151,7 @@ history.
 | Viewer | See the admin dashboard. |
 | Support | Also suspend and reactivate founders. |
 | Admin | Also terminate and delete users, send notifications, and give roles up to Support. |
-| Super admin | Everything: send password reset emails, add free credits, manage admins, edit the website's logos/testimonials/partners, and set the report signature. |
+| Super admin | Everything: send password reset emails, add free credits, manage admins, edit the website's logos/testimonials/partners and the FAQ, and set the report signature. |
 
 | Action | What happens |
 |---|---|
@@ -170,6 +170,7 @@ Other admin pages:
 - **Notifications** (admin and super admin): message one founder or everyone. Messages appear under the bell in the app header.
 - **Discounts** (super admin): the referral programme settings, and discount codes (create, turn off, see how often each was used).
 - **Website** (super admin): startup logos, testimonials and partners shown on the home page, `/testimonials` and `/partners`. Tick the permission box only when the company or person has agreed to appear.
+- **FAQ** (super admin): the questions and answers on `/faq` (the most useful pricing ones also appear on the Pricing page). Pick a language at the top. Add, edit, hide or delete entries, and set their order. On another language's tab, **Not yet in …** lists the English questions without a translation; **Translate** shows the English original next to the form. A language with no published entries shows the English FAQ, with a note saying so. Once a language has any published entries, only those are shown, so translate them all before publishing.
 - **Report signature** (super admin): the name, title and signature image printed as "Issued by RaiseReady" at the end of new PDF reports. Founders' company logos are added to their reports automatically.
 
 Nobody can change their own account from the admin area, so keep at least
@@ -180,7 +181,26 @@ Protect admin accounts with strong, unique passwords, and turn on
 two-factor authentication for your Supabase, Vercel, GitHub and Paystack
 accounts.
 
-## 6. Automated tests in GitHub
+## 6. Languages
+
+Visitors choose a language from the menu in the header or footer: English,
+French, Portuguese, Swahili, Arabic (right to left), Hausa, Yoruba or Igbo.
+The choice is remembered on their device.
+
+Translated so far: the header and footer, home, pricing, FAQ, sign-up, log-in
+and password pages, including their error messages. Everything else,
+including the app itself and the AI investor, is still in English.
+
+Before launch:
+- [ ] Ask a native speaker to check the Hausa, Yoruba and Igbo text, and
+      ideally the others too. The text is in `lib/i18n/messages/` (one file
+      per language). Send me corrections, or edit the files directly; the
+      tests check that no entry is missing.
+- [ ] The privacy policy and terms stay in English (the footer says so).
+      Translate them only once a lawyer has approved the English versions,
+      and have the translations checked too.
+
+## 7. Automated tests in GitHub
 
 Every push runs, in GitHub Actions (**Actions** tab), the same checks used
 during development:
@@ -217,7 +237,7 @@ E2E_BASE_URL=https://<your-site> E2E_SUPABASE_URL=… E2E_SUPABASE_SERVICE_ROLE_
   npx playwright test --project=core-loop
 ```
 
-## 7. Before launch
+## 8. Before launch
 
 - [ ] Legal review of `/privacy` and `/terms`, then remove the
       "DRAFT: requires legal review" notices. Ask the reviewer:

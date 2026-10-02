@@ -6,8 +6,9 @@ import { SubmitButton } from "@/components/auth/submit-button";
 import { FormMessage, TextField } from "@/components/forms/fields";
 import { requestPasswordReset } from "@/lib/auth/actions";
 import { initialFormState } from "@/lib/forms";
+import type { Messages } from "@/lib/i18n/messages/en";
 
-export function ForgotPasswordForm() {
+export function ForgotPasswordForm({ t }: { t: Messages["auth"] }) {
   const [state, action] = useActionState(requestPasswordReset, initialFormState);
 
   if (state.status === "success") {
@@ -19,14 +20,14 @@ export function ForgotPasswordForm() {
       <FormMessage status={state.status} message={state.message} />
       <TextField
         name="email"
-        label="Email"
+        label={t.email}
         type="email"
         autoComplete="email"
         defaultValue={state.values?.email}
         errors={state.fieldErrors}
       />
-      <SubmitButton pendingText="Sending…" className="w-full">
-        Send reset link
+      <SubmitButton pendingText={t.forgot.pending} className="w-full">
+        {t.forgot.submit}
       </SubmitButton>
     </form>
   );
