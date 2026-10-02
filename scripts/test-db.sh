@@ -72,4 +72,27 @@ for migration in "$MIGRATIONS_DIR"/*.sql; do
   PGOPTIONS="-c client_min_messages=warning" psql "$URL" -X -q -v ON_ERROR_STOP=1 --single-transaction -f "$migration" >/dev/null
 done
 
+# Founders re-run supabase/setup.sql on a live database after every update, so
+# it must succeed on top of existing data: users in every role and status,
+# and rows in the tables later migrations change.
+echo "==> Re-running supabase/setup.sql on a database with existing data"
+psql "$URL" -X -q -v ON_ERROR_STOP=1 >/dev/null <<'SQL'
+insert into auth.users (id, email) values
+  ('dddddddd-0000-4000-8000-000000000001', 'super@example.com'),
+  ('dddddddd-0000-4000-8000-000000000002', 'suspended@example.com');
+update public.profiles set role = 'super_admin' where id = 'dddddddd-0000-4000-8000-000000000001';
+update public.profiles set role = 'support', status = 'suspended' where id = 'dddddddd-0000-4000-8000-000000000002';
+insert into public.startups (owner_id, name, logo_path)
+  values ('dddddddd-0000-4000-8000-000000000001', 'Existing', 'dddddddd-0000-4000-8000-000000000001/logo.png');
+insert into public.notifications (title, body) values ('Existing', 'Message');
+insert into public.showcase_items (kind, name, permission_confirmed, published) values ('logo', 'Existing', true, true);
+SQL
+PGOPTIONS="-c client_min_messages=warning" psql "$URL" -X -q -v ON_ERROR_STOP=1 -f "$ROOT/supabase/setup.sql" >/dev/null
+psql "$URL" -X -q -v ON_ERROR_STOP=1 >/dev/null <<'SQL'
+delete from public.notifications where title = 'Existing';
+delete from public.showcase_items where name = 'Existing';
+delete from auth.users where id in ('dddddddd-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-000000000002');
+SQL
+echo "  ok - setup.sql re-runs cleanly on existing data"
+
 run_tests "$URL"

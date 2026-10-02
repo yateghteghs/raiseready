@@ -17,9 +17,11 @@
 ------------------------------------------------------------------------------
 -- profiles: roles, status, avatar
 ------------------------------------------------------------------------------
+-- super_admin is added by a later migration; it is listed here too so that
+-- re-running setup.sql on a database that already has a super admin works.
 alter table public.profiles drop constraint if exists profiles_role_check;
 alter table public.profiles
-  add constraint profiles_role_check check (role in ('founder', 'viewer', 'support', 'admin'));
+  add constraint profiles_role_check check (role in ('founder', 'viewer', 'support', 'admin', 'super_admin'));
 
 alter table public.profiles add column if not exists status text not null default 'active';
 alter table public.profiles drop constraint if exists profiles_status_check;
