@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_cache, updateTag } from "next/cache";
 import { z } from "zod";
 
 import type { Staff } from "@/lib/admin/auth";
@@ -7,9 +7,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { Tables } from "@/lib/supabase/database.types";
 import { createPublicClient } from "@/lib/supabase/public";
 
-export type FaqItem = Pick<Tables<"faq_items">, "id" | "category" | "question" | "answer" | "position">;
+export type FaqItem = Pick<Tables<"faq_items">, "id" | "slug" | "category" | "question" | "answer" | "position">;
 
 export const faqSchema = z.object({
+  slug: z.preprocess((v) => (v === "" || v == null ? null : v), z.string().regex(/^[a-z0-9-]{1,60}$/).nullable()),
   locale: z.enum(LOCALES, { error: "Choose a language." }),
   category: z.string().trim().min(1, { error: "Add a section, e.g. Getting started." }).max(60),
   question: z.string().trim().min(1, { error: "Write the question." }).max(300),
@@ -19,32 +20,48 @@ export const faqSchema = z.object({
 });
 export type FaqInput = z.infer<typeof faqSchema>;
 
+const FAQ_TAG = "faq";
+/** Public pages give up on Supabase (retries included) after this, rather than hang. */
+const PUBLIC_READ_TIMEOUT_MS = 3000;
+
+/** Published entries in one language. Errors throw so a failed read is never cached. */
+const loadPublished = unstable_cache(
+  async (locale: Locale): Promise<FaqItem[]> => {
+    const client = createPublicClient();
+    if (!client) return [];
+    const { data, error } = await client
+      .from("faq_items")
+      .select("id, slug, category, question, answer, position")
+      .eq("published", true)
+      .eq("locale", locale)
+      .order("position")
+      .order("created_at")
+      .abortSignal(AbortSignal.timeout(PUBLIC_READ_TIMEOUT_MS));
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  },
+  ["faq-published"],
+  { tags: [FAQ_TAG], revalidate: 300 },
+);
+
 /**
  * The published FAQ in a language, grouped by section in display order.
  * Falls back to English when that language has no entries yet.
  * Never throws: the page shows an empty state instead.
  */
 export async function publishedFaq(locale: Locale): Promise<{ locale: Locale; sections: { category: string; items: FaqItem[] }[] }> {
-  const client = createPublicClient();
-  if (!client) return { locale, sections: [] };
-  const load = async (l: Locale) => {
-    const { data, error } = await client
-      .from("faq_items")
-      .select("id, category, question, answer, position")
-      .eq("published", true)
-      .eq("locale", l)
-      .order("position")
-      .order("created_at");
-    if (error) console.error(`Could not load FAQ: ${error.message}`);
-    return data ?? [];
-  };
-  let used = locale;
-  let items = await load(locale);
-  if (!items.length && locale !== DEFAULT_LOCALE) {
-    used = DEFAULT_LOCALE;
-    items = await load(DEFAULT_LOCALE);
+  try {
+    let used = locale;
+    let items = await loadPublished(locale);
+    if (!items.length && locale !== DEFAULT_LOCALE) {
+      used = DEFAULT_LOCALE;
+      items = await loadPublished(DEFAULT_LOCALE);
+    }
+    return { locale: used, sections: groupBySection(items) };
+  } catch (error) {
+    console.error(`Could not load FAQ: ${error instanceof Error ? error.message : error}`);
+    return { locale, sections: [] };
   }
-  return { locale: used, sections: groupBySection(items) };
 }
 
 /** Sections in the order of their first entry, entries in position order. */
@@ -74,18 +91,24 @@ async function audit(staff: Staff, action: string, id: string) {
 }
 
 function refresh() {
+  updateTag(FAQ_TAG);
   revalidatePath("/faq");
   revalidatePath("/admin/faq");
 }
 
+export class FaqError extends Error {}
+
 export async function saveFaqItem(staff: Staff, input: FaqInput, id?: string): Promise<void> {
   const admin = createAdminClient();
   if (id) {
-    const { error } = await admin.from("faq_items").update(input).eq("id", id);
+    // The slug links translations together, so editing never changes it.
+    const { locale, category, question, answer, position, published } = input;
+    const { error } = await admin.from("faq_items").update({ locale, category, question, answer, position, published }).eq("id", id);
     if (error) throw new Error(`Could not save FAQ entry: ${error.message}`);
     await audit(staff, "admin.faq_updated", id);
   } else {
     const { data, error } = await admin.from("faq_items").insert({ ...input, created_by: staff.id }).select("id").single();
+    if (error?.code === "23505") throw new FaqError("This question already has a translation in that language. Edit it instead.");
     if (error) throw new Error(`Could not add FAQ entry: ${error.message}`);
     await audit(staff, "admin.faq_created", data.id);
   }

@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { getStaff } from "@/lib/admin/auth";
 import { can } from "@/lib/admin/permissions";
-import { deleteFaqItem, faqSchema, saveFaqItem, setFaqPublished } from "@/lib/faq/service";
+import { deleteFaqItem, FaqError, faqSchema, saveFaqItem, setFaqPublished } from "@/lib/faq/service";
 import { formValues, validationFailed, type FormState } from "@/lib/forms";
 
 async function editor() {
@@ -23,16 +23,23 @@ export async function saveFaqAction(id: string | null, _prev: FormState, formDat
   try {
     await saveFaqItem(staff, parsed.data, id ?? undefined);
   } catch (error) {
+    if (error instanceof FaqError) return { status: "error", message: error.message, values };
     console.error("[faq] save failed:", error);
     return { status: "error", message: "Something went wrong. Nothing was saved.", values };
   }
   return { status: "success", message: id ? "Saved." : parsed.data.published ? "Added to the FAQ." : "Saved as a draft." };
 }
 
-export async function toggleFaqAction(id: string, published: boolean): Promise<void> {
+export async function toggleFaqAction(id: string, published: boolean): Promise<{ error?: string }> {
   const staff = await editor();
-  if (!staff || !z.uuid().safeParse(id).success) return;
-  await setFaqPublished(staff, id, published);
+  if (!staff || !z.uuid().safeParse(id).success) return { error: "Not allowed." };
+  try {
+    await setFaqPublished(staff, id, published);
+    return {};
+  } catch (error) {
+    console.error(error);
+    return { error: "Something went wrong." };
+  }
 }
 
 export async function deleteFaqAction(id: string): Promise<void> {

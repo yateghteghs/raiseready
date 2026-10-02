@@ -19,6 +19,7 @@ const NAV: { href: string; label: string; needs: StaffAction }[] = [
   { href: "/admin/notifications", label: "Notifications", needs: "notify" },
   { href: "/admin/discounts", label: "Discounts", needs: "manage_discounts" },
   { href: "/admin/website", label: "Website", needs: "manage_content" },
+  { href: "/admin/faq", label: "FAQ", needs: "manage_content" },
   { href: "/admin/report-signature", label: "Report signature", needs: "manage_content" },
 ];
 
@@ -27,7 +28,7 @@ export const metadata = { title: { default: "Admin", template: "%s | RaiseReady 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const staff = await requireStaff();
   return (
-    <div className="flex flex-1 flex-col">
+    <div lang="en" dir="ltr" className="flex flex-1 flex-col">
       <header className="border-b">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link href="/admin" aria-label="RaiseReady admin overview" className="inline-flex shrink-0 items-center gap-2">

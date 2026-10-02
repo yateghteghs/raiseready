@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_cache, updateTag } from "next/cache";
 
 import type { Staff } from "@/lib/admin/auth";
 import { validateImage } from "@/lib/images/rules";
@@ -21,20 +21,36 @@ function publicUrl(path: string | null): string | null {
   return `${process.env.NEXT_PUBLIC_SUPABASE_URL.replace(/\/$/, "")}/storage/v1/object/public/${SHOWCASE_BUCKET}/${path}`;
 }
 
+const SHOWCASE_TAG = "showcase";
+
 const withUrls = (rows: Tables<"showcase_items">[]): ShowcaseItem[] => rows.map((r) => ({ ...r, imageUrl: publicUrl(r.image_path) }));
+
+/** Errors throw so a failed read is never cached as "nothing published". */
+const loadPublished = unstable_cache(
+  async (): Promise<Tables<"showcase_items">[]> => {
+    const client = createPublicClient();
+    if (!client) return [];
+    const { data, error } = await client.from("showcase_items").select("*").eq("published", true)
+      .order("position")
+      .order("created_at")
+      // Give up (retries included) rather than hold the page up.
+      .abortSignal(AbortSignal.timeout(3000));
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  },
+  ["showcase-published"],
+  { tags: [SHOWCASE_TAG], revalidate: 300 },
+);
 
 /** Published items for the public site. Never throws: public pages render without them. */
 export async function publishedShowcase(kind?: ShowcaseKind): Promise<ShowcaseItem[]> {
-  const client = createPublicClient();
-  if (!client) return [];
-  let query = client.from("showcase_items").select("*").eq("published", true).order("position").order("created_at");
-  if (kind) query = query.eq("kind", kind);
-  const { data, error } = await query;
-  if (error) {
-    console.error(`Could not load showcase: ${error.message}`);
+  try {
+    const rows = await loadPublished();
+    return withUrls(kind ? rows.filter((r) => r.kind === kind) : rows);
+  } catch (error) {
+    console.error(`Could not load showcase: ${error instanceof Error ? error.message : error}`);
     return [];
   }
-  return withUrls(data ?? []);
 }
 
 /** Every item, drafts included, for the admin page. */
@@ -45,6 +61,7 @@ export async function allShowcase(): Promise<ShowcaseItem[]> {
 }
 
 function refreshPublicPages() {
+  updateTag(SHOWCASE_TAG);
   for (const path of ["/", "/testimonials", "/partners"]) revalidatePath(path);
 }
 
