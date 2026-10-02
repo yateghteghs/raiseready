@@ -98,6 +98,31 @@ belonging to another company. After Paystack approves the business:
 
 The billing page shows a "test mode" notice while test keys are in use.
 
+**Prices in US dollars (optional).** Founders outside Nigeria can already pay
+in naira with a foreign card. To also offer dollar prices:
+1. Ask Paystack to enable USD for your business. Dollar payouts need a Zenith
+   Bank USD domiciliary account.
+2. Check the dollar prices in `lib/billing/prices.ts` (currently placeholders:
+   Pro $10/month, 3 simulations $4, 10 simulations $7) and ask me to change
+   them if needed.
+3. In Vercel, add `PAYSTACK_USD_ENABLED` = `true`, then redeploy. The Billing
+   page then offers "Pay in ₦ Naira / $ US dollars", and the pricing page
+   lists the dollar prices. The dollar Pro plan is created in Paystack
+   automatically.
+
+**Discount codes and referrals.**
+- Super admins create codes under **Admin → Discounts**: percent off, which
+  purchases, total uses, last day. Each founder can use a code once.
+- A code on Pro discounts the first month only. That month is charged once;
+  then the normal monthly plan starts on the same card a month later. If the
+  card can't be reused (some bank cards), Pro simply ends after that month
+  and the founder can subscribe again.
+- A 100% code grants the purchase without going to Paystack.
+- Every founder has an invite link on their Billing page. Founders who join
+  with it get 10% off their first purchase; the inviter gets 2 free
+  simulation credits when that founder first pays. These amounts are in
+  `lib/billing/prices.ts`.
+
 ## 5. Admins and staff
 
 Sign up on the site with your own email, then make yourself the first
@@ -138,6 +163,7 @@ Other admin pages:
 - Each user's page shows their recent sign-ins (with failed attempts), when they were last seen and how many days they were active.
 - **Export CSV** (admin and super admin): download the Users, Simulations or Payments list. Exports contain personal data, so each download is logged; store the files securely and delete them when done.
 - **Notifications** (admin and super admin): message one founder or everyone. Messages appear under the bell in the app header.
+- **Discounts** (super admin): create and turn off discount codes; see how often each was used.
 - **Website** (super admin): startup logos, testimonials and partners shown on the home page, `/testimonials` and `/partners`. Tick the permission box only when the company or person has agreed to appear.
 - **Report signature** (super admin): the name, title and signature image printed as "Issued by RaiseReady" at the end of new PDF reports. Founders' company logos are added to their reports automatically.
 

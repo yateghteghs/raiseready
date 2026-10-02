@@ -56,6 +56,16 @@ export default function PrivacyPage() {
           and on which page, so we can fix it. Deleted after 90 days.
         </li>
         <li>
+          <strong>Invites and discounts:</strong> if you joined through another founder&apos;s invite
+          link, we record who invited you so they can receive their reward, and we record discount codes
+          you use.
+        </li>
+        <li>
+          <strong>Shared reports:</strong> if you create a link to share a report, anyone with that link
+          can read the report until it expires or you turn it off. We record how many times it was
+          opened, not who opened it.
+        </li>
+        <li>
           <strong>Messages:</strong> notifications the RaiseReady team sends you in the app, and
           whether you have read them.
         </li>
