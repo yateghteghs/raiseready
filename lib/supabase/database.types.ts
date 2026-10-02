@@ -36,6 +36,7 @@ export type TurnRole = "investor" | "founder" | "system";
 export type RedFlagType = "contradiction" | "unsupported_claim" | "weak_answer" | "missing_info";
 export type Severity = "low" | "medium" | "high";
 export type PaymentProduct = "pro_monthly" | "credits_3" | "credits_10";
+export type PaymentCurrency = "NGN" | "USD";
 export type PaymentStatus = "pending" | "success" | "failed" | "abandoned" | "reversed";
 export type SubscriptionStatus = "active" | "non_renewing" | "attention" | "cancelled" | "completed";
 
@@ -53,6 +54,8 @@ type ProfileRow = Timestamps & {
   status_changed_at: string | null;
   avatar_path: string | null;
   last_seen_at: string | null;
+  referral_code: string | null;
+  referred_by: string | null;
 };
 
 type StartupRow = Timestamps & {
@@ -171,6 +174,9 @@ type PaymentRow = Timestamps & {
   product: PaymentProduct;
   status: PaymentStatus;
   raw_event: Json | null;
+  list_amount_kobo: number | null;
+  discount_code_id: string | null;
+  referral_discount: boolean;
 };
 
 type SubscriptionRow = Timestamps & {
@@ -273,6 +279,40 @@ type PlainTable<Row, Optional extends keyof Row> = {
   Relationships: [];
 };
 
+type DiscountCodeRow = Timestamps & {
+  id: string;
+  code: string;
+  description: string | null;
+  percent_off: number;
+  products: PaymentProduct[];
+  max_redemptions: number | null;
+  expires_at: string | null;
+  active: boolean;
+  created_by: string | null;
+};
+
+type DiscountRedemptionRow = { id: string; code_id: string; user_id: string | null; payment_reference: string | null; created_at: string };
+
+type ReferralRewardRow = {
+  id: string;
+  referrer_id: string | null;
+  referred_id: string | null;
+  credits: number;
+  payment_reference: string | null;
+  created_at: string;
+};
+
+type ReportShareRow = Timestamps & {
+  id: string;
+  report_id: string;
+  created_by: string;
+  token_hash: string;
+  expires_at: string;
+  revoked_at: string | null;
+  views: number;
+  last_viewed_at: string | null;
+};
+
 type Table<Row, Optional extends keyof Row> = {
   Row: Row;
   Insert: InsertOf<Row, Optional>;
@@ -297,6 +337,8 @@ export type Database = {
         | "status_changed_at"
         | "avatar_path"
         | "last_seen_at"
+        | "referral_code"
+        | "referred_by"
       >;
       startups: Table<
         StartupRow,
@@ -343,7 +385,10 @@ export type Database = {
       simulation_turns: Table<SimulationTurnRow, "id" | "evaluation" | "red_flags">;
       red_flags: Table<RedFlagRow, "id" | "turn_id" | "evidence">;
       reports: Table<ReportRow, "id" | "assessment_id" | "simulation_id" | "pdf_storage_path">;
-      payments: Table<PaymentRow, "id" | "provider" | "currency" | "status" | "raw_event">;
+      payments: Table<
+        PaymentRow,
+        "id" | "provider" | "currency" | "status" | "raw_event" | "list_amount_kobo" | "discount_code_id" | "referral_discount"
+      >;
       subscriptions: Table<SubscriptionRow, "id" | "provider_subscription_code" | "current_period_end">;
       ai_calls: Table<
         AiCallRow,
@@ -364,6 +409,13 @@ export type Database = {
       sign_in_events: PlainTable<SignInEventRow, "id" | "user_id" | "failure_code" | "device" | "created_at">;
       user_activity_days: PlainTable<UserActivityDayRow, never>;
       app_errors: PlainTable<AppErrorRow, "id" | "digest" | "path" | "route_type" | "user_id" | "created_at">;
+      discount_codes: Table<
+        DiscountCodeRow,
+        "id" | "description" | "products" | "max_redemptions" | "expires_at" | "active" | "created_by"
+      >;
+      discount_redemptions: PlainTable<DiscountRedemptionRow, "id" | "user_id" | "payment_reference" | "created_at">;
+      referral_rewards: PlainTable<ReferralRewardRow, "id" | "referrer_id" | "referred_id" | "payment_reference" | "created_at">;
+      report_shares: Table<ReportShareRow, "id" | "revoked_at" | "views" | "last_viewed_at">;
       report_signature: Table<ReportSignatureRow, "id" | "signer_name" | "signer_title" | "signature_path" | "enabled" | "updated_by">;
     };
     Views: { [_ in never]: never };

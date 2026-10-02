@@ -90,6 +90,8 @@ insert into public.startups (owner_id, name, logo_path)
   values ('dddddddd-0000-4000-8000-000000000001', 'Existing', 'dddddddd-0000-4000-8000-000000000001/logo.png');
 insert into public.notifications (title, body) values ('Existing', 'Message');
 insert into public.showcase_items (kind, name, permission_confirmed, published) values ('logo', 'Existing', true, true);
+insert into public.discount_codes (code, percent_off) values ('EXISTING', 10) on conflict do nothing;
+update public.profiles set referral_code = 'EXISTREF' where id = 'dddddddd-0000-4000-8000-000000000001';
 SQL
 PGOPTIONS="-c client_min_messages=warning" psql "$URL" -X -q -v ON_ERROR_STOP=1 -f "$ROOT/supabase/setup.sql" >/dev/null
 role=$(psql "$URL" -X -q -t -A -c "select role from public.profiles where id = 'dddddddd-0000-4000-8000-000000000003'")
@@ -97,6 +99,7 @@ role=$(psql "$URL" -X -q -t -A -c "select role from public.profiles where id = '
 psql "$URL" -X -q -v ON_ERROR_STOP=1 >/dev/null <<'SQL'
 delete from public.notifications where title = 'Existing';
 delete from public.showcase_items where name = 'Existing';
+delete from public.discount_codes where code = 'EXISTING';
 delete from auth.users where id in ('dddddddd-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-000000000002', 'dddddddd-0000-4000-8000-000000000003');
 SQL
 echo "  ok - setup.sql re-runs cleanly on existing data"

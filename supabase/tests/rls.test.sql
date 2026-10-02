@@ -153,6 +153,25 @@ select rls_test.throws(
 
 insert into public.report_signature (id, signer_name, enabled) values (1, 'Signer', true);
 
+insert into public.discount_codes (code, percent_off) values ('LAUNCH20', 20);
+select rls_test.throws($$insert into public.discount_codes (code, percent_off) values ('bad code!', 10)$$, '23514', 'discount codes are letters, digits, - and _');
+select rls_test.throws($$insert into public.discount_codes (code, percent_off) values ('FREE', 0)$$, '23514', 'discounts are 1-100%');
+select rls_test.throws(
+  $$insert into public.discount_codes (code, percent_off, products) values ('ODD', 10, array['pro_yearly'])$$,
+  '23514', 'discounts only apply to real products');
+select rls_test.throws(
+  $$insert into public.payments (user_id, reference, amount_kobo, currency, product) values ('aaaaaaaa-0000-4000-8000-000000000001', 'eur-1', 100, 'EUR', 'credits_3')$$,
+  '23514', 'payments are in NGN or USD');
+select rls_test.throws(
+  $$update public.profiles set referred_by = id where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
+  '23514', 'founders cannot refer themselves');
+insert into public.report_shares (report_id, created_by, token_hash, expires_at)
+  select id, 'aaaaaaaa-0000-4000-8000-000000000001', 'share-a', now() + interval '30 days'
+  from public.reports where startup_id = 'aaaaaaaa-1111-4000-8000-000000000001';
+insert into public.report_shares (report_id, created_by, token_hash, expires_at)
+  select id, 'bbbbbbbb-0000-4000-8000-000000000002', 'share-b', now() + interval '30 days'
+  from public.reports where startup_id = 'bbbbbbbb-1111-4000-8000-000000000002';
+
 insert into public.sign_in_events (user_id, email_hash, succeeded, surface) values
   ('aaaaaaaa-0000-4000-8000-000000000001', 'hash-a', true, 'app'),
   ('bbbbbbbb-0000-4000-8000-000000000002', 'hash-b', true, 'app'),
@@ -209,6 +228,8 @@ select rls_test.throws('select * from public.report_signature', '42501', 'anon c
 select rls_test.throws('select * from public.sign_in_events', '42501', 'anon cannot read sign-in history');
 select rls_test.throws('select * from public.app_errors', '42501', 'anon cannot read the error log');
 select rls_test.throws('select public.prune_activity()', '42501', 'anon cannot prune activity');
+select rls_test.throws('select * from public.discount_codes', '42501', 'anon cannot read discount codes');
+select rls_test.throws('select * from public.report_shares', '42501', 'anon cannot read share links (the server checks them)');
 select rls_test.throws(
   $$insert into public.showcase_items (kind, name) values ('logo', 'Spam')$$,
   '42501', 'anon cannot add showcase items');
@@ -401,6 +422,21 @@ select rls_test.throws(
   $$insert into public.user_activity_days (user_id, day) values ('aaaaaaaa-0000-4000-8000-000000000001', current_date + 1)$$,
   '42501', 'A cannot write activity records');
 select rls_test.throws('select * from public.app_errors', '42501', 'A cannot read the error log');
+select rls_test.throws('select * from public.discount_codes', '42501', 'A cannot list discount codes');
+select rls_test.throws('select * from public.referral_rewards', '42501', 'A cannot read referral rewards directly');
+select rls_test.ok(
+  (select array_agg(token_hash) from public.report_shares) = array['share-a'],
+  'A reads only own share links');
+select rls_test.throws(
+  $$insert into public.report_shares (report_id, created_by, token_hash, expires_at)
+    select id, 'aaaaaaaa-0000-4000-8000-000000000001', 'forged', now() + interval '1 year' from public.reports limit 1$$,
+  '42501', 'A cannot create share links directly (server does)');
+select rls_test.throws(
+  $$update public.profiles set referred_by = 'bbbbbbbb-0000-4000-8000-000000000002' where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
+  '42501', 'A cannot set who referred them');
+select rls_test.throws(
+  $$update public.profiles set referral_code = 'MINE' where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
+  '42501', 'A cannot choose their referral code');
 select rls_test.throws(
   $$update public.profiles set last_seen_at = now() where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
   '42501', 'A cannot set last_seen_at (server does)');
