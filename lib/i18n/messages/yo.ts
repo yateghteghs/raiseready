@@ -89,7 +89,7 @@ export const yo: Messages = {
     free: {
       name: "Ọ̀fẹ́",
       description: "Dán gbogbo ìlànà wò lẹ́ẹ̀kan.",
-      features: ["Àyẹ̀wò ìmúrasílẹ̀ {assessments}", "Ìdánrawò Investor Room {simulations}", "Olùdókòwò: Angel tàbí Seed VC", "Ìpele ìṣòro: ti ọ̀rẹ́ tàbí ti ìtúpalẹ̀"],
+      features: ["Àyẹ̀wò ìmúrasílẹ̀ {assessments}", "Ìdánrawò Investor Room {simulations}", "Olùdókòwò: Angel tàbí Seed VC", "Ìpele ìṣòro: ti ọ̀rẹ́ tàbí ti ìtúpalẹ̀", "Àyẹ̀wò pitch deck: ojú-ìwé {slides} àkọ́kọ́"],
       cta: "Bẹ̀rẹ̀ lọ́fẹ̀ẹ́",
     },
     pro: {
@@ -98,6 +98,7 @@ export const yo: Messages = {
       features: [
         "Àyẹ̀wò ìmúrasílẹ̀ láìní òpin",
         "Ìdánrawò tó tó {simulations} lóṣù",
+        "Pitch deck {decks} lóṣù",
         "Gbogbo olùdókòwò, títí kan olùyẹ̀wò ẹ̀bùn owó",
         "Gbogbo ìpele ìṣòro, títí kan èyí tó le",
         "Ìròyìn PDF tí o lè gbà sílẹ̀",
@@ -110,6 +111,7 @@ export const yo: Messages = {
       from: "Láti {price}",
       description: "San bí o ṣe ń lò ó. Kò sí àsansílẹ̀ oṣooṣù.",
       pack: "{price} fún ìdánrawò {simulations}",
+      deck: "{price} fún pitch deck kan",
       cta: "Bẹ̀rẹ̀",
     },
     usdNote: "Ṣé o wà lẹ́yìn Nàìjíríà? O tún lè san ní dọ́là Amẹ́ríkà: Pro {pro} lóṣù, {packs}.",

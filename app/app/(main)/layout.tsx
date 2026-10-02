@@ -18,6 +18,7 @@ const NAV = [
   { href: "/app/assessment", label: "Assessment" },
   { href: "/app/investor-room", label: "Investor Room" },
   { href: "/app/reports", label: "Reports" },
+  { href: "/app/decks", label: "Pitch deck" },
   { href: "/app/progress", label: "Progress" },
   { href: "/app/billing", label: "Billing" },
   { href: "/app/settings", label: "Settings" },

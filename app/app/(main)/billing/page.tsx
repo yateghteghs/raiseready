@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { LoadProblem } from "@/components/app/load-problem";
 import { BuyOptions } from "@/components/billing/buy-options";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { InviteLink } from "@/components/billing/invite-card";
 import { getCurrentUser } from "@/lib/auth/session";
-import { CREDIT_PACKS, FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
+import { CREDIT_PACKS, DECK_BUILDER, FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
+import { getDeckUsage } from "@/lib/decks/service";
 import { availableCurrencies, inviteOfferText, minimumSpendText, PRICES } from "@/lib/billing/prices";
 import { getReferralSettings } from "@/lib/billing/referral-settings";
 import { ensureReferralCode, referralStats } from "@/lib/referrals/service";
@@ -37,7 +39,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
     if (!user) return null;
     const startup = await getMyStartup();
     const supabase = await createClient();
-    const [usage, subscription, payments, code, referrals, siteUrl, programme] = await Promise.all([
+    const [usage, subscription, payments, code, referrals, siteUrl, programme, decks] = await Promise.all([
       getUsage(user.id, startup?.id ?? null),
       getSubscription(user.id),
       supabase.from("payments").select("*").neq("status", "pending").order("created_at", { ascending: false }).limit(30),
@@ -45,10 +47,12 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
       referralStats(user.id),
       getSiteUrl(),
       getReferralSettings(),
+      getDeckUsage(user.id),
     ]);
     const paidBefore = (payments.data ?? []).some((p) => p.status === "success");
     return {
       usage,
+      decks,
       subscription,
       payments: payments.data ?? [],
       referrals,
@@ -59,7 +63,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
   });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) return <LoadProblem code="no_startup" />;
-  const { usage, subscription, payments, referrals, inviteUrl, referralDiscount, programme } = loaded.data;
+  const { usage, decks, subscription, payments, referrals, inviteUrl, referralDiscount, programme } = loaded.data;
   const inviteOffer = inviteOfferText(programme);
 
   const testMode = (process.env.PAYSTACK_SECRET_KEY ?? "").startsWith("sk_test_");
@@ -129,6 +133,18 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
           <h2 className="text-muted-foreground text-sm">Simulation credits</h2>
           <p className="mt-1 text-4xl font-semibold tabular-nums">{usage.credits}</p>
           <p className="text-muted-foreground text-sm">Each credit pays for one Investor Room session, with any investor and difficulty.</p>
+          <p className="mt-4 text-sm">
+            <Link href="/app/decks" className="font-medium underline-offset-4 hover:underline">
+              Pitch decks
+            </Link>
+            :{" "}
+            {usage.proActive
+              ? `${decks.proDecksThisMonth} of ${DECK_BUILDER.proDecksPerMonth} used this month with Pro`
+              : decks.previewsUsed
+                ? "free preview used"
+                : "free preview available"}
+            {decks.deckCredits ? ` · ${decks.deckCredits} bought and ready to use` : ""}
+          </p>
         </div>
       </section>
 
@@ -154,6 +170,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
                       "Unlimited assessments",
                       `Up to ${PRO_PLAN.simulationsPerMonth} simulations a month`,
                       "Every investor and difficulty",
+                      `${DECK_BUILDER.proDecksPerMonth} pitch decks a month`,
                       "PDF reports and progress tracking",
                     ],
                   },
@@ -165,6 +182,13 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
               note: "One-off payment. No subscription.",
               prices: { NGN: PRICES.NGN[pack.product], USD: PRICES.USD[pack.product] },
             })),
+            {
+              product: "deck_builder" as const,
+              title: "One pitch deck",
+              buttonLabel: "Buy a pitch deck",
+              note: `One-off payment. A full deck with PowerPoint and PDF downloads and ${DECK_BUILDER.creditRewritesPerDeck} AI rewrites. Also unlocks a free preview.`,
+              prices: { NGN: PRICES.NGN.deck_builder, USD: PRICES.USD.deck_builder },
+            },
           ]}
         />
       </section>

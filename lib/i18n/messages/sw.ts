@@ -88,7 +88,7 @@ export const sw: Messages = {
     free: {
       name: "Bure",
       description: "Jaribu mzunguko kamili mara moja.",
-      features: ["Tathmini {assessments} ya utayari", "Simulizi {simulations} ya Investor Room", "Mwekezaji: Angel au Seed VC", "Ugumu: wa kirafiki au wa kiuchambuzi"],
+      features: ["Tathmini {assessments} ya utayari", "Simulizi {simulations} ya Investor Room", "Mwekezaji: Angel au Seed VC", "Ugumu: wa kirafiki au wa kiuchambuzi", "Onyesho la awali la pitch deck: slaidi {slides} za kwanza"],
       cta: "Anza bure",
     },
     pro: {
@@ -97,6 +97,7 @@ export const sw: Messages = {
       features: [
         "Tathmini za utayari bila kikomo",
         "Hadi simulizi {simulations} kwa mwezi",
+        "Pitch deck {decks} kwa mwezi",
         "Wawekezaji wote, pamoja na mtathmini wa ruzuku",
         "Viwango vyote vya ugumu, pamoja na kigumu",
         "Ripoti za PDF za kupakua",
@@ -109,6 +110,7 @@ export const sw: Messages = {
       from: "Kuanzia {price}",
       description: "Lipia unachotumia. Hakuna usajili.",
       pack: "{price} kwa simulizi {simulations}",
+      deck: "{price} kwa pitch deck moja",
       cta: "Anza",
     },
     usdNote: "Uko nje ya Nigeria? Unaweza pia kulipa kwa dola za Marekani: Pro {pro} kwa mwezi, {packs}.",

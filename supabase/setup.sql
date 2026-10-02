@@ -1321,6 +1321,12 @@ revoke all on function public.consume_deck_credit(uuid) from public, anon, authe
 grant execute on function public.add_deck_credits(uuid, integer) to service_role;
 grant execute on function public.consume_deck_credit(uuid) to service_role;
 
+-- An FAQ entry about the deck builder. Admin edits are kept on re-runs.
+insert into public.faq_items (slug, locale, category, question, answer, position, published) values
+  ('pitch-deck', 'en', 'Assessment and practice', 'Can RaiseReady write my pitch deck?',
+   'Yes. Under Pitch deck, RaiseReady writes an investor deck from your startup profile, your documents and your readiness assessment, with speaker notes. It never makes up numbers: anything it needs from you is marked [Add: ...]. Your first deck is a free preview of the first slides. Pro includes 3 full decks a month, or you can buy a single deck. Full decks download as PowerPoint and PDF, and you can edit every slide.', 75, true)
+on conflict (slug, locale) do nothing;
+
 notify pgrst, 'reload schema';
 
 -- ===== Check =====

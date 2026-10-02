@@ -89,7 +89,7 @@ export const ha: Messages = {
     free: {
       name: "Kyauta",
       description: "Gwada cikakken zagaye sau ɗaya.",
-      features: ["Kimanta shiri {assessments}", "Gwajin Investor Room {simulations}", "Mai zuba jari: Angel ko Seed VC", "Matakin wahala: na abokantaka ko na nazari"],
+      features: ["Kimanta shiri {assessments}", "Gwajin Investor Room {simulations}", "Mai zuba jari: Angel ko Seed VC", "Matakin wahala: na abokantaka ko na nazari", "Hangen farko na pitch deck: shafuka {slides} na farko"],
       cta: "Fara kyauta",
     },
     pro: {
@@ -98,6 +98,7 @@ export const ha: Messages = {
       features: [
         "Kimanta shiri ba iyaka",
         "Har zuwa gwaje-gwaje {simulations} a wata",
+        "Pitch deck {decks} a wata",
         "Duk masu zuba jari, har da mai tantance tallafi",
         "Duk matakan wahala, har da mai tsanani",
         "Rahotannin PDF da za a iya saukewa",
@@ -110,6 +111,7 @@ export const ha: Messages = {
       from: "Daga {price}",
       description: "Biya gwargwadon amfani. Babu biyan wata-wata.",
       pack: "{price} don gwaje-gwaje {simulations}",
+      deck: "{price} don pitch deck ɗaya",
       cta: "Fara yanzu",
     },
     usdNote: "Kana wajen Najeriya? Za ka iya biya da dalar Amurka: Pro {pro} a wata, {packs}.",

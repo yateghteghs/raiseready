@@ -89,7 +89,7 @@ export const ig: Messages = {
     free: {
       name: "N'efu",
       description: "Nwalee usoro niile otu ugboro.",
-      features: ["Nyocha njikere {assessments}", "Omume Investor Room {simulations}", "Onye na-etinye ego: Angel ma ọ bụ Seed VC", "Ọkwa isi ike: nke enyi ma ọ bụ nke nyocha"],
+      features: ["Nyocha njikere {assessments}", "Omume Investor Room {simulations}", "Onye na-etinye ego: Angel ma ọ bụ Seed VC", "Ọkwa isi ike: nke enyi ma ọ bụ nke nyocha", "Nlele pitch deck: ibe {slides} mbụ"],
       cta: "Malite n'efu",
     },
     pro: {
@@ -98,6 +98,7 @@ export const ig: Messages = {
       features: [
         "Nyocha njikere na-enweghị njedebe",
         "Ruo omume {simulations} kwa ọnwa",
+        "Pitch deck {decks} kwa ọnwa",
         "Ndị niile na-etinye ego, gụnyere onye na-enyocha onyinye ego",
         "Ọkwa isi ike niile, gụnyere nke siri ike",
         "Akụkọ PDF ị nwere ike ibudata",
@@ -110,6 +111,7 @@ export const ig: Messages = {
       from: "Site na {price}",
       description: "Kwụọ ụgwọ ka ị na-eji ya. Enweghị ndebanye aha kwa ọnwa.",
       pack: "{price} maka omume {simulations}",
+      deck: "{price} maka otu pitch deck",
       cta: "Malite",
     },
     usdNote: "Ị nọ na mpụga Naịjirịa? Ị nwekwara ike ịkwụ ụgwọ na dollar America: Pro {pro} kwa ọnwa, {packs}.",

@@ -86,7 +86,7 @@ test("the main call to action leads to sign-up", async ({ page }) => {
 });
 
 test("signed-in areas send visitors to log in and come back afterwards", async ({ page }) => {
-  for (const path of ["/app", "/app/documents", "/app/settings"]) {
+  for (const path of ["/app", "/app/documents", "/app/settings", "/app/decks"]) {
     await page.goto(path);
     await expect(page).toHaveURL(new RegExp(`/login\\?next=${encodeURIComponent(path)}$`));
   }

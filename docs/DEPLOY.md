@@ -113,12 +113,22 @@ in naira with a foreign card. To also offer dollar prices:
 1. Ask Paystack to enable USD for your business. Dollar payouts need a Zenith
    Bank USD domiciliary account.
 2. Check the dollar prices in `lib/billing/prices.ts` (currently placeholders:
-   Pro $10/month, 3 simulations $4, 10 simulations $7) and ask me to change
+   Pro $10/month, 3 simulations $4, 10 simulations $7, one pitch deck $5) and ask me to change
    them if needed.
 3. In Vercel, add `PAYSTACK_USD_ENABLED` = `true`, then redeploy. The Billing
    page then offers "Pay in ₦ Naira / $ US dollars", and the pricing page
    lists the dollar prices. The dollar Pro plan is created in Paystack
    automatically.
+
+**Pitch deck builder.** Founders build investor decks under **Pitch deck**.
+Each founder's first deck is a free preview (outline plus the first 3
+slides). Pro includes 3 full decks a month; anyone can buy a single deck
+(₦7,500, or $5 placeholder when dollars are on). A preview unlocks as it is,
+without being written again. Full decks download as PowerPoint (with speaker
+notes) and PDF. Founders can edit slides freely; AI rewrites of a slide are
+limited to 2 per bought deck and 30 per Pro deck. Change these numbers in
+`lib/billing/plans.ts` (`DECK_BUILDER`) and the prices in
+`lib/billing/prices.ts`. A deck costs roughly $1–3 in AI fees.
 
 **Discount codes and referrals.**
 - Super admins create codes under **Admin → Discounts**: percent off, which

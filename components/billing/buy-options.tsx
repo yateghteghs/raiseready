@@ -120,7 +120,7 @@ export function BuyOptions({ options, currencies, referralPercent }: { options: 
         ) : null}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {options.map((o) => {
           const list = o.prices[currency];
           const deal = preview?.ok ? preview.prices[o.product] : undefined;

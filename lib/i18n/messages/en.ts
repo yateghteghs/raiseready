@@ -91,7 +91,7 @@ export const en = {
     free: {
       name: "Free",
       description: "Try the full loop once.",
-      features: ["{assessments} readiness assessment", "{simulations} Investor Room simulation", "Angel or Seed VC investor", "Friendly or analytical difficulty"],
+      features: ["{assessments} readiness assessment", "{simulations} Investor Room simulation", "Angel or Seed VC investor", "Friendly or analytical difficulty", "Pitch deck preview: the first {slides} slides"],
       cta: "Start free",
     },
     pro: {
@@ -100,6 +100,7 @@ export const en = {
       features: [
         "Unlimited readiness assessments",
         "Up to {simulations} simulations a month",
+        "{decks} pitch decks a month",
         "All investors, including Grant Evaluator",
         "All difficulties, including tough",
         "Downloadable PDF reports",
@@ -112,6 +113,7 @@ export const en = {
       from: "From {price}",
       description: "Pay as you go. No subscription.",
       pack: "{price} for {simulations} simulations",
+      deck: "{price} for one pitch deck",
       cta: "Get started",
     },
     usdNote: "Outside Nigeria? You can also pay in US dollars: Pro {pro} a month, {packs}.",

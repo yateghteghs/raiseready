@@ -94,6 +94,7 @@ export const pt: Messages = {
         "{simulations} simulação na Investor Room",
         "Investidor-anjo ou Seed VC",
         "Dificuldade amigável ou analítica",
+        "Pré-visualização do pitch deck: os primeiros {slides} diapositivos",
       ],
       cta: "Começar grátis",
     },
@@ -103,6 +104,7 @@ export const pt: Messages = {
       features: [
         "Avaliações de preparação ilimitadas",
         "Até {simulations} simulações por mês",
+        "{decks} pitch decks por mês",
         "Todos os investidores, incluindo o avaliador de subsídios",
         "Todas as dificuldades, incluindo exigente",
         "Relatórios em PDF para descarregar",
@@ -115,6 +117,7 @@ export const pt: Messages = {
       from: "A partir de {price}",
       description: "Pague conforme usa. Sem assinatura.",
       pack: "{price} por {simulations} simulações",
+      deck: "{price} por um pitch deck",
       cta: "Começar",
     },
     usdNote: "Fora da Nigéria? Também pode pagar em dólares americanos: Pro {pro} por mês, {packs}.",

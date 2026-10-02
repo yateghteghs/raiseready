@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CheckIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { CREDIT_PACKS, FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
+import { CREDIT_PACKS, DECK_BUILDER, FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
 import { PRICES, usdEnabled } from "@/lib/billing/prices";
 import { formatMoney, koboToNaira } from "@/lib/format";
 import type { Messages } from "@/lib/i18n/messages/en";
@@ -19,7 +19,9 @@ export function PricingCards({ t }: { t: Messages["pricing"] }) {
       price: naira(FREE_PLAN.priceKobo),
       period: "",
       description: t.free.description,
-      features: t.free.features.map((f) => fill(f, { assessments: FREE_PLAN.assessments, simulations: FREE_PLAN.simulations })),
+      features: t.free.features.map((f) =>
+        fill(f, { assessments: FREE_PLAN.assessments, simulations: FREE_PLAN.simulations, slides: DECK_BUILDER.previewSlides }),
+      ),
       cta: t.free.cta,
       highlighted: false,
     },
@@ -28,7 +30,7 @@ export function PricingCards({ t }: { t: Messages["pricing"] }) {
       price: naira(PRO_PLAN.priceKobo),
       period: t.perMonth,
       description: t.pro.description,
-      features: t.pro.features.map((f) => fill(f, { simulations: PRO_PLAN.simulationsPerMonth })),
+      features: t.pro.features.map((f) => fill(f, { simulations: PRO_PLAN.simulationsPerMonth, decks: DECK_BUILDER.proDecksPerMonth })),
       cta: t.pro.cta,
       highlighted: true,
     },
@@ -37,7 +39,10 @@ export function PricingCards({ t }: { t: Messages["pricing"] }) {
       price: fill(t.credits.from, { price: naira(CREDIT_PACKS[0].priceKobo) }),
       period: "",
       description: t.credits.description,
-      features: CREDIT_PACKS.map((p) => fill(t.credits.pack, { price: naira(p.priceKobo), simulations: p.simulations })),
+      features: [
+        ...CREDIT_PACKS.map((p) => fill(t.credits.pack, { price: naira(p.priceKobo), simulations: p.simulations })),
+        fill(t.credits.deck, { price: naira(DECK_BUILDER.priceKobo) }),
+      ],
       cta: t.credits.cta,
       highlighted: false,
     },
@@ -82,7 +87,10 @@ export function PricingCards({ t }: { t: Messages["pricing"] }) {
         <p className="text-muted-foreground text-sm">
           {fill(t.usdNote, {
             pro: usd(PRICES.USD.pro_monthly),
-            packs: CREDIT_PACKS.map((p) => fill(t.usdPack, { simulations: p.simulations, price: usd(PRICES.USD[p.product]) })).join(", "),
+            packs: [
+              ...CREDIT_PACKS.map((p) => fill(t.usdPack, { simulations: p.simulations, price: usd(PRICES.USD[p.product]) })),
+              fill(t.credits.deck, { price: usd(PRICES.USD.deck_builder) }),
+            ].join(", "),
           })}
         </p>
       ) : null}

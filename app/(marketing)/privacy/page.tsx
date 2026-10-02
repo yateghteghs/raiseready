@@ -66,6 +66,10 @@ export default function PrivacyPage() {
           you use.
         </li>
         <li>
+          <strong>Pitch decks:</strong> decks RaiseReady writes for you, your edits to them, and the
+          requests you make when asking for a slide to be rewritten.
+        </li>
+        <li>
           <strong>Shared reports:</strong> if you create a link to share a report, anyone with that link
           can read the report until it expires or you turn it off. We record how many times it was
           opened, not who opened it.
@@ -83,8 +87,9 @@ export default function PrivacyPage() {
       <h2>What is sent to our AI provider</h2>
       <p>
         RaiseReady uses Anthropic&apos;s Claude models to read documents and run the Investor Room.
-        To do this, the content of your uploaded documents, your startup profile and your answers in
-        the Investor Room are sent to Anthropic for processing. We only send what is needed for the
+        To do this, the content of your uploaded documents, your startup profile, your answers in
+        the Investor Room and, when you use the pitch deck builder, your deck and your requests to
+        change it are sent to Anthropic for processing. We only send what is needed for the
         feature you are using, and we never include another user&apos;s data in your requests.
         Anthropic handles this data under its own commercial terms and privacy policy.
       </p>
@@ -118,7 +123,7 @@ export default function PrivacyPage() {
       <p>
         We keep your data while your account is open. When you delete a document, the file and its
         record are removed. When you delete your account, your profile, startups, documents,
-        assessments, simulations, reports and payment records are permanently deleted. Usage records
+        assessments, simulations, reports, pitch decks and payment records are permanently deleted. Usage records
         are kept for cost reporting but are no longer linked to you. We keep a log entry that the
         deletion happened, with the total you had paid us but no name, email or startup details. Any
         Pro subscription is cancelled with Paystack first. Paystack keeps its own payment records
