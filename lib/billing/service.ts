@@ -11,7 +11,9 @@ import {
   subscriptionManageLink,
   type PaystackTransaction,
 } from "@/lib/billing/paystack";
-import { CREDIT_PACKS, DECK_BUILDER, PLAN_LIMITS, PLAN_PRODUCTS, planOfProduct } from "@/lib/billing/plans";
+import { PLAN_NAMES, type PlanRules } from "@/lib/billing/plan-rules";
+import { getPlanRules } from "@/lib/billing/plan-settings";
+import { CREDIT_PACKS, DECK_BUILDER, PLAN_PRODUCTS, planOfProduct } from "@/lib/billing/plans";
 import {
   availableCurrencies,
   codeProblem,
@@ -70,6 +72,7 @@ export async function getMembership(userId: string): Promise<Pick<Tables<"teams"
 
 export type FullUsage = Usage & {
   tier: Tier;
+  rules: PlanRules;
   profile: Tables<"profiles">;
   /** The team giving this founder Pro Plus, while it's active. */
   team: Pick<Tables<"teams">, "id" | "name" | "ends_at"> | null;
@@ -79,7 +82,7 @@ export async function getUsage(userId: string, startupId: string | null): Promis
   const admin = createAdminClient();
   const { data: profile, error } = await admin.from("profiles").select("*").eq("id", userId).single();
   if (error || !profile) throw new Error(`Could not load profile: ${error?.message}`);
-  const [subscription, membership] = await Promise.all([getSubscription(userId), getMembership(userId)]);
+  const [subscription, membership, rules] = await Promise.all([getSubscription(userId), getMembership(userId), getPlanRules()]);
   const team = membership && new Date(membership.ends_at).getTime() > Date.now() ? membership : null;
   const tier = tierOf(profile.plan, subscription, team);
 
@@ -105,6 +108,7 @@ export async function getUsage(userId: string, startupId: string | null): Promis
     profile,
     tier,
     team,
+    rules,
     proActive: tier !== "free",
     credits: profile.credits,
     assessments,
@@ -204,7 +208,7 @@ export async function startCheckout(
   if (plan) {
     const usage = await getUsage(user.id, null);
     if (usage.team) throw new BillingError(`Your team, ${usage.team.name}, already gives you Pro Plus.`);
-    if (usage.tier === plan) throw new BillingError(`You're already on ${PLAN_LIMITS[plan].name}.`);
+    if (usage.tier === plan) throw new BillingError(`You're already on ${PLAN_NAMES[plan]}.`);
     if (usage.tier === "pro_plus" && plan === "pro") {
       throw new BillingError("To move to Pro, cancel Pro Plus first. You keep Pro Plus until the end of the month you've paid for.");
     }

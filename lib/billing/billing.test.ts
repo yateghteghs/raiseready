@@ -186,7 +186,7 @@ describe("limits when starting a simulation", () => {
   });
 
   it("blocks Pro-only choices on the free plan", async () => {
-    await expect(start("grant_evaluator", "tough")).rejects.toThrow(/Grant Evaluator/);
+    await expect(start("grant_evaluator", "tough")).rejects.toThrow(/^Free includes an Angel investor or a /);
     expect(db.simulations).toHaveLength(0);
   });
 

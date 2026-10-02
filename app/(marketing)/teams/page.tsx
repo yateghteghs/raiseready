@@ -3,23 +3,24 @@ import { CheckIcon } from "lucide-react";
 
 import { PageHero, Section } from "@/components/marketing/section";
 import { TeamEnquiryForm } from "@/components/teams/enquiry-form";
-import { PLAN_LIMITS } from "@/lib/billing/plans";
+import { getPlanRules } from "@/lib/billing/plan-settings";
 
 export const metadata: Metadata = {
   title: "Teams",
   description: "RaiseReady for accelerators, incubators, hubs and fellowship programmes: Pro Plus for every founder in your cohort.",
 };
 
-const BENEFITS = [
-  `Pro Plus for every founder: ${PLAN_LIMITS.pro_plus.simulationsPerMonth} Investor Room sessions and ${PLAN_LIMITS.pro_plus.decksPerMonth} pitch decks a month each`,
+
+export default async function TeamsPage() {
+  const rules = await getPlanRules();
+  const BENEFITS = [
+  `Pro Plus for every founder: ${rules.pro_plus.simulations} Investor Room sessions and ${rules.pro_plus.decksPerMonth} pitch decks a month each`,
   "Founders join with one link; no cards or individual payments",
   "A cohort view: each founder's readiness score, practice meetings and last activity",
   "Founders' documents, answers and reports stay private to them",
   "One agreement and one invoice for the whole programme, in naira or dollars",
   "New Pro Plus features, like voice practice, included as they launch",
 ];
-
-export default function TeamsPage() {
   return (
     // Not translated yet: keep English text left to right in every language.
     <div lang="en" dir="ltr">

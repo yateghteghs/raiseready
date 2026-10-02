@@ -1,20 +1,20 @@
 import Link from "next/link";
 import { CheckIcon } from "lucide-react";
 
+import { CurrencySwitch } from "@/components/marketing/currency-switch";
 import { Button } from "@/components/ui/button";
-import { CREDIT_PACKS, DECK_BUILDER, FREE_PLAN, PLAN_LIMITS } from "@/lib/billing/plans";
-import { usdEnabled, type PriceTable } from "@/lib/billing/prices";
-import { formatMoney, koboToNaira } from "@/lib/format";
+import { planFeatures } from "@/lib/billing/plan-features";
+import type { PlanRules } from "@/lib/billing/plan-rules";
+import { CREDIT_PACKS } from "@/lib/billing/plans";
+import { priceLabel, type PriceContext } from "@/lib/currency/display";
 import type { Messages } from "@/lib/i18n/messages/en";
 import { fill } from "@/lib/i18n/text";
 import { cn } from "@/lib/utils";
 
-const naira = (kobo: number) => formatMoney(koboToNaira(kobo));
-const usd = (cents: number) => formatMoney(cents / 100, "USD");
-
 type Tier = {
   name: string;
-  price: string;
+  price: { price: string; approx: string | null } | null;
+  customPrice?: string;
   period: string;
   description: string;
   features: string[];
@@ -24,27 +24,30 @@ type Tier = {
   highlighted?: boolean;
 };
 
-/** The plan cards. `prices` are the live ones (getPrices), so admin changes show here. */
-export function PricingCards({ t, prices }: { t: Messages["pricing"]; prices: PriceTable }) {
-  const PRICES = prices;
+/**
+ * The plan cards. Features come from the live plan rules and prices from the
+ * live price list, in the visitor's currency (naira for Nigeria, US dollars
+ * elsewhere), with an estimate in their own currency when a rate is set.
+ */
+export function PricingCards({ t, rules, ctx }: { t: Messages["pricing"]; rules: PlanRules; ctx: PriceContext }) {
+  const p = (minor: number) => priceLabel(minor, ctx);
+  const prices = ctx.prices[ctx.currency];
   const tiers: Tier[] = [
     {
       name: t.free.name,
-      price: naira(0),
+      price: p(0),
       period: "",
-      description: t.free.description,
-      features: t.free.features.map((f) =>
-        fill(f, { assessments: FREE_PLAN.assessments, simulations: FREE_PLAN.simulations, slides: DECK_BUILDER.previewSlides }),
-      ),
+      description: rules.free.description ?? t.free.description,
+      features: planFeatures("free", rules, t.features),
       cta: t.free.cta,
       href: "/register",
     },
     {
       name: t.pro.name,
-      price: naira(PRICES.NGN.pro_monthly),
+      price: p(prices.pro_monthly),
       period: t.perMonth,
-      description: t.pro.description,
-      features: t.pro.features.map((f) => fill(f, { simulations: PLAN_LIMITS.pro.simulationsPerMonth, decks: PLAN_LIMITS.pro.decksPerMonth })),
+      description: rules.pro.description ?? t.pro.description,
+      features: planFeatures("pro", rules, t.features),
       cta: t.pro.cta,
       href: "/register",
       badge: t.mostPopular,
@@ -52,23 +55,18 @@ export function PricingCards({ t, prices }: { t: Messages["pricing"]; prices: Pr
     },
     {
       name: t.plus.name,
-      price: naira(PRICES.NGN.pro_plus_monthly),
+      price: p(prices.pro_plus_monthly),
       period: t.perMonth,
-      description: t.plus.description,
-      features: t.plus.features.map((f) =>
-        fill(f, {
-          simulations: PLAN_LIMITS.pro_plus.simulationsPerMonth,
-          decks: PLAN_LIMITS.pro_plus.decksPerMonth,
-          rewrites: PLAN_LIMITS.pro_plus.rewritesPerDeck,
-        }),
-      ),
+      description: rules.pro_plus.description ?? t.plus.description,
+      features: planFeatures("pro_plus", rules, t.features),
       cta: t.plus.cta,
       href: "/register",
       badge: t.premium,
     },
     {
       name: t.teams.name,
-      price: t.teams.price,
+      price: null,
+      customPrice: t.teams.price,
       period: "",
       description: t.teams.description,
       features: t.teams.features,
@@ -77,12 +75,18 @@ export function PricingCards({ t, prices }: { t: Messages["pricing"]; prices: Pr
     },
   ];
   const payg = [
-    ...CREDIT_PACKS.map((p) => fill(t.credits.pack, { price: naira(PRICES.NGN[p.product]), simulations: p.simulations })),
-    fill(t.credits.deck, { price: naira(PRICES.NGN.deck_builder) }),
+    ...CREDIT_PACKS.map((pack) => ({ text: fill(t.credits.pack, { price: p(prices[pack.product]).price, simulations: pack.simulations }), approx: p(prices[pack.product]).approx })),
+    { text: fill(t.credits.deck, { price: p(prices.deck_builder).price }), approx: p(prices.deck_builder).approx },
   ];
+  const hasEstimates = Boolean(p(prices.pro_monthly).approx);
+  const other = ctx.currency === "NGN" ? "USD" : "NGN";
 
   return (
     <div className="grid gap-6">
+      <div className="text-muted-foreground flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
+        <span>{fill(t.pricesIn, { currency: t.currencyNames[ctx.currency] })}</span>
+        {ctx.usdOn ? <CurrencySwitch to={other} label={fill(t.switchTo, { currency: t.currencyNames[other] })} /> : null}
+      </div>
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {tiers.map((tier) => (
           <div
@@ -105,10 +109,15 @@ export function PricingCards({ t, prices }: { t: Messages["pricing"]; prices: Pr
             <p className="text-muted-foreground mt-1 text-sm">{tier.description}</p>
             <p className="mt-6">
               <span className="text-3xl font-semibold tracking-tight" dir="ltr">
-                {tier.price}
+                {tier.price?.price ?? tier.customPrice}
               </span>
               {tier.period ? <span className="text-muted-foreground ms-1 text-sm">{tier.period}</span> : null}
             </p>
+            {tier.price?.approx ? (
+              <p className="text-muted-foreground mt-1 text-xs" dir="ltr">
+                {tier.price.approx}
+              </p>
+            ) : null}
             <ul className="mt-6 grid flex-1 content-start gap-3 text-sm">
               {tier.features.map((f) => (
                 <li key={f} className="flex gap-2">
@@ -131,26 +140,21 @@ export function PricingCards({ t, prices }: { t: Messages["pricing"]; prices: Pr
         </div>
         <ul className="grid gap-2 text-sm sm:grid-cols-3 md:gap-6">
           {payg.map((f) => (
-            <li key={f} className="flex gap-2">
+            <li key={f.text} className="flex gap-2">
               <CheckIcon className="text-primary mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              {f}
+              <span>
+                {f.text}
+                {f.approx ? (
+                  <span className="text-muted-foreground block text-xs" dir="ltr">
+                    {f.approx}
+                  </span>
+                ) : null}
+              </span>
             </li>
           ))}
         </ul>
       </div>
-
-      {usdEnabled() ? (
-        <p className="text-muted-foreground text-sm">
-          {fill(t.usdNote, {
-            pro: usd(PRICES.USD.pro_monthly),
-            packs: [
-              `${t.plus.name} ${usd(PRICES.USD.pro_plus_monthly)}`,
-              ...CREDIT_PACKS.map((p) => fill(t.usdPack, { simulations: p.simulations, price: usd(PRICES.USD[p.product]) })),
-              fill(t.credits.deck, { price: usd(PRICES.USD.deck_builder) }),
-            ].join(", "),
-          })}
-        </p>
-      ) : null}
+      {hasEstimates ? <p className="text-muted-foreground text-xs">{t.estimateNote}</p> : null}
     </div>
   );
 }

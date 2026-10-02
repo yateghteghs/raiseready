@@ -6,12 +6,13 @@ import { SampleReport } from "@/components/marketing/sample-report";
 import { Section } from "@/components/marketing/section";
 import { LogoStrip, TestimonialCards } from "@/components/marketing/showcase";
 import { Button } from "@/components/ui/button";
-import { getPrices } from "@/lib/billing/price-settings";
+import { getPlanRules } from "@/lib/billing/plan-settings";
+import { getPriceContext } from "@/lib/currency/server";
 import { getMessages } from "@/lib/i18n/server";
 import { publishedShowcase } from "@/lib/showcase/service";
 
 export default async function HomePage() {
-  const [{ m }, showcase, prices] = await Promise.all([getMessages(), publishedShowcase(), getPrices()]);
+  const [{ m }, showcase, rules, ctx] = await Promise.all([getMessages(), publishedShowcase(), getPlanRules(), getPriceContext()]);
   const t = m.home;
   const logos = showcase.filter((i) => i.kind === "logo");
   const testimonials = showcase.filter((i) => i.kind === "testimonial");
@@ -90,7 +91,7 @@ export default async function HomePage() {
       ) : null}
 
       <Section title={t.pricingTitle} intro={t.pricingIntro}>
-        <PricingCards t={m.pricing} prices={prices} />
+        <PricingCards t={m.pricing} rules={rules} ctx={ctx} />
       </Section>
 
       <section className="bg-primary text-primary-foreground">

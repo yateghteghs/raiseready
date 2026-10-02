@@ -6,7 +6,11 @@ import { BuyOptions } from "@/components/billing/buy-options";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { InviteLink } from "@/components/billing/invite-card";
 import { getCurrentUser } from "@/lib/auth/session";
-import { CREDIT_PACKS, DECK_BUILDER, FREE_PLAN, PLAN_LIMITS, PRO_PLAN, PRO_PLUS_PLAN } from "@/lib/billing/plans";
+import { CREDIT_PACKS, DECK_BUILDER, PRO_PLUS_PLAN } from "@/lib/billing/plans";
+import { planFeatures } from "@/lib/billing/plan-features";
+import { PLAN_NAMES } from "@/lib/billing/plan-rules";
+import { getPriceContext } from "@/lib/currency/server";
+import { DICTIONARIES } from "@/lib/i18n/messages";
 import { getDeckUsage } from "@/lib/decks/service";
 import { availableCurrencies, inviteOfferText, minimumSpendText } from "@/lib/billing/prices";
 import { getPrices } from "@/lib/billing/price-settings";
@@ -51,11 +55,13 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
       getDeckUsage(user.id),
       getPrices(),
     ]);
+    const ctx = await getPriceContext(usage.profile.country);
     const paidBefore = (payments.data ?? []).some((p) => p.status === "success");
     return {
       usage,
       decks,
       prices,
+      ctx,
       subscription,
       payments: payments.data ?? [],
       referrals,
@@ -66,7 +72,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
   });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) return <LoadProblem code="no_startup" />;
-  const { usage, decks, prices: PRICES, subscription, payments, referrals, inviteUrl, referralDiscount, programme } = loaded.data;
+  const { usage, decks, prices: PRICES, ctx, subscription, payments, referrals, inviteUrl, referralDiscount, programme } = loaded.data;
   const inviteOffer = inviteOfferText(programme);
 
   const testMode = (process.env.PAYSTACK_SECRET_KEY ?? "").startsWith("sk_test_");
@@ -96,7 +102,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
           <h2 id="plan-heading" className="text-muted-foreground text-sm">
             Your plan
           </h2>
-          <p className="mt-1 text-2xl font-semibold">{usage.tier === "free" ? "Free" : PLAN_LIMITS[usage.tier].name}</p>
+          <p className="mt-1 text-2xl font-semibold">{PLAN_NAMES[usage.tier]}</p>
           {usage.team ? (
             <p className="text-muted-foreground text-sm">
               From your team, {usage.team.name}, until {dateFormat.format(new Date(usage.team.ends_at))}.
@@ -113,18 +119,18 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
               <div>
                 <dt className="text-muted-foreground">Simulations this month</dt>
                 <dd className="font-medium tabular-nums">
-                  {usage.proSimulationsThisMonth} of {PLAN_LIMITS[usage.tier === "pro_plus" ? "pro_plus" : "pro"].simulationsPerMonth}
+                  {usage.proSimulationsThisMonth} of {usage.rules[usage.tier].simulations}
                 </dd>
               </div>
             ) : (
               <>
                 <div>
                   <dt className="text-muted-foreground">Free assessment</dt>
-                  <dd className="font-medium">{usage.assessments >= FREE_PLAN.assessments ? "Used" : "Available"}</dd>
+                  <dd className="font-medium">{usage.assessments >= usage.rules.free.assessments ? "Used" : "Available"}</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">Free simulation</dt>
-                  <dd className="font-medium">{usage.freeSimulationsUsed >= FREE_PLAN.simulations ? "Used" : "Available"}</dd>
+                  <dd className="font-medium">{usage.freeSimulationsUsed >= usage.rules.free.simulations ? "Used" : "Available"}</dd>
                 </div>
               </>
             )}
@@ -147,7 +153,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
             </Link>
             :{" "}
             {usage.tier !== "free"
-              ? `${decks.proDecksThisMonth} of ${PLAN_LIMITS[usage.tier].decksPerMonth} used this month with ${PLAN_LIMITS[usage.tier].name}`
+              ? `${decks.proDecksThisMonth} of ${usage.rules[usage.tier].decksPerMonth} used this month with ${PLAN_NAMES[usage.tier]}`
               : decks.previewsUsed
                 ? "free preview used"
                 : "free preview available"}
@@ -161,7 +167,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
           {usage.tier === "pro_plus" ? "Need more sessions?" : "Upgrade"}
         </h2>
         <BuyOptions
-          currencies={availableCurrencies()}
+          currencies={[ctx.currency, ...availableCurrencies().filter((c) => c !== ctx.currency)]}
           referralPercent={referralDiscount ? programme.friendPercentOff : null}
           options={[
             ...(usage.tier === "free"
@@ -172,13 +178,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
                     perMonth: true,
                     buttonLabel: "Upgrade to Pro",
                     prices: { NGN: PRICES.NGN.pro_monthly, USD: PRICES.USD.pro_monthly },
-                    features: [
-                      "Unlimited assessments",
-                      `Up to ${PRO_PLAN.simulationsPerMonth} simulations a month`,
-                      "Every investor and difficulty",
-                      `${PLAN_LIMITS.pro.decksPerMonth} pitch decks a month`,
-                      "PDF reports and progress tracking",
-                    ],
+                    features: planFeatures("pro", usage.rules, DICTIONARIES.en.pricing.features),
                   },
                 ]
               : []),
@@ -192,12 +192,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
                     highlight: true,
                     buttonLabel: usage.tier === "pro" ? "Upgrade to Pro Plus" : "Get Pro Plus",
                     prices: { NGN: PRICES.NGN.pro_plus_monthly, USD: PRICES.USD.pro_plus_monthly },
-                    features: [
-                      "Everything in Pro",
-                      `Up to ${PRO_PLUS_PLAN.simulationsPerMonth} simulations a month`,
-                      `${PLAN_LIMITS.pro_plus.decksPerMonth} pitch decks a month, ${PLAN_LIMITS.pro_plus.rewritesPerDeck} AI rewrites each`,
-                      "Voice practice and slide-by-slide deck feedback as they launch",
-                    ],
+                    features: planFeatures("pro_plus", usage.rules, DICTIONARIES.en.pricing.features),
                     note:
                       usage.tier === "pro"
                         ? "Pro Plus starts as soon as you pay and your Pro subscription stops renewing. Days left on Pro aren't refunded."

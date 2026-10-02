@@ -1,4 +1,6 @@
-import { DECK_BUILDER, FREE_PLAN, PLAN_LIMITS } from "@/lib/billing/plans";
+import { DIFFICULTIES, PERSONAS } from "@/lib/ai/personas";
+import { DEFAULT_PLAN_RULES, PLAN_NAMES, type PlanRule, type PlanRules } from "@/lib/billing/plan-rules";
+import { DECK_BUILDER } from "@/lib/billing/plans";
 import type { DeckAccess, Difficulty, PaidPlan, Persona, Plan, SubscriptionStatus } from "@/lib/supabase/database.types";
 
 /**
@@ -44,6 +46,8 @@ export type Usage = {
   proActive: boolean;
   /** Which plan; when missing, Pro if proActive. */
   tier?: Tier;
+  /** What each plan includes (live settings); the defaults when missing. */
+  rules?: PlanRules;
   credits: number;
   assessments: number;
   /** Simulations that used the one free allowance. */
@@ -54,46 +58,70 @@ export type Usage = {
 
 export type Access<Via extends string> = { ok: true; via: Via } | { ok: false; reason: string; upgrade: boolean };
 
-export function simulationAccess(usage: Usage, persona: Persona, difficulty: Difficulty): Access<"free" | "pro" | "credit"> {
-  const paid = paidPlanOf(usage);
-  const limit = paid ? PLAN_LIMITS[paid] : null;
-  if (limit && usage.proSimulationsThisMonth < limit.simulationsPerMonth) return { ok: true, via: "pro" };
-
-  const freeChoice = FREE_PLAN.personas.includes(persona) && FREE_PLAN.difficulties.includes(difficulty);
-  if (!limit && usage.freeSimulationsUsed < FREE_PLAN.simulations && freeChoice) return { ok: true, via: "free" };
-  if (usage.credits > 0) return { ok: true, via: "credit" };
-
-  if (limit) {
-    return {
-      ok: false,
-      reason: `You've used all ${limit.simulationsPerMonth} ${limit.name} simulations this month. Buy credits to keep practising.`,
-      upgrade: true,
-    };
-  }
-  if (!freeChoice && usage.freeSimulationsUsed < FREE_PLAN.simulations) {
-    return {
-      ok: false,
-      reason: "The Grant Evaluator and the Tough difficulty are included with Pro or credits. Your free simulation can use an Angel or Seed VC on Friendly or Analytical.",
-      upgrade: true,
-    };
-  }
-  return { ok: false, reason: "You've used your free simulation. Upgrade to Pro or buy credits to practise again.", upgrade: true };
+/** The rules for the founder's current plan. */
+export function ruleFor(usage: { proActive: boolean; tier?: Tier; rules?: PlanRules }): PlanRule {
+  return (usage.rules ?? DEFAULT_PLAN_RULES)[paidPlanOf(usage) ?? "free"];
 }
 
-export function assessmentAccess(usage: Usage): Access<"free" | "pro"> {
-  if (usage.proActive) return { ok: true, via: "pro" };
-  if (usage.assessments < FREE_PLAN.assessments) return { ok: true, via: "free" };
+const list = (items: string[]) => (items.length > 1 ? `${items.slice(0, -1).join(", ")} or ${items.at(-1)}` : items[0]);
+
+export function simulationAccess(usage: Usage, persona: Persona, difficulty: Difficulty): Access<"free" | "pro" | "credit"> {
+  const paid = paidPlanOf(usage);
+  const rule = ruleFor(usage);
+  const name = PLAN_NAMES[paid ?? "free"];
+  const allowed = rule.personas.includes(persona) && rule.difficulties.includes(difficulty);
+  const used = paid ? usage.proSimulationsThisMonth : usage.freeSimulationsUsed;
+  const left = used < rule.simulations;
+
+  if (allowed && left) return paid ? { ok: true, via: "pro" } : { ok: true, via: "free" };
+  // Credits pay for any investor and difficulty.
+  if (usage.credits > 0) return { ok: true, via: "credit" };
+
+  if (!allowed && left) {
+    const investors = list(rule.personas.map((p) => `${/^[AEIOU]/.test(PERSONAS[p].name) ? "an" : "a"} ${PERSONAS[p].name}`));
+    const levels = list(rule.difficulties.map((d) => DIFFICULTIES[d].label));
+    return {
+      ok: false,
+      reason: `${name} includes ${investors} on ${levels} difficulty. Choose one of those, buy credits for any investor and difficulty, or upgrade.`,
+      upgrade: true,
+    };
+  }
+  if (paid) {
+    return {
+      ok: false,
+      reason: `You've used all ${rule.simulations} ${name} simulations this month. Buy credits to keep practising.`,
+      upgrade: true,
+    };
+  }
   return {
     ok: false,
-    reason: "Your free plan includes one assessment. Upgrade to Pro for unlimited reassessments as you improve.",
+    reason:
+      rule.simulations === 0
+        ? "Upgrade to Pro or buy credits to practise in the Investor Room."
+        : "You've used your free simulation. Upgrade to Pro or buy credits to practise again.",
     upgrade: true,
   };
 }
 
-export function pdfAccess(usage: Pick<Usage, "proActive">): Access<"pro"> {
-  return usage.proActive
+export function assessmentAccess(usage: Usage): Access<"free" | "pro"> {
+  if (usage.proActive) return { ok: true, via: "pro" };
+  const allowed = ruleFor(usage).assessments;
+  if (usage.assessments < allowed) return { ok: true, via: "free" };
+  return {
+    ok: false,
+    reason: `Your free plan includes ${allowed === 1 ? "one assessment" : `${allowed} assessments`}. Upgrade to Pro for unlimited reassessments as you improve.`,
+    upgrade: true,
+  };
+}
+
+export function pdfAccess(usage: { proActive: boolean; tier?: Tier; rules?: PlanRules }): Access<"pro"> {
+  return ruleFor(usage).pdfReports
     ? { ok: true, via: "pro" }
-    : { ok: false, reason: "PDF reports are part of Pro. You can still read your report here.", upgrade: true };
+    : { ok: false, reason: "PDF reports aren't part of your plan. You can still read your report here.", upgrade: true };
+}
+
+export function progressAccess(usage: { proActive: boolean; tier?: Tier; rules?: PlanRules }): boolean {
+  return ruleFor(usage).progressTracking;
 }
 
 /** Start of the current calendar month in Lagos (UTC+1, no daylight saving). */
@@ -105,6 +133,7 @@ export function lagosMonthStart(now = Date.now()): Date {
 export type DeckUsage = {
   proActive: boolean;
   tier?: Tier;
+  rules?: PlanRules;
   /** Decks bought one at a time and not yet used. */
   deckCredits: number;
   /** Decks Pro has unlocked this calendar month. */
@@ -116,14 +145,15 @@ export type DeckUsage = {
 /** What pays for unlocking a deck in full: Pro's monthly allowance first, then a bought deck. */
 export function deckUnlockAccess(usage: DeckUsage): Access<"pro" | "credit"> {
   const paid = paidPlanOf(usage);
-  const limit = paid ? PLAN_LIMITS[paid] : null;
-  if (limit && usage.proDecksThisMonth < limit.decksPerMonth) return { ok: true, via: "pro" };
+  const rule = ruleFor(usage);
+  if (paid && usage.proDecksThisMonth < rule.decksPerMonth) return { ok: true, via: "pro" };
   if (usage.deckCredits > 0) return { ok: true, via: "credit" };
   return {
     ok: false,
-    reason: limit
-      ? `You've used the ${limit.decksPerMonth} decks included with ${limit.name} this month. Buy another deck to keep going.`
-      : "Unlock the full deck with Pro, or buy this one deck on its own.",
+    reason:
+      paid && rule.decksPerMonth > 0
+        ? `You've used the ${rule.decksPerMonth} decks included with ${PLAN_NAMES[paid]} this month. Buy another deck to keep going.`
+        : "Unlock the full deck with a plan that includes decks, or buy this one deck on its own.",
     upgrade: true,
   };
 }
@@ -132,16 +162,16 @@ export function deckUnlockAccess(usage: DeckUsage): Access<"pro" | "credit"> {
 export function deckBuildAccess(usage: DeckUsage): Access<"pro" | "credit" | "preview"> {
   const unlock = deckUnlockAccess(usage);
   if (unlock.ok) return unlock;
-  if (usage.previewsUsed < DECK_BUILDER.freePreviews) return { ok: true, via: "preview" };
+  if ((usage.rules ?? DEFAULT_PLAN_RULES).free.deckPreview && usage.previewsUsed < DECK_BUILDER.freePreviews) return { ok: true, via: "preview" };
   return unlock;
 }
 
 /** AI rewrites of single slides. Previews have none; typing changes is always free. */
-export function rewriteAccess(deck: { access: DeckAccess; rewrites_used: number }, tier: Tier = "pro"): Access<"rewrite"> {
+export function rewriteAccess(deck: { access: DeckAccess; rewrites_used: number }, tier: Tier = "pro", rules?: PlanRules): Access<"rewrite"> {
   if (deck.access === "preview") {
     return { ok: false, reason: "Unlock the full deck to have slides rewritten. You can still edit the text yourself.", upgrade: true };
   }
-  const limit = rewriteLimit(deck.access, tier);
+  const limit = rewriteLimit(deck.access, tier, rules);
   if (deck.rewrites_used < limit) return { ok: true, via: "rewrite" };
   return {
     ok: false,
@@ -151,7 +181,7 @@ export function rewriteAccess(deck: { access: DeckAccess; rewrites_used: number 
 }
 
 /** AI rewrites allowed on a deck: by plan for plan-paid decks, fixed for bought ones. */
-export function rewriteLimit(access: DeckAccess, tier: Tier): number {
+export function rewriteLimit(access: DeckAccess, tier: Tier, rules: PlanRules = DEFAULT_PLAN_RULES): number {
   if (access !== "pro") return DECK_BUILDER.creditRewritesPerDeck;
-  return PLAN_LIMITS[tier === "pro_plus" ? "pro_plus" : "pro"].rewritesPerDeck;
+  return rules[tier === "pro_plus" ? "pro_plus" : "pro"].rewritesPerDeck;
 }

@@ -3,11 +3,10 @@ import Link from "next/link";
 
 import { PricingCards } from "@/components/marketing/pricing-cards";
 import { PageHero, Section } from "@/components/marketing/section";
-import { FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
 import { publishedFaq } from "@/lib/faq/service";
-import { getPrices } from "@/lib/billing/price-settings";
+import { getPlanRules } from "@/lib/billing/plan-settings";
+import { getPriceContext } from "@/lib/currency/server";
 import { getMessages } from "@/lib/i18n/server";
-import { fill } from "@/lib/i18n/text";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -20,7 +19,7 @@ const PRICING_QUESTIONS = ["free-plan", "pro-plan", "credits", "how-to-pay", "ca
 export default async function PricingPage() {
   const { locale, m } = await getMessages();
   const t = m.pricingPage;
-  const [faq, prices] = await Promise.all([publishedFaq(locale), getPrices()]);
+  const [faq, rules, ctx] = await Promise.all([publishedFaq(locale), getPlanRules(), getPriceContext()]);
   const items = faq.sections
     .flatMap((s) => s.items)
     .filter((i) => i.slug && PRICING_QUESTIONS.includes(i.slug))
@@ -32,10 +31,7 @@ export default async function PricingPage() {
         {t.intro}
       </PageHero>
       <Section>
-        <PricingCards t={m.pricing} prices={prices} />
-        <p className="text-muted-foreground mt-6 text-sm">
-          {fill(t.note, { assessments: FREE_PLAN.assessments, simulations: FREE_PLAN.simulations, pro: PRO_PLAN.simulationsPerMonth })}
-        </p>
+        <PricingCards t={m.pricing} rules={rules} ctx={ctx} />
       </Section>
       {items.length ? (
         <div className="bg-muted/40 border-t">

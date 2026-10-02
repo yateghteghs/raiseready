@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { DIFFICULTIES, PERSONAS } from "@/lib/ai/personas";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getUsage } from "@/lib/billing/service";
-import { PLAN_LIMITS } from "@/lib/billing/plans";
+import { PLAN_NAMES } from "@/lib/billing/plan-rules";
 import { load } from "@/lib/data-errors";
 import { getLatestKnowledgeProfile } from "@/lib/documents/service";
 import { FUNDING_TYPE_OPTIONS, labelFor } from "@/lib/startups/options";
@@ -40,9 +40,9 @@ export default async function InvestorRoomPage() {
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) return <LoadProblem code="no_startup" />;
   const { startup, profile, sims, usage } = loaded.data;
-  const limit = PLAN_LIMITS[usage.tier === "pro_plus" ? "pro_plus" : "pro"];
+  const limit = usage.rules[usage.tier];
   const planNote = usage.proActive
-    ? `${limit.name}: ${Math.max(0, limit.simulationsPerMonth - usage.proSimulationsThisMonth)} of ${limit.simulationsPerMonth} sessions left this month${usage.credits ? `, plus ${usage.credits} credits` : ""}.`
+    ? `${PLAN_NAMES[usage.tier]}: ${Math.max(0, limit.simulations - usage.proSimulationsThisMonth)} of ${limit.simulations} sessions left this month${usage.credits ? `, plus ${usage.credits} credits` : ""}.`
     : usage.freeSimulationsUsed === 0
       ? `Your free session works with an Angel or Seed VC on Friendly or Analytical${usage.credits ? `. You also have ${usage.credits} credits for any investor and difficulty` : ""}.`
       : usage.credits

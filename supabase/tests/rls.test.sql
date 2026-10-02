@@ -171,6 +171,9 @@ insert into public.notifications (id, user_id, title, body) values
 insert into public.notifications (user_id, title, body, active) values
   (null, 'Turned off', 'Withdrawn', false);
 insert into public.price_settings (product, currency, amount) values ('pro_monthly', 'NGN', 2000000);
+insert into public.fx_rates (currency, per_usd) values ('KES', 129.5);
+select rls_test.throws($$insert into public.fx_rates (currency, per_usd) values ('USD', 1)$$, '23514', 'exchange rates are against the dollar, not for it');
+select rls_test.throws($$insert into public.plan_settings (plan, config) values ('platinum', '{}')$$, '23514', 'plan settings exist only for real plans');
 select rls_test.throws(
   $$insert into public.price_settings (product, currency, amount) values ('pro_monthly', 'EUR', 1000)$$,
   '23514', 'prices are in naira or dollars only');
@@ -475,6 +478,8 @@ select rls_test.ok(
   (select array_agg(title order by title) from public.notifications) = array['For A', 'For everyone'],
   'A reads own and broadcast notifications, not B''s or turned-off ones');
 select rls_test.throws('select * from public.price_settings', '42501', 'A cannot read price settings directly');
+select rls_test.throws('select * from public.plan_settings', '42501', 'A cannot read plan settings directly');
+select rls_test.throws($$insert into public.fx_rates (currency, per_usd) values ('KES', 1)$$, '42501', 'A cannot set exchange rates');
 select rls_test.throws(
   $$update public.price_settings set amount = 100$$,
   '42501', 'A cannot change prices');

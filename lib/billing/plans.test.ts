@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { CREDIT_PACKS, FREE_PLAN } from "@/lib/billing/plans";
+import { DEFAULT_PLAN_RULES } from "@/lib/billing/plan-rules";
+import { CREDIT_PACKS } from "@/lib/billing/plans";
 import { DEFAULT_PRICES } from "@/lib/billing/prices";
 import { formatMoney, koboToNaira } from "@/lib/format";
 
@@ -12,7 +13,7 @@ describe("plans", () => {
   });
 
   it("keeps the tough difficulty and Grant Evaluator for paid users", () => {
-    expect(FREE_PLAN.difficulties).not.toContain("tough");
-    expect(FREE_PLAN.personas).not.toContain("grant_evaluator");
+    expect(DEFAULT_PLAN_RULES.free.difficulties).not.toContain("tough");
+    expect(DEFAULT_PLAN_RULES.free.personas).not.toContain("grant_evaluator");
   });
 });

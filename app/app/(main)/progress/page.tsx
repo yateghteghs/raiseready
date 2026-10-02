@@ -6,6 +6,7 @@ import { ProgressChart } from "@/components/progress/progress-chart";
 import { Button } from "@/components/ui/button";
 import { DIFFICULTIES, PERSONAS } from "@/lib/ai/personas";
 import { getCurrentUser } from "@/lib/auth/session";
+import { progressAccess } from "@/lib/billing/entitlements";
 import { getUsage } from "@/lib/billing/service";
 import { load } from "@/lib/data-errors";
 import { bandFor } from "@/lib/scoring/rubric";
@@ -21,7 +22,7 @@ export default async function ProgressPage() {
     const [startup, user] = await Promise.all([getMyStartup(), getCurrentUser()]);
     if (!startup || !user) return null;
     const usage = await getUsage(user.id, startup.id);
-    if (!usage.proActive) return { locked: true as const };
+    if (!progressAccess(usage)) return { locked: true as const };
     const supabase = await createClient();
     const [assessments, sims] = await Promise.all([
       supabase.from("assessments").select("id, overall_score, created_at").eq("startup_id", startup.id).order("created_at", { ascending: true }),

@@ -10,7 +10,7 @@ import { BuildDeckForm } from "@/components/decks/build-deck-form";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth/session";
 import { deckUnlockAccess, rewriteAccess, rewriteLimit } from "@/lib/billing/entitlements";
-import { DECK_BUILDER } from "@/lib/billing/plans";
+import { DEFAULT_PLAN_RULES } from "@/lib/billing/plan-rules";
 import { load } from "@/lib/data-errors";
 import { getPrices } from "@/lib/billing/price-settings";
 import { deckContent, getDeckUsage, visibleSlideCount } from "@/lib/decks/service";
@@ -68,8 +68,8 @@ export default async function DeckPage({ params }: PageProps<"/app/decks/[deckId
   const slides = content.slides.slice(0, shown);
   const locked = content.slides.slice(shown).map((s) => s.kind);
   const tier = usage.tier ?? (usage.proActive ? "pro" : "free");
-  const rewrite = rewriteAccess(deck, tier);
-  const rewritesAllowed = rewriteLimit(deck.access, tier);
+  const rewrite = rewriteAccess(deck, tier, usage.rules);
+  const rewritesAllowed = rewriteLimit(deck.access, tier, usage.rules);
   const unlock = deck.access === "preview" ? deckUnlockAccess(usage) : null;
   const placeholders = content.slides.reduce((n, s) => n + s.missing.length, 0);
 
@@ -107,7 +107,7 @@ export default async function DeckPage({ params }: PageProps<"/app/decks/[deckId
             <div className="grid justify-items-start gap-2 text-sm">
               <p>
                 Unlock every slide, AI rewrites and the PowerPoint and PDF downloads: buy this deck for{" "}
-                {formatMoney(koboToNaira(prices.NGN.deck_builder))}, or get {DECK_BUILDER.proDecksPerMonth} decks a month with Pro.
+                {formatMoney(koboToNaira(prices.NGN.deck_builder))}, or get {(usage.rules ?? DEFAULT_PLAN_RULES).pro.decksPerMonth} decks a month with Pro.
                 Your deck won&apos;t be written again; it unlocks as it is.
               </p>
               <Button asChild size="sm">
