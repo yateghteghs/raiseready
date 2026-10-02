@@ -1,8 +1,11 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 
-import { friendlyAuthError, logAuthError } from "@/lib/auth/errors";
+import { recordSignIn } from "@/lib/activity/service";
+import { authErrorCode, friendlyAuthError, logAuthError } from "@/lib/auth/errors";
 import { safeNextPath } from "@/lib/auth/redirect";
 import {
   forgotPasswordSchema,
@@ -35,7 +38,18 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
   if (!parsed.success) return validationFailed(parsed.error, values);
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
+  const userAgent = (await headers()).get("user-agent");
+  after(() =>
+    recordSignIn({
+      email: parsed.data.email,
+      userId: data.user?.id ?? null,
+      succeeded: !error,
+      surface: "app",
+      failureCode: error ? authErrorCode(error) : null,
+      userAgent,
+    }),
+  );
   if (error && error.code !== "invalid_credentials") logAuthError("login", error);
   if (error) return { status: "error", message: friendlyAuthError(error), values };
 

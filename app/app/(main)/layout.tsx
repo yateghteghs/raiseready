@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 
 import { AppFooter } from "@/components/app/app-footer";
+import { touchActivity } from "@/lib/activity/service";
 import { AppHeader } from "@/components/app/app-header";
 import { isStaffProfile } from "@/lib/admin/auth";
 import { LoadProblem } from "@/components/app/load-problem";
@@ -34,6 +36,8 @@ export default async function MainAppLayout({ children }: LayoutProps<"/app">) {
     );
   }
   if (!loaded.data?.onboarding_complete) redirect("/app/onboarding");
+  const { id, last_seen_at } = loaded.data;
+  after(() => touchActivity(id, last_seen_at));
   const [avatarUrl, unread] = await Promise.all([
     imageLink(loaded.data.id, loaded.data.avatar_path),
     unreadCount(loaded.data.id, loaded.data.created_at),

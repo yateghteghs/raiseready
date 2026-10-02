@@ -1,6 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
-import { NextResponse, type NextRequest } from "next/server";
+import { after, NextResponse, type NextRequest } from "next/server";
 
+import { recordSignIn } from "@/lib/activity/service";
 import { safeNextPath } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/server";
 
@@ -17,13 +18,20 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") as EmailOtpType | null;
 
   const supabase = await createClient();
+  const signedIn = (user: { id: string; email?: string } | null | undefined) => {
+    if (user?.email) {
+      const userAgent = request.headers.get("user-agent");
+      after(() => recordSignIn({ email: user.email!, userId: user.id, succeeded: true, surface: "app", userAgent }));
+    }
+    return NextResponse.redirect(new URL(next, origin));
+  };
 
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(new URL(next, origin));
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) return signedIn(data.user);
   } else if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
-    if (!error) return NextResponse.redirect(new URL(next, origin));
+    const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+    if (!error) return signedIn(data.user);
   }
 
   return NextResponse.redirect(new URL("/login?error=link", origin));
