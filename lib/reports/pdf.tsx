@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import path from "node:path";
 
 import { Document, Font, Image, Page, renderToBuffer, StyleSheet, Text, View } from "@react-pdf/renderer";
@@ -20,6 +21,19 @@ function registerFonts() {
   fontsRegistered = true;
 }
 
+let brandLogo: Buffer | null | undefined;
+/** The RaiseReady logo for the report header, or null if the file is missing. */
+function raiseReadyLogo(): Buffer | null {
+  if (brandLogo === undefined) {
+    try {
+      brandLogo = readFileSync(path.join(process.cwd(), "lib/reports/assets/raiseready-logo.png"));
+    } catch {
+      brandLogo = null;
+    }
+  }
+  return brandLogo;
+}
+
 const GREEN = "#0b6e4f";
 const MUTED = "#5b6472";
 const BORDER = "#e3e6ea";
@@ -27,6 +41,7 @@ const BORDER = "#e3e6ea";
 const s = StyleSheet.create({
   page: { fontFamily: "Noto Sans", fontSize: 10, color: "#1c2127", padding: 40, lineHeight: 1.45 },
   brand: { fontSize: 9, color: GREEN, fontWeight: 700, marginBottom: 4 },
+  brandLogo: { height: 20, alignSelf: "flex-start", objectFit: "contain", objectPositionX: 0, marginBottom: 6 },
   heading: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 16 },
   logo: { maxWidth: 110, maxHeight: 48, objectFit: "contain" },
   issued: { marginTop: 24, paddingTop: 12, borderTopWidth: 1, borderTopColor: BORDER },
@@ -80,7 +95,9 @@ function ReportDocument({ content, logo, signer }: { content: ReportContent; log
       <Page size="A4" style={s.page}>
         <View style={s.heading}>
           <View style={{ flex: 1 }}>
-            <Text style={s.brand}>RAISEREADY · READINESS REPORT</Text>
+            {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf images take no alt text */}
+            {raiseReadyLogo() ? <Image src={raiseReadyLogo()!} style={s.brandLogo} /> : null}
+            <Text style={s.brand}>{raiseReadyLogo() ? "READINESS REPORT" : "RAISEREADY · READINESS REPORT"}</Text>
             <Text style={s.title}>{c.startup.name}</Text>
             <Text style={s.subtitle}>
               {[c.startup.stage, c.startup.industry, c.startup.country].filter(Boolean).join(" · ")} · {dateFormat.format(new Date(c.generated_at))}
