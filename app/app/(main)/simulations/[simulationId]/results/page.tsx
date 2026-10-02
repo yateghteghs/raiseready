@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { LoadProblem } from "@/components/app/load-problem";
+import { NextStep } from "@/components/app/next-step";
 import { PractiseButton } from "@/components/simulation/practise-button";
 import { RatingRow } from "@/components/simulation/rating-row";
 import { RedFlagCard, type FlagView } from "@/components/simulation/red-flag-card";
@@ -24,10 +25,11 @@ export default async function ResultsPage({ params }: PageProps<"/app/simulation
     const supabase = await createClient();
     const { data: sim } = await supabase.from("simulations").select("*").eq("id", simulationId).eq("mode", "full").maybeSingle();
     if (!sim) return null;
-    const [turns, flags, docs] = await Promise.all([
+    const [turns, flags, docs, report] = await Promise.all([
       supabase.from("simulation_turns").select("*").eq("simulation_id", sim.id).order("turn_index"),
       supabase.from("red_flags").select("id, turn_id, type, severity, description, evidence").eq("simulation_id", sim.id),
       supabase.from("documents").select("id, kind").eq("startup_id", sim.startup_id),
+      supabase.from("reports").select("id").eq("simulation_id", sim.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
     const questionIds = (turns.data ?? []).filter((t) => t.role === "investor").map((t) => t.id);
     const drills = questionIds.length
@@ -45,11 +47,12 @@ export default async function ResultsPage({ params }: PageProps<"/app/simulation
       flags: (flags.data ?? []) as unknown as FlagView[],
       docs: docs.data ?? [],
       drills: drills.data ?? [],
+      reportId: report.data?.id ?? null,
     };
   });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) notFound();
-  const { sim, turns, flags, docs, drills } = loaded.data;
+  const { sim, turns, flags, docs, drills, reportId } = loaded.data;
 
   const final = sim.final_evaluation ? finalEvaluationSchema.safeParse(sim.final_evaluation) : null;
   const struggled = new Map((final?.success ? final.data.struggled_questions : []).map((q) => [q.turn_index, q]));
@@ -89,6 +92,24 @@ export default async function ResultsPage({ params }: PageProps<"/app/simulation
           {sim.status === "abandoned" ? "You left this session early, so there's no overall feedback." : "Feedback isn't ready yet."}
         </p>
       )}
+
+      {sim.status === "completed" ? (
+        reportId ? (
+          <NextStep title="Your report is ready" href={`/app/reports/${reportId}`} cta="Open and download your report">
+            Download it as a PDF to print or share with mentors and your team.
+          </NextStep>
+        ) : (
+          <NextStep
+            title="Create your readiness report"
+            href={`/app/reports?simulation=${sim.id}`}
+            cta="Create report"
+            secondary={{ href: "/app/investor-room", label: "Practise again" }}
+          >
+            Combine this session with your assessment into one report: summary, risks, red flags, the questions to
+            prepare and what to do next. Download it as a PDF to print or share.
+          </NextStep>
+        )
+      ) : null}
 
       <section aria-labelledby="answers-heading" className="grid gap-4">
         <div>

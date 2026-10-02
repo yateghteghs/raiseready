@@ -28,6 +28,8 @@ export function recommendedSimulation(view: AssessmentView) {
   const def = target ? dimensionById(target.dimension_id) : undefined;
   if (!target || !def) return null;
   return {
+    personaId: def.practise.persona,
+    difficultyId: target.score < 50 ? ("friendly" as const) : ("analytical" as const),
     persona: PERSONA_LABELS[def.practise.persona],
     focus: def.practise.focus,
     difficulty: target.score < 50 ? "Friendly" : "Analytical",

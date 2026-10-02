@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { LoadProblem } from "@/components/app/load-problem";
+import { NextStep } from "@/components/app/next-step";
 import { AnalysePanel } from "@/components/documents/analyse-panel";
 import { DocumentList, type DocumentRow } from "@/components/documents/document-list";
 import { KnowledgeProfileView } from "@/components/documents/knowledge-profile-view";
@@ -97,6 +98,13 @@ export default async function DocumentsPage() {
           failure={!running && failed ? (failed.error_message ?? "The last analysis failed.") : null}
         />
       </section>
+
+      {profile && !running ? (
+        <NextStep title="Get your readiness score" href="/app/assessment" cta="Go to Assessment">
+          Your documents are analysed. See how investors would rate you across 10 areas, and what to fix first. Run it
+          again whenever you upload new documents.
+        </NextStep>
+      ) : null}
 
       <section aria-labelledby="files-heading" className="grid gap-4">
         <h2 id="files-heading" className="text-lg font-semibold">

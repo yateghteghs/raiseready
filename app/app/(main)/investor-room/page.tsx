@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { DIFFICULTIES, PERSONAS } from "@/lib/ai/personas";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getUsage } from "@/lib/billing/service";
-import { PLAN_NAMES } from "@/lib/billing/plan-rules";
+import { ALL_DIFFICULTIES, ALL_PERSONAS, PLAN_NAMES } from "@/lib/billing/plan-rules";
 import { load } from "@/lib/data-errors";
 import { getLatestKnowledgeProfile } from "@/lib/documents/service";
 import { FUNDING_TYPE_OPTIONS, labelFor } from "@/lib/startups/options";
@@ -18,7 +18,8 @@ export const metadata: Metadata = { title: "Investor Room" };
 
 const dateFormat = new Intl.DateTimeFormat("en-NG", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
-export default async function InvestorRoomPage() {
+export default async function InvestorRoomPage({ searchParams }: PageProps<"/app/investor-room">) {
+  const wanted = await searchParams;
   const loaded = await load(async () => {
     const [startup, user] = await Promise.all([getMyStartup(), getCurrentUser()]);
     if (!startup || !user) return null;
@@ -41,6 +42,12 @@ export default async function InvestorRoomPage() {
   if (!loaded.data) return <LoadProblem code="no_startup" />;
   const { startup, profile, sims, usage } = loaded.data;
   const limit = usage.rules[usage.tier];
+  // A recommendation (e.g. from the assessment) preselects the investor and
+  // difficulty, unless the founder's plan doesn't include them.
+  const pick = <T extends string>(value: unknown, all: readonly T[], included: readonly T[], fallback: T): T =>
+    typeof value === "string" && all.includes(value as T) && (usage.credits > 0 || included.includes(value as T)) ? (value as T) : fallback;
+  const defaultPersona = pick(wanted.persona, ALL_PERSONAS, limit.personas, "seed_vc");
+  const defaultDifficulty = pick(wanted.difficulty, ALL_DIFFICULTIES, limit.difficulties, "analytical");
   const planNote = usage.proActive
     ? `${PLAN_NAMES[usage.tier]}: ${Math.max(0, limit.simulations - usage.proSimulationsThisMonth)} of ${limit.simulations} sessions left this month${usage.credits ? `, plus ${usage.credits} credits` : ""}.`
     : usage.freeSimulationsUsed === 0
@@ -72,6 +79,8 @@ export default async function InvestorRoomPage() {
           difficulties={Object.entries(DIFFICULTIES).map(([value, d]) => ({ value, label: d.label, summary: d.summary }))}
           fundingTypes={FUNDING_TYPE_OPTIONS}
           defaultFundingType={labelFor(FUNDING_TYPE_OPTIONS, startup.funding_type) ?? ""}
+          defaultPersona={defaultPersona}
+          defaultDifficulty={defaultDifficulty}
         />
       ) : (
         <div className="bg-muted/40 flex flex-col items-start gap-3 rounded-xl border p-5">

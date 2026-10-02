@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { LoadProblem } from "@/components/app/load-problem";
+import { NextStep } from "@/components/app/next-step";
 import { DimensionBreakdown } from "@/components/assessment/dimension-breakdown";
 import { RunAssessmentButton } from "@/components/assessment/run-assessment-button";
 import { BandBadge, ScoreChange } from "@/components/assessment/score-badge";
 import { Button } from "@/components/ui/button";
 import { listAssessments } from "@/lib/assessment/service";
-import { assessmentView } from "@/lib/assessment/view";
+import { assessmentView, recommendedSimulation } from "@/lib/assessment/view";
 import { load } from "@/lib/data-errors";
 import { getLatestKnowledgeProfile } from "@/lib/documents/service";
 import { RUBRIC_VERSION } from "@/lib/scoring/rubric";
@@ -34,6 +35,7 @@ export default async function AssessmentPage() {
   const latest = assessments[0] ? assessmentView(assessments[0]) : null;
   const previous = assessments[1] ? assessmentView(assessments[1]) : null;
   const delta = latest && previous ? latest.score - previous.score : null;
+  const practise = latest ? recommendedSimulation(latest) : null;
 
   return (
     <div className="grid gap-10">
@@ -78,6 +80,16 @@ export default async function AssessmentPage() {
               </p>
             </div>
           </section>
+
+          <NextStep
+            title="Practise your pitch in the Investor Room"
+            href={practise ? `/app/investor-room?persona=${practise.personaId}&difficulty=${practise.difficultyId}` : "/app/investor-room"}
+            cta="Enter the Investor Room"
+          >
+            {practise
+              ? `Your weakest area is ${practise.reason}. Pitch to a ${practise.persona} on ${practise.difficulty.toLowerCase()} difficulty and practise ${practise.focus}, before a real investor asks.`
+              : "Your documents are in good shape. Now practise answering the questions a real investor would ask, out loud and under pressure."}
+          </NextStep>
 
           {latest.actions.length ? (
             <section aria-labelledby="actions-heading" className="grid gap-4">
