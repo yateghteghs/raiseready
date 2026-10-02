@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { planFeatures } from "@/lib/billing/plan-features";
 import type { PlanRules } from "@/lib/billing/plan-rules";
 import { CREDIT_PACKS } from "@/lib/billing/plans";
-import { priceLabel, type PriceContext } from "@/lib/currency/display";
+import { formatAmount, priceLabel, type PriceContext } from "@/lib/currency/display";
+import type { PaymentProduct as PricedProduct } from "@/lib/supabase/database.types";
 import type { Messages } from "@/lib/i18n/messages/en";
 import { fill } from "@/lib/i18n/text";
 import { cn } from "@/lib/utils";
@@ -30,12 +31,24 @@ type Tier = {
  * elsewhere), with an estimate in their own currency when a rate is set.
  */
 export function PricingCards({ t, rules, ctx }: { t: Messages["pricing"]; rules: PlanRules; ctx: PriceContext }) {
-  const p = (minor: number) => priceLabel(minor, ctx);
-  const prices = ctx.prices[ctx.currency];
+  const shown = ctx.shown ?? ctx.currency;
+  // Outside Nigeria the headline is in dollars; while checkout is still in naira, say what's charged.
+  const p = (product: PricedProduct | null) => {
+    if (!product) return { price: formatAmount(0, shown), approx: null, estimate: false };
+    if (shown === ctx.currency) {
+      const label = priceLabel(ctx.prices[ctx.currency][product], ctx);
+      return { ...label, estimate: Boolean(label.approx) };
+    }
+    return {
+      price: formatAmount(ctx.prices[shown][product] / 100, shown),
+      approx: fill(t.paidIn, { price: formatAmount(ctx.prices[ctx.currency][product] / 100, ctx.currency) }),
+      estimate: false,
+    };
+  };
   const tiers: Tier[] = [
     {
       name: t.free.name,
-      price: p(0),
+      price: p(null),
       period: "",
       description: rules.free.description ?? t.free.description,
       features: planFeatures("free", rules, t.features),
@@ -44,7 +57,7 @@ export function PricingCards({ t, rules, ctx }: { t: Messages["pricing"]; rules:
     },
     {
       name: t.pro.name,
-      price: p(prices.pro_monthly),
+      price: p("pro_monthly"),
       period: t.perMonth,
       description: rules.pro.description ?? t.pro.description,
       features: planFeatures("pro", rules, t.features),
@@ -55,7 +68,7 @@ export function PricingCards({ t, rules, ctx }: { t: Messages["pricing"]; rules:
     },
     {
       name: t.plus.name,
-      price: p(prices.pro_plus_monthly),
+      price: p("pro_plus_monthly"),
       period: t.perMonth,
       description: rules.pro_plus.description ?? t.plus.description,
       features: planFeatures("pro_plus", rules, t.features),
@@ -75,16 +88,16 @@ export function PricingCards({ t, rules, ctx }: { t: Messages["pricing"]; rules:
     },
   ];
   const payg = [
-    ...CREDIT_PACKS.map((pack) => ({ text: fill(t.credits.pack, { price: p(prices[pack.product]).price, simulations: pack.simulations }), approx: p(prices[pack.product]).approx })),
-    { text: fill(t.credits.deck, { price: p(prices.deck_builder).price }), approx: p(prices.deck_builder).approx },
+    ...CREDIT_PACKS.map((pack) => ({ text: fill(t.credits.pack, { price: p(pack.product).price, simulations: pack.simulations }), approx: p(pack.product).approx })),
+    { text: fill(t.credits.deck, { price: p("deck_builder").price }), approx: p("deck_builder").approx },
   ];
-  const hasEstimates = Boolean(p(prices.pro_monthly).approx);
-  const other = ctx.currency === "NGN" ? "USD" : "NGN";
+  const hasEstimates = p("pro_monthly").estimate;
+  const other = shown === "NGN" ? "USD" : "NGN";
 
   return (
     <div className="grid gap-6">
       <div className="text-muted-foreground flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
-        <span>{fill(t.pricesIn, { currency: t.currencyNames[ctx.currency] })}</span>
+        <span>{fill(t.pricesIn, { currency: t.currencyNames[shown] })}</span>
         {ctx.usdOn ? <CurrencySwitch to={other} label={fill(t.switchTo, { currency: t.currencyNames[other] })} /> : null}
       </div>
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">

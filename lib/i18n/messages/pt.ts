@@ -47,8 +47,8 @@ export const pt: Messages = {
       "Os investidores aqui perguntam coisas que as ferramentas de pitch genéricas ignoram. O RaiseReady foi feito para as perguntar também.",
     africa: [
       {
-        title: "Naira em primeiro lugar",
-        body: "Os valores aparecem em ₦ por defeito e cada número mantém a sua moeda, para que uma ronda em dólares e receitas em naira nunca se confundam.",
+        title: "A sua moeda, sem confusões",
+        body: "Indique as receitas na sua moeda, do cedi ao xelim, do rand ao kwanza, e a ronda em dólares. Cada número mantém a sua moeda, para que nunca se misturem.",
       },
       {
         title: "Perguntas sobre o mercado local",
@@ -129,6 +129,7 @@ export const pt: Messages = {
       difficulties: { friendly: "Amigável", analytical: "Analítica", tough: "Exigente" },
     },
     pricesIn: "Preços em {currency}.",
+    paidIn: "Pago em nairas: {price}",
     estimateNote: "Os valores com ≈ são estimativas na sua moeda; o seu banco converte o pagamento.",
     switchTo: "Mostrar preços em {currency}",
     currencyNames: { NGN: "nairas", USD: "dólares americanos" },

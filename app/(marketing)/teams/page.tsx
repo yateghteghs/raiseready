@@ -18,7 +18,7 @@ export default async function TeamsPage() {
   "Founders join with one link; no cards or individual payments",
   "A cohort view: each founder's readiness score, practice meetings and last activity",
   "Founders' documents, answers and reports stay private to them",
-  "One agreement and one invoice for the whole programme, in naira or dollars",
+  "One agreement and one invoice for the whole programme, in US dollars, or naira for Nigerian programmes",
   "New Pro Plus features, like voice practice, included as they launch",
 ];
   return (

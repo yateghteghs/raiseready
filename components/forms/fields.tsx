@@ -214,7 +214,7 @@ export function MoneyField({
           <NativeSelect
             name={currencyName}
             aria-label={`${label} currency`}
-            defaultValue={defaultCurrency ?? "NGN"}
+            defaultValue={defaultCurrency ?? "USD"}
           >
             {currencyOptions.map((o) => (
               <option key={o.value} value={o.value}>

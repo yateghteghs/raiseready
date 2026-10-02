@@ -30,7 +30,7 @@ const PERSONAS = [
   },
   {
     name: "Angel",
-    focus: "You as a founder, the product, early traction and how far you can stretch each naira.",
+    focus: "You as a founder, the product, early traction and how far you can make the money go.",
   },
   {
     name: "Grant Evaluator",

@@ -51,7 +51,7 @@ export const PERSONAS: Record<Persona, PersonaConfig> = {
   angel: {
     id: "angel",
     name: "Angel investor",
-    summary: "You as a founder, your product, early traction and how far each naira goes.",
+    summary: "You as a founder, your product, early traction and how far the money goes.",
     rounds: [1, 2, 4, 5, 6, 7, 8, 9, 10],
     emphasis: { 1: 1.3, 4: 1.3, 7: 1.2, 3: 0.7 },
     focus: "the founder and team, the product, early traction and capital efficiency",

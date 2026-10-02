@@ -19,13 +19,18 @@ export function displayCurrency(input: {
   return input.country === "NG" ? "NGN" : "USD";
 }
 
-/** The visitor's local currency when it isn't the one they're charged in. */
+/**
+ * The currency to show an estimate in: the visitor's own when it differs from
+ * the one they're charged in, or US dollars for anyone outside Nigeria who is
+ * charged in naira.
+ */
 export function localCurrency(
   country: string | null,
   charged: Currency,
 ): string | null {
   const local = country ? COUNTRY_CURRENCY[country] : null;
-  return local && local !== charged ? local : null;
+  if (local && local !== charged) return local;
+  return charged === "NGN" && country !== "NG" ? "USD" : null;
 }
 
 /** Rounds an estimate to two significant figures, so it doesn't look exact. */
@@ -43,7 +48,7 @@ export function estimate(
   rates: FxRates,
 ): number | null {
   if (!to) return null;
-  const perUsd = rates[to];
+  const perUsd = to === "USD" ? 1 : rates[to];
   if (!perUsd) return null;
   const usd =
     from === "USD" ? minor / 100 : rates.NGN ? minor / 100 / rates.NGN : null;
@@ -79,19 +84,28 @@ export function priceLabel(
   },
 ): { price: string; approx: string | null } {
   const price = formatAmount(minor / 100, ctx.currency, ctx.locale);
-  const local =
-    minor > 0 ? estimate(minor, ctx.currency, ctx.local, ctx.rates) : null;
-  return {
-    price,
-    approx:
-      local === null
-        ? null
-        : `≈ ${formatAmount(local, ctx.local!, ctx.locale)}`,
-  };
+  // Without a rate for their own currency, people paying in naira still get a dollar estimate.
+  const targets = [
+    ctx.local,
+    ctx.currency === "NGN" && ctx.local && ctx.local !== "USD" ? "USD" : null,
+  ];
+  for (const to of targets) {
+    const amount =
+      minor > 0 && to ? estimate(minor, ctx.currency, to, ctx.rates) : null;
+    if (amount !== null)
+      return { price, approx: `≈ ${formatAmount(amount, to!, ctx.locale)}` };
+  }
+  return { price, approx: null };
 }
 
 export type PriceContext = {
+  /** What the visitor is charged in. */
   currency: Currency;
+  /**
+   * What the headline prices are shown in, when different: US dollars for
+   * visitors outside Nigeria while checkout is still in naira.
+   */
+  shown?: Currency;
   local: string | null;
   rates: FxRates;
   prices: PriceTable;

@@ -1,3 +1,4 @@
+import { AFRICAN_COUNTRIES, COUNTRY_CURRENCY } from "@/lib/currency/countries";
 import type { FundingType, StartupStage } from "@/lib/supabase/database.types";
 
 export type Option<T extends string = string> = { value: T; label: string };
@@ -19,33 +20,24 @@ export const FUNDING_TYPE_OPTIONS: Option<FundingType>[] = [
   { value: "other", label: "Other" },
 ];
 
-export const CURRENCY_OPTIONS: Option[] = [
-  { value: "NGN", label: "₦ NGN" },
-  { value: "USD", label: "$ USD" },
-  { value: "GHS", label: "GH₵ GHS" },
-  { value: "KES", label: "KSh KES" },
-  { value: "ZAR", label: "R ZAR" },
-  { value: "EGP", label: "E£ EGP" },
-  { value: "EUR", label: "€ EUR" },
-  { value: "GBP", label: "£ GBP" },
-];
+/** Symbol and code, e.g. "KSh KES"; just the code when there's no distinct symbol. */
+function currencyLabel(code: string): string {
+  const symbol =
+    new Intl.NumberFormat("en", { style: "currency", currency: code, currencyDisplay: "narrowSymbol" })
+      .formatToParts(0)
+      .find((p) => p.type === "currency")?.value ?? code;
+  return symbol === code ? code : `${symbol} ${code}`;
+}
 
-export const COUNTRY_OPTIONS: Option[] = [
-  "Nigeria",
-  "Ghana",
-  "Kenya",
-  "South Africa",
-  "Egypt",
-  "Rwanda",
-  "Uganda",
-  "Tanzania",
-  "Ethiopia",
-  "Côte d'Ivoire",
-  "Senegal",
-  "Cameroon",
-  "Morocco",
-  "Other",
-].map((c) => ({ value: c, label: c }));
+/** US dollars first, then every African currency, then euros and pounds. */
+export const CURRENCY_OPTIONS: Option[] = [
+  "USD",
+  ...[...new Set(Object.values(COUNTRY_CURRENCY))].sort(),
+  "EUR",
+  "GBP",
+].map((code) => ({ value: code, label: currencyLabel(code) }));
+
+export const COUNTRY_OPTIONS: Option[] = [...AFRICAN_COUNTRIES.map((c) => c.name), "Other"].map((c) => ({ value: c, label: c }));
 
 export const INDUSTRY_OPTIONS: Option[] = [
   "Fintech",

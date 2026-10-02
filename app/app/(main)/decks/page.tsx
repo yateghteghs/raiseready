@@ -10,9 +10,10 @@ import { DECK_BUILDER } from "@/lib/billing/plans";
 import { DEFAULT_PLAN_RULES, PLAN_NAMES } from "@/lib/billing/plan-rules";
 import { paidPlanOf } from "@/lib/billing/entitlements";
 import { load } from "@/lib/data-errors";
-import { getPrices } from "@/lib/billing/price-settings";
+import { getCurrentProfile } from "@/lib/auth/session";
+import { priceLabel } from "@/lib/currency/display";
+import { getPriceContext } from "@/lib/currency/server";
 import { getDeckUsage } from "@/lib/decks/service";
-import { formatMoney, koboToNaira } from "@/lib/format";
 import { getMyStartup } from "@/lib/startups/service";
 import { createClient } from "@/lib/supabase/server";
 
@@ -32,7 +33,7 @@ export default async function DecksPage() {
       supabase.from("pitch_decks").select("id, title, status, access, created_at").eq("startup_id", startup.id).order("created_at", { ascending: false }),
       supabase.from("knowledge_profiles").select("id", { count: "exact", head: true }).eq("startup_id", startup.id),
       getDeckUsage(user.id),
-      getPrices(),
+      getCurrentProfile().then((p) => getPriceContext(p?.country)),
     ]);
     return { decks: decks.data ?? [], hasDocuments: (documents.count ?? 0) > 0, usage, prices };
   });
@@ -42,7 +43,7 @@ export default async function DecksPage() {
   const access = deckBuildAccess(usage);
   const plan = paidPlanOf(usage);
   const allowance = (usage.rules ?? DEFAULT_PLAN_RULES)[plan ?? "pro"].decksPerMonth;
-  const price = formatMoney(koboToNaira(prices.NGN.deck_builder));
+  const price = priceLabel(prices.prices[prices.currency].deck_builder, prices).price;
 
   return (
     <div className="grid gap-10">

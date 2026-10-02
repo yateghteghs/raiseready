@@ -47,8 +47,8 @@ export const fr: Messages = {
       "Les investisseurs ici posent des questions que les outils de pitch génériques ignorent. RaiseReady est conçu pour les poser aussi.",
     africa: [
       {
-        title: "Le naira d'abord",
-        body: "Les montants s'affichent en ₦ par défaut et chaque chiffre garde sa propre devise : une levée en dollars et un chiffre d'affaires en naira ne sont jamais confondus.",
+        title: "Votre devise, sans confusion",
+        body: "Saisissez votre chiffre d'affaires dans votre devise, du cedi au shilling, du rand au franc CFA, et votre levée en dollars. Chaque chiffre garde sa devise : rien n'est jamais mélangé.",
       },
       {
         title: "Des questions sur le marché local",
@@ -129,6 +129,7 @@ export const fr: Messages = {
       difficulties: { friendly: "Bienveillante", analytical: "Analytique", tough: "Exigeante" },
     },
     pricesIn: "Prix en {currency}.",
+    paidIn: "Payé en nairas : {price}",
     estimateNote: "Les montants précédés de ≈ sont des estimations dans votre monnaie ; votre banque convertit le paiement.",
     switchTo: "Afficher les prix en {currency}",
     currencyNames: { NGN: "nairas", USD: "dollars américains" },

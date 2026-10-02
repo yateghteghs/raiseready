@@ -49,8 +49,8 @@ export const en = {
     africaIntro: "Investors here ask about things generic pitch tools ignore. RaiseReady is built to ask them too.",
     africa: [
       {
-        title: "Naira first",
-        body: "Amounts are shown in ₦ by default, and every figure keeps its own currency, so dollar raises and naira revenue are never mixed up.",
+        title: "Your currency, kept straight",
+        body: "Enter revenue in your own currency, from cedis and shillings to rand and CFA francs, and your raise in dollars. Every figure keeps its currency, so they're never mixed up.",
       },
       {
         title: "Local market questions",
@@ -131,6 +131,7 @@ export const en = {
       difficulties: { friendly: "Friendly", analytical: "Analytical", tough: "Tough" },
     },
     pricesIn: "Prices in {currency}.",
+    paidIn: "Paid in naira: {price}",
     estimateNote: "Amounts marked ≈ are estimates in your local currency; your bank converts the charge.",
     switchTo: "Show prices in {currency}",
     currencyNames: { NGN: "naira", USD: "US dollars" },

@@ -45,7 +45,10 @@ export default function AboutPage() {
             investor who asks the follow-up question, notices the number that doesn&apos;t add up, and
             tells you what to fix.
           </p>
-          <p>We&apos;re starting in Nigeria and building for founders across the continent.</p>
+          <p>
+            RaiseReady is built for founders across Africa, from Lagos and Accra to Nairobi, Kigali, Cairo and
+            Cape Town, and for the angels, VCs and grant panels they pitch to.
+          </p>
         </div>
       </Section>
       <div className="bg-muted/40 border-y">

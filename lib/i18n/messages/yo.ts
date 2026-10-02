@@ -47,8 +47,8 @@ export const yo: Messages = {
     africaIntro: "Àwọn olùdókòwò níbí máa ń béèrè nǹkan tí àwọn irinṣẹ́ pitch gbogbogbòò kò kà sí. A kọ́ RaiseReady láti béèrè wọn pẹ̀lú.",
     africa: [
       {
-        title: "Náírà lákọ̀ọ́kọ́",
-        body: "A máa ń fi iye owó hàn ní ₦, gbogbo iye sì máa ń dúró pẹ̀lú owó tirẹ̀, kí owó ìdókòwò dọ́là àti owó-wiwọlé náírà má baà dàrú mọ́ ara wọn.",
+        title: "Owó rẹ, láìdàrú",
+        body: "Kọ owó-wiwọlé rẹ ní owó orílẹ̀-èdè rẹ, láti cedi àti shilling dé rand àti CFA, kí o sì kọ owó ìdókòwò tí o ń wá ní dọ́là. Gbogbo iye máa ń dúró pẹ̀lú owó tirẹ̀, kí wọn má baà dàrú.",
       },
       {
         title: "Ìbéèrè nípa ọjà ìbílẹ̀",
@@ -129,6 +129,7 @@ export const yo: Messages = {
       difficulties: { friendly: "Ti ọ̀rẹ́", analytical: "Ti ìtúpalẹ̀", tough: "Èyí tó le" },
     },
     pricesIn: "Iye owó ní {currency}.",
+    paidIn: "A máa ń san án ní náírà: {price}",
     estimateNote: "Àwọn iye tó ní ≈ jẹ́ àfojúsùn ní owó ìlú rẹ; ilé-ìfowópamọ́ rẹ ni yóò pààrọ̀ owó tí o san.",
     switchTo: "Fi iye owó hàn ní {currency}",
     currencyNames: { NGN: "náírà", USD: "dọ́là Amẹ́ríkà" },

@@ -108,14 +108,16 @@ export function normaliseCode(input: string): string {
 }
 
 /** The minimum spend in words, e.g. "₦37,500 (or $25)", or null if there isn't one. */
-export function minimumSpendText(p: Pick<ReferralSettings, "minSpendNgn" | "minSpendUsd">): string | null {
+export function minimumSpendText(p: Pick<ReferralSettings, "minSpendNgn" | "minSpendUsd">, first: Currency = "NGN"): string | null {
   if (p.minSpendNgn <= 0 || p.minSpendUsd <= 0) return null;
-  return `${formatMoney(p.minSpendNgn / 100, "NGN")} (or ${formatMoney(p.minSpendUsd / 100, "USD")})`;
+  const ngn = formatMoney(p.minSpendNgn / 100, "NGN");
+  const usd = formatMoney(p.minSpendUsd / 100, "USD");
+  return first === "USD" ? `${usd} (or ${ngn})` : `${ngn} (or ${usd})`;
 }
 
 /** The invite card's description of the programme, e.g. "Founders who join … and you get …". */
-export function inviteOfferText(p: ReferralSettings): string {
-  const minimum = minimumSpendText(p);
+export function inviteOfferText(p: ReferralSettings, first: Currency = "NGN"): string {
+  const minimum = minimumSpendText(p, first);
   const unlock = minimum ? `, usable once you've spent ${minimum} on RaiseReady yourself` : "";
   const credits = `${p.referrerCredits} free simulation ${p.referrerCredits === 1 ? "credit" : "credits"}`;
   const friend = p.friendPercentOff > 0 ? `Founders who join with it get ${p.friendPercentOff}% off their first purchase` : "";

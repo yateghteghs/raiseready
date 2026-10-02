@@ -47,8 +47,8 @@ export const ig: Messages = {
     africaIntro: "Ndị na-etinye ego ebe a na-ajụ maka ihe ngwa pitch nkịtị na-eleghara anya. E wuru RaiseReady ka ọ jụkwaa ha.",
     africa: [
       {
-        title: "Naira na mbụ",
-        body: "A na-egosi ego na ₦ na mbụ, ọnụọgụ ọ bụla na-ejikwa ego nke ya, ka ego dollar a na-achọ na ego naira a na-enweta ghara ịgwakọ.",
+        title: "Ego gị, n'enweghị mgbagwoju anya",
+        body: "Tinye ego ị na-enweta n'ego obodo gị, site na cedi na shilling ruo rand na CFA, tinyekwa ego ị na-achọ na dollar. Ọnụọgụ ọ bụla na-ejide ego nke ya, ka ha ghara ịgwakọ.",
       },
       {
         title: "Ajụjụ gbasara ahịa obodo",
@@ -129,6 +129,7 @@ export const ig: Messages = {
       difficulties: { friendly: "Nke enyi", analytical: "Nke nyocha", tough: "Nke siri ike" },
     },
     pricesIn: "Ọnụahịa na {currency}.",
+    paidIn: "A na-akwụ ya na naira: {price}",
     estimateNote: "Ego nwere ≈ bụ atụmatụ n'ego obodo gị; ụlọ akụ gị ga-agbanwe ịkwụ ụgwọ ahụ.",
     switchTo: "Gosi ọnụahịa na {currency}",
     currencyNames: { NGN: "naira", USD: "dollar America" },

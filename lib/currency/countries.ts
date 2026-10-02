@@ -9,11 +9,27 @@ export const COUNTRY_CURRENCY: Record<string, string> = {
   SL: "SLE", LR: "LRD", GM: "GMD", GN: "GNF", CV: "CVE", ST: "STN",
 };
 
-/** The countries founders pick in their profile, by name. */
-const COUNTRY_CODES: Record<string, string> = {
-  Nigeria: "NG", Ghana: "GH", Kenya: "KE", "South Africa": "ZA", Egypt: "EG", Rwanda: "RW", Uganda: "UG",
-  Tanzania: "TZ", Ethiopia: "ET", "Côte d'Ivoire": "CI", Senegal: "SN", Cameroon: "CM", Morocco: "MA",
-};
+/** Every African country founders can pick, by the name shown in forms. */
+export const AFRICAN_COUNTRIES: { name: string; code: string }[] = [
+  ["Algeria", "DZ"], ["Angola", "AO"], ["Benin", "BJ"], ["Botswana", "BW"], ["Burkina Faso", "BF"], ["Burundi", "BI"],
+  ["Cabo Verde", "CV"], ["Cameroon", "CM"], ["Central African Republic", "CF"], ["Chad", "TD"], ["Comoros", "KM"],
+  ["Congo", "CG"], ["Côte d'Ivoire", "CI"], ["DR Congo", "CD"], ["Djibouti", "DJ"], ["Egypt", "EG"],
+  ["Equatorial Guinea", "GQ"], ["Eritrea", "ER"], ["Eswatini", "SZ"], ["Ethiopia", "ET"], ["Gabon", "GA"],
+  ["Gambia", "GM"], ["Ghana", "GH"], ["Guinea", "GN"], ["Guinea-Bissau", "GW"], ["Kenya", "KE"], ["Lesotho", "LS"],
+  ["Liberia", "LR"], ["Libya", "LY"], ["Madagascar", "MG"], ["Malawi", "MW"], ["Mali", "ML"], ["Mauritania", "MR"],
+  ["Mauritius", "MU"], ["Morocco", "MA"], ["Mozambique", "MZ"], ["Namibia", "NA"], ["Niger", "NE"], ["Nigeria", "NG"],
+  ["Rwanda", "RW"], ["São Tomé and Príncipe", "ST"], ["Senegal", "SN"], ["Seychelles", "SC"], ["Sierra Leone", "SL"],
+  ["Somalia", "SO"], ["South Africa", "ZA"], ["South Sudan", "SS"], ["Sudan", "SD"], ["Tanzania", "TZ"], ["Togo", "TG"],
+  ["Tunisia", "TN"], ["Uganda", "UG"], ["Zambia", "ZM"], ["Zimbabwe", "ZW"],
+].map(([name, code]) => ({ name, code }));
+
+const COUNTRY_CODES: Record<string, string> = Object.fromEntries(AFRICAN_COUNTRIES.map((c) => [c.name, c.code]));
+
+/** The currency to suggest for a founder's figures: their country's, else US dollars. */
+export function defaultCurrencyFor(country: string | null | undefined): string {
+  const code = countryCode(country);
+  return (code && COUNTRY_CURRENCY[code]) || "USD";
+}
 
 /** An ISO country code from a profile's country name or a two-letter code, or null. */
 export function countryCode(value: string | null | undefined): string | null {

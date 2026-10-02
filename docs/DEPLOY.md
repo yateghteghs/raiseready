@@ -119,8 +119,10 @@ in naira with a foreign card. To also offer dollar prices:
    page then offers "Pay in ₦ Naira / $ US dollars". The dollar Pro plan is
    created in Paystack automatically.
 
-**Which currency visitors see.** While dollar payments are off, everyone sees
-(and pays) naira. Once they're on, the website and Billing page show naira to
+**Which currency visitors see.** While dollar payments are off, everyone pays
+in naira; visitors outside Nigeria also see a rough amount in US dollars (or
+their own currency) once you add an `NGN` rate under Admin → Prices →
+Exchange rates (e.g. NGN 1500). Once they're on, the website and Billing page show naira to
 visitors in Nigeria and US dollars to everyone else, decided by the country
 in the founder's profile or, for visitors, the country Vercel detects from
 the request. Anyone can switch with "Show prices in naira / US dollars"
@@ -314,12 +316,13 @@ E2E_BASE_URL=https://<your-site> E2E_SUPABASE_URL=… E2E_SUPABASE_SERVICE_ROLE_
 
 ## 8. Before launch
 
-- [ ] Legal review of `/privacy` and `/terms`, then remove the
-      "DRAFT: requires legal review" notices. Ask the reviewer:
+- [ ] `/privacy` and `/terms` are published as final. A lawyer's check is
+      still worthwhile, in particular:
       - whether payment records must be kept longer than account deletion
         currently allows
-      - whether you need to register with the Nigeria Data Protection
-        Commission
+      - whether Index Prima must register with the Nigeria Data Protection
+        Commission, and with regulators in countries where you market
+        actively (e.g. Kenya's ODPC, South Africa's Information Regulator)
 - [ ] Supabase's built-in email sender allows only a few emails an hour, which
       also limits the admin "Send password reset" button. A custom SMTP
       sender (below) removes this limit.

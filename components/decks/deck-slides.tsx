@@ -46,7 +46,7 @@ function RewriteForm({ deckId, index, done, left }: { deckId: string; index: num
       <TextareaField
         name="request"
         label="How should this slide change?"
-        hint={`For example: "Lead with our revenue", "Make it shorter", "Our CAC is ₦2,500". ${left} AI rewrite${left === 1 ? "" : "s"} left for this deck.`}
+        hint={`For example: "Lead with our revenue", "Make it shorter", "Our CAC is $25". ${left} AI rewrite${left === 1 ? "" : "s"} left for this deck.`}
         rows={2}
         maxLength={500}
         defaultValue={state.status === "success" ? "" : state.values?.request}

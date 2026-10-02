@@ -74,10 +74,11 @@ test("visitors can switch language, and untranslated pages stay in English", asy
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 });
 
-test("legal pages are marked as drafts", async ({ page }) => {
+test("legal pages name the operator and are no longer drafts", async ({ page }) => {
   for (const path of ["/privacy", "/terms"]) {
     await page.goto(path);
-    await expect(page.getByText(/DRAFT: requires legal review/)).toBeVisible();
+    await expect(page.getByText(/BN 9430651/).first()).toBeVisible();
+    await expect(page.getByText(/DRAFT/)).toHaveCount(0);
   }
 });
 

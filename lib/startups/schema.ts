@@ -1,3 +1,4 @@
+import { defaultCurrencyFor } from "@/lib/currency/countries";
 import { z } from "zod";
 
 import {
@@ -82,7 +83,7 @@ const optionalYesNo = z.preprocess(
 );
 
 const currency = z.preprocess(
-  (v) => blankToUndefined(v) ?? "NGN",
+  (v) => blankToUndefined(v) ?? "USD",
   oneOf(CURRENCY_OPTIONS, "Choose a currency."),
 );
 
@@ -221,11 +222,11 @@ export function toFormValues(
     business_model: str(startup?.business_model),
     customers_count: str(startup?.customers_count),
     revenue_monthly: str(startup?.revenue_monthly),
-    revenue_currency: startup?.revenue_currency ?? "NGN",
+    revenue_currency: startup?.revenue_currency ?? defaultCurrencyFor(startup?.country ?? profile?.country),
     growth_notes: str(startup?.growth_notes),
     raising: startup ? yesNo(startup.raising) : "",
     amount_seeking: str(startup?.amount_seeking),
-    seeking_currency: startup?.seeking_currency ?? "NGN",
+    seeking_currency: startup?.seeking_currency ?? "USD",
     funding_type: str(startup?.funding_type),
     previously_raised: yesNo(startup?.previously_raised),
     use_of_funds: str(startup?.use_of_funds),

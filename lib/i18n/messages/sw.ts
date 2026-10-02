@@ -46,8 +46,8 @@ export const sw: Messages = {
     africaIntro: "Wawekezaji hapa huuliza mambo ambayo zana za kawaida za pitch hupuuza. RaiseReady imejengwa kuyauliza pia.",
     africa: [
       {
-        title: "Naira kwanza",
-        body: "Kiasi huonyeshwa kwa ₦ kwa chaguo-msingi, na kila takwimu hubaki na sarafu yake, ili mtaji wa dola na mapato ya naira yasichanganywe kamwe.",
+        title: "Sarafu yako, bila mchanganyiko",
+        body: "Weka mapato kwa sarafu yako, kuanzia shilingi na cedi hadi randi na faranga za CFA, na mtaji unaotafuta kwa dola. Kila takwimu hubaki na sarafu yake, ili zisichanganywe kamwe.",
       },
       {
         title: "Maswali ya soko la ndani",
@@ -128,6 +128,7 @@ export const sw: Messages = {
       difficulties: { friendly: "Wa kirafiki", analytical: "Wa kiuchambuzi", tough: "Kigumu" },
     },
     pricesIn: "Bei kwa {currency}.",
+    paidIn: "Hulipwa kwa naira: {price}",
     estimateNote: "Kiasi chenye ≈ ni makadirio kwa sarafu yako; benki yako hubadilisha malipo.",
     switchTo: "Onyesha bei kwa {currency}",
     currencyNames: { NGN: "naira", USD: "dola za Marekani" },

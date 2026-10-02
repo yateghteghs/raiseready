@@ -47,8 +47,8 @@ export const ha: Messages = {
     africaIntro: "Masu zuba jari a nan suna tambaya game da abubuwan da kayan aikin pitch na gama-gari ke watsi da su. An gina RaiseReady don ya tambaye su ma.",
     africa: [
       {
-        title: "Naira da farko",
-        body: "Ana nuna kuɗi a ₦ kai tsaye, kuma kowane adadi yana riƙe da kuɗinsa, don kada jarin dala da kuɗin shiga na naira su cakuɗe.",
+        title: "Kuɗinka, ba tare da cakuɗa ba",
+        body: "Shigar da kuɗin shiga a kuɗin ƙasarka, daga cedi da shilling zuwa rand da CFA, da jarin da kake nema a dala. Kowane adadi yana riƙe da kuɗinsa, don kada su cakuɗe.",
       },
       {
         title: "Tambayoyi game da kasuwar gida",
@@ -129,6 +129,7 @@ export const ha: Messages = {
       difficulties: { friendly: "Na abokantaka", analytical: "Na nazari", tough: "Mai tsanani" },
     },
     pricesIn: "Farashi a {currency}.",
+    paidIn: "Ana biya da naira: {price}",
     estimateNote: "Adadin da ke da ≈ kimantawa ne a kuɗinku; bankinku zai canza biyan.",
     switchTo: "Nuna farashi a {currency}",
     currencyNames: { NGN: "naira", USD: "dalar Amurka" },

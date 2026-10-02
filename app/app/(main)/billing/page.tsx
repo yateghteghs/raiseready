@@ -73,7 +73,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) return <LoadProblem code="no_startup" />;
   const { usage, decks, prices: PRICES, ctx, subscription, payments, referrals, inviteUrl, referralDiscount, programme } = loaded.data;
-  const inviteOffer = inviteOfferText(programme);
+  const inviteOffer = inviteOfferText(programme, ctx.currency);
 
   const testMode = (process.env.PAYSTACK_SECRET_KEY ?? "").startsWith("sk_test_");
   const banner = typeof payment === "string" ? PAYMENT_MESSAGES[payment] : undefined;
@@ -239,7 +239,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
               <span className="font-medium">
                 {referrals.creditsLocked} {referrals.creditsLocked === 1 ? "credit is" : "credits are"} waiting for you.
               </span>{" "}
-              They unlock automatically once you&apos;ve spent {minimumSpendText(programme)} on RaiseReady.
+              They unlock automatically once you&apos;ve spent {minimumSpendText(programme, ctx.currency)} on RaiseReady.
             </p>
             <div
               className="bg-background h-2 rounded-full"

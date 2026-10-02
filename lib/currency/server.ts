@@ -18,6 +18,8 @@ export async function getPriceContext(profileCountry?: string | null): Promise<P
   const [prices, rates, jar, head] = await Promise.all([getPrices(), getFxRates(), cookies(), headers()]);
   const country = countryCode(profileCountry) ?? countryCode(head.get("x-vercel-ip-country"));
   const usdOn = usdEnabled();
-  const currency = displayCurrency({ country, chosen: jar.get(CURRENCY_COOKIE)?.value, usdOn });
-  return { prices, rates, usdOn, currency, local: localCurrency(country, currency), country };
+  const chosen = jar.get(CURRENCY_COOKIE)?.value;
+  const currency = displayCurrency({ country, chosen, usdOn });
+  const shown = displayCurrency({ country, chosen: usdOn ? chosen : null, usdOn: true });
+  return { prices, rates, usdOn, currency, shown, local: localCurrency(country, currency), country };
 }
