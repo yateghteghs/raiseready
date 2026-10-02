@@ -57,6 +57,11 @@ milestone at a time (spec section 11) and stop for review after each.
 - Website showcase (`lib/showcase`, public `showcase` bucket) and report
   signature (`lib/reports/signature.ts`) are super-admin content; editing
   revalidates the public pages.
+- Activity (`lib/activity`): sign-in events, active days and the error log
+  (server errors via `instrumentation.ts`, browser-only errors via
+  `ErrorPanel`). All best-effort (never block the user), server-only tables,
+  kept 90 days by `prune_activity`. Admin lists page with `PAGE_SIZE`; CSV
+  exports (`lib/admin/export.ts`) escape formulas and are audit-logged.
 - Profile pictures and logos: private `images` bucket, PNG/JPEG ≤ 2 MB,
   checked by content (`lib/images`). Only server code writes `avatar_path` /
   `logo_path`; viewing uses short-lived signed links.

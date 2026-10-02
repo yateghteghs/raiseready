@@ -133,6 +133,10 @@ history.
 | Add free credits | Adds simulation credits at no charge (1–100 at a time). |
 
 Other admin pages:
+- **Analytics** (all staff): active founders per day, week and month, sign-ins, where founders drop off between signing up and paying, and which features they use.
+- **Errors** (all staff): what went wrong on the live site. When a founder sends you the "Reference" from an error screen, search for it here.
+- Each user's page shows their recent sign-ins (with failed attempts), when they were last seen and how many days they were active.
+- **Export CSV** (admin and super admin): download the Users, Simulations or Payments list. Exports contain personal data, so each download is logged; store the files securely and delete them when done.
 - **Notifications** (admin and super admin): message one founder or everyone. Messages appear under the bell in the app header.
 - **Website** (super admin): startup logos, testimonials and partners shown on the home page, `/testimonials` and `/partners`. Tick the permission box only when the company or person has agreed to appear.
 - **Report signature** (super admin): the name, title and signature image printed as "Issued by RaiseReady" at the end of new PDF reports. Founders' company logos are added to their reports automatically.
