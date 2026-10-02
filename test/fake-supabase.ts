@@ -110,6 +110,10 @@ export function createFakeDb() {
         filters.push((r) => String(r[col]) >= v);
         return builder;
       },
+      gt(col: string, v: string) {
+        filters.push((r) => String(r[col]) > v);
+        return builder;
+      },
       order(col: string, opts?: { ascending?: boolean }) {
         order = { col, asc: opts?.ascending ?? true };
         return builder;
