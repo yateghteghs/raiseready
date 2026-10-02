@@ -6,6 +6,7 @@ import { AdminLoginForm } from "@/components/admin/admin-login-form";
 import { AuthCard } from "@/components/auth/auth-card";
 import { getStaff } from "@/lib/admin/auth";
 import { safeNextPath } from "@/lib/auth/redirect";
+import { Logo } from "@/components/brand/logo";
 
 export const metadata: Metadata = { title: "Admin sign-in", robots: { index: false } };
 
@@ -17,8 +18,9 @@ export default async function AdminLoginPage({ searchParams }: PageProps<"/admin
   return (
     <div className="bg-muted/40 flex flex-1 flex-col">
       <header className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-6">
-        <Link href="/" className="text-lg font-semibold tracking-tight">
-          RaiseReady <span className="bg-primary text-primary-foreground ml-1 rounded px-1.5 py-0.5 text-xs">Admin</span>
+        <Link href="/" aria-label="RaiseReady home" className="inline-flex items-center gap-2">
+          <Logo />
+          <span className="bg-primary text-primary-foreground rounded px-1.5 py-0.5 text-xs font-semibold">Admin</span>
         </Link>
       </header>
       <main className="flex flex-1 items-start justify-center px-4 pt-6 pb-16 sm:pt-12">

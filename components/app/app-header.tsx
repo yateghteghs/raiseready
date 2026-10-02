@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/auth/actions";
+import { Logo } from "@/components/brand/logo";
 
 type NavItem = { href: string; label: string };
 
@@ -35,8 +36,8 @@ export function AppHeader({
     <header className="border-b">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-6">
-          <Link href="/app" className="text-lg font-semibold tracking-tight">
-            RaiseReady
+          <Link href="/app" aria-label="RaiseReady dashboard" className="shrink-0">
+            <Logo className="h-6 sm:h-7" />
           </Link>
           {nav ? (
             <nav aria-label="App" className="hidden items-center gap-4 text-sm lg:flex">

@@ -1,13 +1,14 @@
 import Link from "next/link";
 
 import { MARKETING_NAV, SITE } from "@/lib/site";
+import { Logo } from "@/components/brand/logo";
 
 export function SiteFooter() {
   return (
     <footer className="border-t">
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-sm sm:grid-cols-[2fr_1fr_1fr_1fr] sm:px-6">
         <div>
-          <p className="font-semibold">{SITE.name}</p>
+          <Logo className="h-6" priority={false} />
           <p className="text-muted-foreground mt-2 max-w-xs">{SITE.tagline}</p>
         </div>
         <nav aria-label="Product" className="grid content-start gap-2">

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { requireStaff } from "@/lib/admin/auth";
 import { can, roleLabel, type StaffAction } from "@/lib/admin/permissions";
 import { logout } from "@/lib/auth/actions";
+import { Logo } from "@/components/brand/logo";
 
 const NAV: { href: string; label: string; needs: StaffAction }[] = [
   { href: "/admin", label: "Overview", needs: "view" },
@@ -26,8 +27,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     <div className="flex flex-1 flex-col">
       <header className="border-b">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-          <Link href="/admin" className="font-semibold tracking-tight">
-            RaiseReady <span className="bg-primary text-primary-foreground ml-1 rounded px-1.5 py-0.5 text-xs">Admin</span>
+          <Link href="/admin" aria-label="RaiseReady admin overview" className="inline-flex shrink-0 items-center gap-2">
+            <Logo className="h-6" />
+            <span className="bg-primary text-primary-foreground rounded px-1.5 py-0.5 text-xs font-semibold">Admin</span>
           </Link>
           <div className="flex items-center gap-3 text-sm">
             <span className="text-muted-foreground hidden truncate md:inline">

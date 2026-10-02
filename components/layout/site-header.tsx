@@ -3,13 +3,14 @@ import { MenuIcon } from "lucide-react";
 
 import { AuthActions } from "@/components/layout/auth-actions";
 import { MARKETING_NAV, SITE } from "@/lib/site";
+import { Logo } from "@/components/brand/logo";
 
 export function SiteHeader() {
   return (
     <header className="bg-background/95 sticky top-0 z-40 border-b backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" className="text-lg font-semibold tracking-tight">
-          {SITE.name}
+        <Link href="/" aria-label={`${SITE.name} home`} className="shrink-0">
+          <Logo />
         </Link>
         <nav aria-label="Main" className="hidden items-center gap-6 text-sm md:flex">
           {MARKETING_NAV.map((link) => (
