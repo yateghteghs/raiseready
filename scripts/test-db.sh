@@ -82,16 +82,22 @@ insert into auth.users (id, email) values
   ('dddddddd-0000-4000-8000-000000000002', 'suspended@example.com');
 update public.profiles set role = 'super_admin' where id = 'dddddddd-0000-4000-8000-000000000001';
 update public.profiles set role = 'support', status = 'suspended' where id = 'dddddddd-0000-4000-8000-000000000002';
+-- A role typed by hand with odd spelling, as if entered while the check was off.
+insert into auth.users (id, email) values ('dddddddd-0000-4000-8000-000000000003', 'messy@example.com');
+alter table public.profiles drop constraint profiles_role_check;
+update public.profiles set role = ' Admin' where id = 'dddddddd-0000-4000-8000-000000000003';
 insert into public.startups (owner_id, name, logo_path)
   values ('dddddddd-0000-4000-8000-000000000001', 'Existing', 'dddddddd-0000-4000-8000-000000000001/logo.png');
 insert into public.notifications (title, body) values ('Existing', 'Message');
 insert into public.showcase_items (kind, name, permission_confirmed, published) values ('logo', 'Existing', true, true);
 SQL
 PGOPTIONS="-c client_min_messages=warning" psql "$URL" -X -q -v ON_ERROR_STOP=1 -f "$ROOT/supabase/setup.sql" >/dev/null
+role=$(psql "$URL" -X -q -t -A -c "select role from public.profiles where id = 'dddddddd-0000-4000-8000-000000000003'")
+[ "$role" = "admin" ] || { echo "FAIL: setup.sql should tidy ' Admin' to 'admin', got '$role'" >&2; exit 1; }
 psql "$URL" -X -q -v ON_ERROR_STOP=1 >/dev/null <<'SQL'
 delete from public.notifications where title = 'Existing';
 delete from public.showcase_items where name = 'Existing';
-delete from auth.users where id in ('dddddddd-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-000000000002');
+delete from auth.users where id in ('dddddddd-0000-4000-8000-000000000001', 'dddddddd-0000-4000-8000-000000000002', 'dddddddd-0000-4000-8000-000000000003');
 SQL
 echo "  ok - setup.sql re-runs cleanly on existing data"
 

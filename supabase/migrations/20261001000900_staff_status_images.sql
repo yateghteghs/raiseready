@@ -20,8 +20,12 @@
 -- super_admin is added by a later migration; it is listed here too so that
 -- re-running setup.sql on a database that already has a super admin works.
 alter table public.profiles drop constraint if exists profiles_role_check;
+-- Tidy role spelling first, so the check below never trips over "Admin" or
+-- " admin". NOT VALID: existing rows aren't re-checked (so re-running
+-- setup.sql can't fail on live data); every new or changed role is.
+update public.profiles set role = lower(trim(role)) where role <> lower(trim(role));
 alter table public.profiles
-  add constraint profiles_role_check check (role in ('founder', 'viewer', 'support', 'admin', 'super_admin'));
+  add constraint profiles_role_check check (role in ('founder', 'viewer', 'support', 'admin', 'super_admin')) not valid;
 
 alter table public.profiles add column if not exists status text not null default 'active';
 alter table public.profiles drop constraint if exists profiles_status_check;

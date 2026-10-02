@@ -5,8 +5,12 @@
 -- super_admin role (above admin)
 ------------------------------------------------------------------------------
 alter table public.profiles drop constraint if exists profiles_role_check;
+-- Tidy role spelling first, so the check below never trips over "Admin" or
+-- " admin". NOT VALID: existing rows aren't re-checked (so re-running
+-- setup.sql can't fail on live data); every new or changed role is.
+update public.profiles set role = lower(trim(role)) where role <> lower(trim(role));
 alter table public.profiles
-  add constraint profiles_role_check check (role in ('founder', 'viewer', 'support', 'admin', 'super_admin'));
+  add constraint profiles_role_check check (role in ('founder', 'viewer', 'support', 'admin', 'super_admin')) not valid;
 
 create or replace function private.set_user_role(p_email text, p_role text)
 returns uuid
