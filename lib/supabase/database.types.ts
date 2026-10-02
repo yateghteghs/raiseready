@@ -299,6 +299,8 @@ type ReferralRewardRow = {
   referred_id: string | null;
   credits: number;
   payment_reference: string | null;
+  status: "locked" | "released";
+  released_at: string | null;
   created_at: string;
 };
 
@@ -318,6 +320,9 @@ type ReferralSettingsRow = Timestamps & {
   enabled: boolean;
   friend_percent_off: number;
   referrer_credits: number;
+  /** Inviter must have spent this much (kobo) — or the USD amount, or a mix — before credits unlock. */
+  min_spend_ngn: number;
+  min_spend_usd: number;
   updated_by: string | null;
 };
 
@@ -422,9 +427,15 @@ export type Database = {
         "id" | "description" | "products" | "max_redemptions" | "expires_at" | "active" | "created_by"
       >;
       discount_redemptions: PlainTable<DiscountRedemptionRow, "id" | "user_id" | "payment_reference" | "created_at">;
-      referral_rewards: PlainTable<ReferralRewardRow, "id" | "referrer_id" | "referred_id" | "payment_reference" | "created_at">;
+      referral_rewards: PlainTable<
+        ReferralRewardRow,
+        "id" | "referrer_id" | "referred_id" | "payment_reference" | "status" | "released_at" | "created_at"
+      >;
       report_shares: Table<ReportShareRow, "id" | "revoked_at" | "views" | "last_viewed_at">;
-      referral_settings: Table<ReferralSettingsRow, "id" | "enabled" | "friend_percent_off" | "referrer_credits" | "updated_by">;
+      referral_settings: Table<
+        ReferralSettingsRow,
+        "id" | "enabled" | "friend_percent_off" | "referrer_credits" | "min_spend_ngn" | "min_spend_usd" | "updated_by"
+      >;
       report_signature: Table<ReportSignatureRow, "id" | "signer_name" | "signer_title" | "signature_path" | "enabled" | "updated_by">;
     };
     Views: { [_ in never]: never };

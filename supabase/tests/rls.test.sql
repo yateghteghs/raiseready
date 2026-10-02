@@ -157,6 +157,12 @@ insert into public.discount_codes (code, percent_off) values ('LAUNCH20', 20);
 select rls_test.ok(
   (select enabled and friend_percent_off = 10 and referrer_credits = 2 from public.referral_settings where id = 1),
   'referral programme starts on, at 10% off and 2 credits');
+select rls_test.ok(
+  (select min_spend_ngn = 3750000 and min_spend_usd = 2500 from public.referral_settings where id = 1),
+  'referral credits unlock after ₦37,500 or $25 by default');
+select rls_test.throws(
+  $$insert into public.referral_rewards (credits, status) values (2, 'pending')$$,
+  '23514', 'referral rewards are locked or released');
 select rls_test.throws($$update public.referral_settings set friend_percent_off = 150$$, '23514', 'referral discount is 0-100%');
 select rls_test.throws($$insert into public.referral_settings (id) values (2)$$, '23514', 'there is only one referral settings row');
 select rls_test.throws($$insert into public.discount_codes (code, percent_off) values ('bad code!', 10)$$, '23514', 'discount codes are letters, digits, - and _');
