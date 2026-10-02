@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 
 import { lagosMonthStart, isProActive, type Usage } from "@/lib/billing/entitlements";
 import {
+  createSubscription,
   ensureProPlan,
   initializeTransaction,
   metadataOf,
@@ -9,16 +10,26 @@ import {
   subscriptionManageLink,
   type PaystackTransaction,
 } from "@/lib/billing/paystack";
-import { CREDIT_PACKS, CURRENCY, PRO_PLAN } from "@/lib/billing/plans";
+import { CREDIT_PACKS } from "@/lib/billing/plans";
+import {
+  availableCurrencies,
+  codeProblem,
+  discounted,
+  isCurrency,
+  normaliseCode,
+  priceOf,
+  REFERRAL,
+  type Currency,
+} from "@/lib/billing/prices";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Json, PaymentProduct, SubscriptionStatus, Tables } from "@/lib/supabase/database.types";
 
 export class BillingError extends Error {}
 
-const PRODUCTS: Record<PaymentProduct, { amountKobo: number; credits: number; label: string }> = {
-  pro_monthly: { amountKobo: PRO_PLAN.priceKobo, credits: 0, label: "Pro (monthly)" },
-  credits_3: { amountKobo: CREDIT_PACKS[0].priceKobo, credits: CREDIT_PACKS[0].simulations, label: CREDIT_PACKS[0].name },
-  credits_10: { amountKobo: CREDIT_PACKS[1].priceKobo, credits: CREDIT_PACKS[1].simulations, label: CREDIT_PACKS[1].name },
+const PRODUCTS: Record<PaymentProduct, { credits: number; label: string }> = {
+  pro_monthly: { credits: 0, label: "Pro (monthly)" },
+  credits_3: { credits: CREDIT_PACKS[0].simulations, label: CREDIT_PACKS[0].name },
+  credits_10: { credits: CREDIT_PACKS[1].simulations, label: CREDIT_PACKS[1].name },
 };
 
 export function productLabel(product: PaymentProduct): string {
@@ -88,39 +99,115 @@ export async function refundCredit(userId: string): Promise<void> {
   await createAdminClient().rpc("add_credits", { p_user_id: userId, p_amount: 1 });
 }
 
+export type PriceQuote = {
+  product: PaymentProduct;
+  currency: Currency;
+  list: number;
+  amount: number;
+  discount: number;
+  percentOff: number;
+  /** Where the discount came from, for the founder and the payment record. */
+  source: { kind: "code"; codeId: string; code: string } | { kind: "referral" } | null;
+};
+
+/** Whether a founder has ever paid successfully (referral discounts are for first purchases). */
+async function hasPaid(userId: string): Promise<boolean> {
+  const { count } = await createAdminClient()
+    .from("payments")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("status", "success");
+  return (count ?? 0) > 0;
+}
+
+/**
+ * What a founder will pay: the list price, less the better of a discount code
+ * they typed and their referral discount (first purchase only).
+ * Throws BillingError with a message to show when a typed code can't be used.
+ */
+export async function quote(userId: string, product: PaymentProduct, currency: Currency, typedCode?: string | null): Promise<PriceQuote> {
+  if (!availableCurrencies().includes(currency)) throw new BillingError("Payments in that currency aren't available yet.");
+  const list = priceOf(product, currency);
+  const admin = createAdminClient();
+
+  let best: { percent: number; source: PriceQuote["source"] } = { percent: 0, source: null };
+
+  const code = typedCode ? normaliseCode(typedCode) : "";
+  if (code) {
+    const { data: row } = await admin.from("discount_codes").select("*").eq("code", code).maybeSingle();
+    const [{ count: redemptions }, { count: mine }] = row
+      ? await Promise.all([
+          admin.from("discount_redemptions").select("id", { count: "exact", head: true }).eq("code_id", row.id),
+          admin.from("discount_redemptions").select("id", { count: "exact", head: true }).eq("code_id", row.id).eq("user_id", userId),
+        ])
+      : [{ count: 0 }, { count: 0 }];
+    const problem = codeProblem(row, { product, redemptions: redemptions ?? 0, usedByThisFounder: (mine ?? 0) > 0 });
+    if (problem) throw new BillingError(problem);
+    best = { percent: row!.percent_off, source: { kind: "code", codeId: row!.id, code } };
+  }
+
+  const { data: profile } = await admin.from("profiles").select("referred_by").eq("id", userId).maybeSingle();
+  if (profile?.referred_by && REFERRAL.friendPercentOff > best.percent && !(await hasPaid(userId))) {
+    best = { percent: REFERRAL.friendPercentOff, source: { kind: "referral" } };
+  }
+
+  const { amount, discount } = discounted(list, best.percent, currency);
+  return { product, currency, list, amount, discount, percentOff: best.percent, source: discount > 0 ? best.source : null };
+}
+
 /**
  * Starts a Paystack checkout: records a pending payment, then initialises the
- * transaction on the server and returns Paystack's payment page URL.
+ * transaction on the server and returns where to send the founder.
+ *
+ * Pro at full price uses the Paystack plan, so Paystack renews it monthly.
+ * Pro with a discount is a one-off charge for the first month; once it
+ * succeeds we start the plan from next month on the same card (see
+ * applyChargeSuccess). A 100% discount skips Paystack entirely.
  */
 export async function startCheckout(
   user: { id: string; email: string | null },
   product: PaymentProduct,
   callbackUrl: string,
+  options: { currency?: string; code?: string | null } = {},
 ): Promise<string> {
   if (!user.email) throw new BillingError("Your account has no email address. Contact support.");
+  const currency = isCurrency(options.currency) ? options.currency : "NGN";
   if (product === "pro_monthly") {
     const usage = await getUsage(user.id, null);
     if (usage.proActive) throw new BillingError("You're already on Pro.");
   }
 
+  const q = await quote(user.id, product, currency, options.code);
   const reference = `rr_${product}_${randomUUID().replace(/-/g, "")}`;
-  const { amountKobo } = PRODUCTS[product];
   const admin = createAdminClient();
   const { error } = await admin.from("payments").insert({
     user_id: user.id,
     provider: "paystack",
     reference,
-    amount_kobo: amountKobo,
-    currency: CURRENCY,
+    amount_kobo: q.amount,
+    list_amount_kobo: q.list,
+    currency,
     product,
     status: "pending",
+    discount_code_id: q.source?.kind === "code" ? q.source.codeId : null,
+    referral_discount: q.source?.kind === "referral",
   });
   if (error) throw new Error(`Could not record payment: ${error.message}`);
 
-  const planCode = product === "pro_monthly" ? await ensureProPlan() : undefined;
+  if (q.amount === 0) {
+    // Free with a 100% code: nothing to charge, so grant it now.
+    await applyChargeSuccess(
+      { id: 0, status: "success", reference, amount: 0, currency, paid_at: new Date().toISOString() },
+      { event: "free_with_code", reference },
+    );
+    return "/app/billing?payment=success";
+  }
+
+  const planCode = product === "pro_monthly" && q.discount === 0 ? await ensureProPlan(currency) : undefined;
   const tx = await initializeTransaction({
     email: user.email,
-    amountKobo,
+    amountKobo: q.amount,
+    currency,
     reference,
     callbackUrl,
     metadata: { user_id: user.id, product },
@@ -168,23 +255,76 @@ export async function applyChargeSuccess(tx: PaystackTransaction, raw: unknown):
     await admin.from("profiles").update({ paystack_customer_code: customerCode }).eq("id", payment.user_id).is("paystack_customer_code", null);
   }
 
+  if (payment.discount_code_id) {
+    await admin
+      .from("discount_redemptions")
+      .insert({ code_id: payment.discount_code_id, user_id: payment.user_id, payment_reference: tx.reference });
+  }
+
   if (payment.product === "pro_monthly") {
     await admin.from("profiles").update({ plan: "pro" }).eq("id", payment.user_id);
     const existing = await getSubscription(payment.user_id);
     const periodEnd = plusOneMonth(tx.paid_at);
+    // A discounted first month was a one-off charge: start the plan from next month.
+    const renews = planCodeOf(tx.plan) !== null || (await startRenewalAfterDiscount(tx, payment.currency, periodEnd, payment.user_id));
+    const status = renews ? "active" : "non_renewing";
     if (existing) {
-      await admin.from("subscriptions").update({ status: "active", current_period_end: periodEnd }).eq("id", existing.id);
+      await admin.from("subscriptions").update({ status, current_period_end: periodEnd }).eq("id", existing.id);
     } else {
-      await admin.from("subscriptions").insert({ user_id: payment.user_id, status: "active", current_period_end: periodEnd });
+      await admin.from("subscriptions").insert({ user_id: payment.user_id, status, current_period_end: periodEnd });
     }
-    await audit("billing.pro_started", payment.user_id, { reference: tx.reference });
+    await audit("billing.pro_started", payment.user_id, { reference: tx.reference, renews });
   } else {
     const credits = PRODUCTS[payment.product].credits;
     const { error } = await admin.rpc("add_credits", { p_user_id: payment.user_id, p_amount: credits });
     if (error) throw new Error(`Could not add credits: ${error.message}`);
     await audit("billing.credits_added", payment.user_id, { reference: tx.reference, credits });
   }
+
+  if (payment.amount_kobo > 0) await rewardReferrer(payment.user_id, tx.reference);
   return true;
+}
+
+/**
+ * After a discounted first month of Pro, subscribes the founder to the plan
+ * starting when that month ends, on the card they just used. Returns false
+ * (and logs why) if it can't, in which case Pro simply ends after the month.
+ */
+async function startRenewalAfterDiscount(tx: PaystackTransaction, currency: string, startDate: string, userId: string): Promise<boolean> {
+  const customerCode = tx.customer?.customer_code;
+  const authorizationCode = tx.authorization?.reusable ? tx.authorization.authorization_code : undefined;
+  if (!customerCode || !authorizationCode || !isCurrency(currency)) {
+    await audit("billing.renewal_not_started", userId, { reference: tx.reference, reason: "no reusable card" });
+    return false;
+  }
+  try {
+    const planCode = await ensureProPlan(currency);
+    await createSubscription({ customerCode, planCode, authorizationCode, startDate });
+    return true;
+  } catch (error) {
+    console.error("[billing] could not start renewal after discount:", error);
+    await audit("billing.renewal_not_started", userId, { reference: tx.reference, reason: "paystack error" });
+    return false;
+  }
+}
+
+/** Gives the founder who invited this one their credits, once, on this founder's first payment. */
+async function rewardReferrer(userId: string, reference: string): Promise<void> {
+  const admin = createAdminClient();
+  const { data: profile } = await admin.from("profiles").select("referred_by").eq("id", userId).maybeSingle();
+  const referrerId = profile?.referred_by;
+  if (!referrerId) return;
+  const { data: referrer } = await admin.from("profiles").select("status").eq("id", referrerId).maybeSingle();
+  if (!referrer || referrer.status !== "active") return;
+  const { data: earlier } = await admin.from("referral_rewards").select("id").eq("referred_id", userId).maybeSingle();
+  if (earlier) return;
+  // The unique index on referred_id also stops two simultaneous rewards.
+  const { error } = await admin
+    .from("referral_rewards")
+    .insert({ referrer_id: referrerId, referred_id: userId, credits: REFERRAL.referrerCredits, payment_reference: reference });
+  if (error) return;
+  await admin.rpc("add_credits", { p_user_id: referrerId, p_amount: REFERRAL.referrerCredits });
+  await audit("billing.referral_rewarded", referrerId, { referred_id: userId, credits: REFERRAL.referrerCredits });
 }
 
 /** A Pro renewal charge: Paystack creates the reference, so we record it now. */

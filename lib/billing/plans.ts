@@ -4,6 +4,7 @@
  * Amounts are in kobo (1/100 Naira), as Paystack expects.
  */
 
+import { PRICES } from "@/lib/billing/prices";
 import type { Difficulty, PaymentProduct, Persona } from "@/lib/supabase/database.types";
 
 export const CURRENCY = "NGN";
@@ -24,7 +25,7 @@ export const PRO_PLAN = {
   id: "pro",
   name: "Pro",
   product: "pro_monthly" as PaymentProduct,
-  priceKobo: 1_500_000,
+  priceKobo: PRICES.NGN.pro_monthly,
   interval: "month",
   assessments: Infinity,
   simulationsPerMonth: 30,
@@ -35,6 +36,6 @@ export const PRO_PLAN = {
 } as const;
 
 export const CREDIT_PACKS = [
-  { product: "credits_3" as PaymentProduct, name: "3 simulations", priceKobo: 500_000, simulations: 3 },
-  { product: "credits_10" as PaymentProduct, name: "10 simulations", priceKobo: 1_000_000, simulations: 10 },
+  { product: "credits_3" as PaymentProduct, name: "3 simulations", priceKobo: PRICES.NGN.credits_3, simulations: 3 },
+  { product: "credits_10" as PaymentProduct, name: "10 simulations", priceKobo: PRICES.NGN.credits_10, simulations: 10 },
 ] as const;

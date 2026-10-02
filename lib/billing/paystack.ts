@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { serverEnv } from "@/lib/env";
-import { CURRENCY, PRO_PLAN } from "@/lib/billing/plans";
+import { priceOf, type Currency } from "@/lib/billing/prices";
 
 /** Minimal Paystack API client (https://paystack.com/docs/api). Server-only. */
 
@@ -36,11 +36,13 @@ export type PaystackTransaction = {
   metadata?: Record<string, unknown> | string | null;
   customer?: PaystackCustomer;
   plan?: { plan_code?: string } | string | null;
+  authorization?: { authorization_code?: string; reusable?: boolean } | null;
 };
 
 export async function initializeTransaction(input: {
   email: string;
   amountKobo: number;
+  currency: Currency;
   reference: string;
   callbackUrl: string;
   metadata: Record<string, string>;
@@ -49,7 +51,7 @@ export async function initializeTransaction(input: {
   return call("POST", "/transaction/initialize", {
     email: input.email,
     amount: input.amountKobo,
-    currency: CURRENCY,
+    currency: input.currency,
     reference: input.reference,
     callback_url: input.callbackUrl,
     metadata: input.metadata,
@@ -61,27 +63,43 @@ export async function verifyTransaction(reference: string): Promise<PaystackTran
   return call("GET", `/transaction/verify/${encodeURIComponent(reference)}`);
 }
 
-let cachedPlanCode: string | null = null;
+const cachedPlanCodes = new Map<Currency, string>();
 
-/** The Paystack plan for Pro, found by name and price or created on first use. */
-export async function ensureProPlan(): Promise<string> {
-  if (cachedPlanCode) return cachedPlanCode;
-  const name = "RaiseReady Pro";
+/** The Paystack plan for Pro in this currency, found by name and price or created on first use. */
+export async function ensureProPlan(currency: Currency = "NGN"): Promise<string> {
+  const cached = cachedPlanCodes.get(currency);
+  if (cached) return cached;
+  const name = currency === "NGN" ? "RaiseReady Pro" : `RaiseReady Pro (${currency})`;
+  const amount = priceOf("pro_monthly", currency);
   const plans = await call<{ plan_code: string; name: string; amount: number; interval: string; currency: string; is_deleted?: boolean }[]>(
     "GET",
-    `/plan?perPage=100&interval=monthly&amount=${PRO_PLAN.priceKobo}`,
+    `/plan?perPage=100&interval=monthly&amount=${amount}`,
   );
-  const existing = plans.find(
-    (p) => p.name === name && p.amount === PRO_PLAN.priceKobo && p.currency === CURRENCY && !p.is_deleted,
-  );
-  if (existing) return (cachedPlanCode = existing.plan_code);
-  const created = await call<{ plan_code: string }>("POST", "/plan", {
-    name,
-    interval: "monthly",
-    amount: PRO_PLAN.priceKobo,
-    currency: CURRENCY,
+  const existing = plans.find((p) => p.name === name && p.amount === amount && p.currency === currency && !p.is_deleted);
+  const code = existing
+    ? existing.plan_code
+    : (await call<{ plan_code: string }>("POST", "/plan", { name, interval: "monthly", amount, currency })).plan_code;
+  cachedPlanCodes.set(currency, code);
+  return code;
+}
+
+/**
+ * Starts a Pro subscription that first charges on `startDate`, using the card
+ * from an earlier payment. Used after a discounted first month, which is
+ * charged as a one-off because Paystack plans always charge the plan price.
+ */
+export async function createSubscription(input: {
+  customerCode: string;
+  planCode: string;
+  authorizationCode: string;
+  startDate: string;
+}): Promise<{ subscription_code: string }> {
+  return call("POST", "/subscription", {
+    customer: input.customerCode,
+    plan: input.planCode,
+    authorization: input.authorizationCode,
+    start_date: input.startDate,
   });
-  return (cachedPlanCode = created.plan_code);
 }
 
 /** A Paystack-hosted page where the customer can cancel or update their subscription. */
