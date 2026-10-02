@@ -81,6 +81,12 @@ async function answerUntilTheMeetingEnds(page: Page) {
 
 test("a founder can go from sign-in to feedback, then delete their account", async ({ page }) => {
   test.setTimeout(30 * 60_000);
+  // Browser-side problems (blocked requests, script errors) explain most failures; print them.
+  page.on("console", (m) => {
+    if (m.type() === "error" || m.type() === "warning") console.log(`[browser ${m.type()}] ${m.text()}`);
+  });
+  page.on("pageerror", (e) => console.log(`[page error] ${e.message}`));
+  page.on("requestfailed", (r) => console.log(`[request failed] ${r.method()} ${r.url().split("?")[0]} ${r.failure()?.errorText ?? ""}`));
 
   await test.step("log in", async () => {
     await page.goto("/login");
@@ -112,7 +118,10 @@ test("a founder can go from sign-in to feedback, then delete their account", asy
   await test.step("upload and analyse the pitch deck", async () => {
     await page.goto("/app/documents");
     await page.locator("#upload-pitch_deck").setInputFiles(DECK);
-    await expect(page.getByText("sample-deck.pdf").first()).toBeVisible({ timeout: 60_000 });
+    const uploaded = page.getByText("sample-deck.pdf").first();
+    const failed = page.locator("#upload-pitch_deck-error");
+    await expect(uploaded.or(failed)).toBeVisible({ timeout: 60_000 });
+    if (await failed.isVisible()) throw new Error(`Upload failed with: ${await failed.textContent()}`);
     await page.getByRole("button", { name: "Analyse documents" }).click();
     await expect(page.getByText(/Version 1, analysed/)).toBeVisible({ timeout: 5 * 60_000 });
   });
