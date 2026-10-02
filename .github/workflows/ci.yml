@@ -3,6 +3,8 @@ name: CI
 on:
   push:
   pull_request:
+  # "Run workflow" button in the Actions tab (once this file is on the default branch).
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -42,8 +44,9 @@ jobs:
 
   core-loop:
     name: Core loop E2E against the live deployment
-    # Uses real AI calls, so it only runs when a commit message contains [e2e].
-    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[e2e]')
+    # Uses real AI calls, so it only runs when asked: a commit message
+    # containing [e2e], or a manual run.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[e2e]'))
     needs: checks
     runs-on: ubuntu-24.04
     timeout-minutes: 45
