@@ -11,7 +11,7 @@ import { DEFAULT_PLAN_RULES, PLAN_NAMES } from "@/lib/billing/plan-rules";
 import { paidPlanOf } from "@/lib/billing/entitlements";
 import { load } from "@/lib/data-errors";
 import { getCurrentProfile } from "@/lib/auth/session";
-import { priceLabel } from "@/lib/currency/display";
+import { displayPrice } from "@/lib/currency/display";
 import { getPriceContext } from "@/lib/currency/server";
 import { getDeckUsage } from "@/lib/decks/service";
 import { getMyStartup } from "@/lib/startups/service";
@@ -43,7 +43,8 @@ export default async function DecksPage() {
   const access = deckBuildAccess(usage);
   const plan = paidPlanOf(usage);
   const allowance = (usage.rules ?? DEFAULT_PLAN_RULES)[plan ?? "pro"].decksPerMonth;
-  const price = priceLabel(prices.prices[prices.currency].deck_builder, prices).price;
+  const deckPrice = displayPrice("deck_builder", prices, "paid in naira: {price}");
+  const price = deckPrice.approx ? `${deckPrice.price} (${deckPrice.approx})` : deckPrice.price;
 
   return (
     <div className="grid gap-10">

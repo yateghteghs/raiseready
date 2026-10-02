@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { countryCode } from "@/lib/currency/countries";
+import { DEFAULT_PRICES } from "@/lib/billing/prices";
 import {
   displayCurrency,
+  displayPrice,
   estimate,
   localCurrency,
   priceLabel,
@@ -89,5 +91,43 @@ describe("currency display", () => {
       priceLabel(250, { currency: "USD", local: "KES", rates: { KES: 0.9 } })
         .approx,
     ).toMatch(/^≈ KES\s2\.3$/);
+  });
+
+  it("shows dollar prices, with the naira amount when that's what is charged", () => {
+    const base = {
+      prices: DEFAULT_PRICES,
+      rates: {},
+      usdOn: false,
+      local: null,
+    };
+    const paidIn = "Paid in naira: {price}";
+    expect(
+      displayPrice(
+        "pro_monthly",
+        { ...base, currency: "NGN", shown: "USD" },
+        paidIn,
+      ),
+    ).toEqual({
+      price: "$10",
+      approx: "Paid in naira: ₦15,000",
+      estimate: false,
+    });
+    expect(
+      displayPrice(
+        "pro_monthly",
+        { ...base, currency: "USD", shown: "USD" },
+        paidIn,
+      ),
+    ).toMatchObject({ price: "$10", approx: null });
+    expect(
+      displayPrice(
+        "pro_monthly",
+        { ...base, currency: "NGN", shown: "NGN" },
+        paidIn,
+      ),
+    ).toMatchObject({ price: "₦15,000", approx: null });
+    expect(
+      displayPrice(null, { ...base, currency: "NGN", shown: "USD" }, paidIn),
+    ).toMatchObject({ price: "$0", approx: null });
   });
 });

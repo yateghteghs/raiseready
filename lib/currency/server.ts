@@ -20,6 +20,7 @@ export async function getPriceContext(profileCountry?: string | null): Promise<P
   const usdOn = usdEnabled();
   const chosen = jar.get(CURRENCY_COOKIE)?.value;
   const currency = displayCurrency({ country, chosen, usdOn });
-  const shown = displayCurrency({ country, chosen: usdOn ? chosen : null, usdOn: true });
+  // Prices are shown in US dollars unless the visitor switched to naira.
+  const shown = chosen === "NGN" ? "NGN" : "USD";
   return { prices, rates, usdOn, currency, shown, local: localCurrency(country, currency), country };
 }

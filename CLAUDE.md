@@ -57,10 +57,12 @@ milestone at a time (spec section 11) and stop for review after each.
   USD only when `PAYSTACK_USD_ENABLED=true`. `payments.amount_kobo` is in the
   currency's smallest unit; revenue is always totalled per currency. Discounted
   Pro is a one-off first month, then `createSubscription` starts the plan.
-- Currency display (`lib/currency`): naira in Nigeria, US dollars elsewhere
-  (only when `PAYSTACK_USD_ENABLED`), overridable with the `rr_currency`
-  cookie; `getPriceContext` decides from the profile country or
-  `x-vercel-ip-country`. Local estimates use super-admin rates (`fx_rates`,
+- Currency display (`lib/currency`): prices are shown in US dollars
+  (`ctx.shown`) unless the `rr_currency` cookie picks naira; the charge
+  currency (`ctx.currency`) is naira in Nigeria or while
+  `PAYSTACK_USD_ENABLED` is off, else dollars. `displayPrice` adds "Paid in
+  naira" when they differ. `getPriceContext` decides from the profile country
+  or `x-vercel-ip-country`. Local estimates use super-admin rates (`fx_rates`,
   per US dollar) and are display only; charges are always NGN or USD.
 - Report share links (`lib/reports/shares.ts`): random token in the URL, only
   its SHA-256 stored; public page `/shared/[token]`.

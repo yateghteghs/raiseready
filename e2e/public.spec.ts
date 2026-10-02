@@ -85,12 +85,14 @@ test("legal pages name the operator and are no longer drafts", async ({ page }) 
 test.describe("pricing currency", () => {
   test.skip(Boolean(process.env.E2E_BASE_URL), "Needs dollar payments on and default prices");
 
-  test("shows naira in Nigeria", async ({ browser }) => {
+  test("shows dollars in Nigeria too, with the naira amount charged", async ({ browser }) => {
     const context = await browser.newContext({ extraHTTPHeaders: { "x-vercel-ip-country": "NG" } });
     const page = await context.newPage();
     await page.goto("/pricing");
-    await expect(page.getByText("₦15,000").first()).toBeVisible();
-    await expect(page.getByText("₦5,000").first()).toBeVisible();
+    await expect(page.getByText("Prices in US dollars.")).toBeVisible();
+    await expect(page.getByText("$10", { exact: true })).toBeVisible();
+    await expect(page.getByText("Paid in naira: ₦15,000")).toBeVisible();
+    await expect(page.getByText("Paid in naira: ₦5,000")).toBeVisible();
     await context.close();
   });
 

@@ -1,4 +1,5 @@
 import type { Currency, PriceTable } from "@/lib/billing/prices";
+import type { PaymentProduct } from "@/lib/supabase/database.types";
 import { COUNTRY_CURRENCY } from "@/lib/currency/countries";
 
 /** How much of each currency one US dollar buys (from Admin → Prices). */
@@ -111,3 +112,32 @@ export type PriceContext = {
   prices: PriceTable;
   usdOn: boolean;
 };
+
+/**
+ * A product's price as the website shows it: in the display currency (US
+ * dollars unless the visitor chose naira), plus what is actually charged when
+ * that differs ("Paid in naira: ₦15,000"), or an estimate in their own
+ * currency. `paidIn` is a template with a {price} placeholder.
+ */
+export function displayPrice(
+  product: PaymentProduct | null,
+  ctx: PriceContext,
+  paidIn: string,
+): { price: string; approx: string | null; estimate: boolean } {
+  const shown = ctx.shown ?? ctx.currency;
+  if (!product)
+    return { price: formatAmount(0, shown), approx: null, estimate: false };
+  if (shown === ctx.currency) {
+    const label = priceLabel(ctx.prices[ctx.currency][product], ctx);
+    return { ...label, estimate: Boolean(label.approx) };
+  }
+  const charged = formatAmount(
+    ctx.prices[ctx.currency][product] / 100,
+    ctx.currency,
+  );
+  return {
+    price: formatAmount(ctx.prices[shown][product] / 100, shown),
+    approx: paidIn.replace("{price}", charged),
+    estimate: false,
+  };
+}

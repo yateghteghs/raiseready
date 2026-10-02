@@ -13,7 +13,7 @@ import { deckUnlockAccess, rewriteAccess, rewriteLimit } from "@/lib/billing/ent
 import { DEFAULT_PLAN_RULES } from "@/lib/billing/plan-rules";
 import { load } from "@/lib/data-errors";
 import { getCurrentProfile } from "@/lib/auth/session";
-import { priceLabel } from "@/lib/currency/display";
+import { displayPrice } from "@/lib/currency/display";
 import { getPriceContext } from "@/lib/currency/server";
 import { deckContent, getDeckUsage, visibleSlideCount } from "@/lib/decks/service";
 import { createClient } from "@/lib/supabase/server";
@@ -108,7 +108,7 @@ export default async function DeckPage({ params }: PageProps<"/app/decks/[deckId
             <div className="grid justify-items-start gap-2 text-sm">
               <p>
                 Unlock every slide, AI rewrites and the PowerPoint and PDF downloads: buy this deck for{" "}
-                {priceLabel(prices.prices[prices.currency].deck_builder, prices).price}, or get {(usage.rules ?? DEFAULT_PLAN_RULES).pro.decksPerMonth} decks a month with Pro.
+                {[displayPrice("deck_builder", prices, "paid in naira: {price}")].map((d) => (d.approx ? `${d.price} (${d.approx})` : d.price))[0]}, or get {(usage.rules ?? DEFAULT_PLAN_RULES).pro.decksPerMonth} decks a month with Pro.
                 Your deck won&apos;t be written again; it unlocks as it is.
               </p>
               <Button asChild size="sm">

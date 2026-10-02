@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { planFeatures } from "@/lib/billing/plan-features";
 import type { PlanRules } from "@/lib/billing/plan-rules";
 import { CREDIT_PACKS } from "@/lib/billing/plans";
-import { formatAmount, priceLabel, type PriceContext } from "@/lib/currency/display";
+import { displayPrice, type PriceContext } from "@/lib/currency/display";
 import type { PaymentProduct as PricedProduct } from "@/lib/supabase/database.types";
 import type { Messages } from "@/lib/i18n/messages/en";
 import { fill } from "@/lib/i18n/text";
@@ -32,19 +32,7 @@ type Tier = {
  */
 export function PricingCards({ t, rules, ctx }: { t: Messages["pricing"]; rules: PlanRules; ctx: PriceContext }) {
   const shown = ctx.shown ?? ctx.currency;
-  // Outside Nigeria the headline is in dollars; while checkout is still in naira, say what's charged.
-  const p = (product: PricedProduct | null) => {
-    if (!product) return { price: formatAmount(0, shown), approx: null, estimate: false };
-    if (shown === ctx.currency) {
-      const label = priceLabel(ctx.prices[ctx.currency][product], ctx);
-      return { ...label, estimate: Boolean(label.approx) };
-    }
-    return {
-      price: formatAmount(ctx.prices[shown][product] / 100, shown),
-      approx: fill(t.paidIn, { price: formatAmount(ctx.prices[ctx.currency][product] / 100, ctx.currency) }),
-      estimate: false,
-    };
-  };
+  const p = (product: PricedProduct | null) => displayPrice(product, ctx, t.paidIn);
   const tiers: Tier[] = [
     {
       name: t.free.name,
@@ -98,7 +86,7 @@ export function PricingCards({ t, rules, ctx }: { t: Messages["pricing"]; rules:
     <div className="grid gap-6">
       <div className="text-muted-foreground flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
         <span>{fill(t.pricesIn, { currency: t.currencyNames[shown] })}</span>
-        {ctx.usdOn ? <CurrencySwitch to={other} label={fill(t.switchTo, { currency: t.currencyNames[other] })} /> : null}
+        <CurrencySwitch to={other} label={fill(t.switchTo, { currency: t.currencyNames[other] })} />
       </div>
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {tiers.map((tier) => (
