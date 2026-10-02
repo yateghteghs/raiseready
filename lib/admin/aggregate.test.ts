@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { assessmentInsights, redFlagCounts, revenueSummary, summariseAiCalls } from "@/lib/admin/aggregate";
+import { activeUsers, assessmentInsights, dailyActive, funnel, redFlagCounts, revenueSummary, summariseAiCalls } from "@/lib/admin/aggregate";
 import { isStaffProfile } from "@/lib/admin/auth";
 import { estimateCostUsd } from "@/lib/ai/pricing";
 
@@ -77,5 +77,42 @@ describe("revenue", () => {
     );
     expect(r).toMatchObject({ allTimeKobo: 2_000_000, thisMonthKobo: 1_500_000 });
     expect(r.byProduct[1]).toEqual({ product: "credits_3", count: 1, kobo: 500_000 });
+  });
+});
+
+describe("usage analytics", () => {
+  const rows = [
+    { user_id: "a", day: "2026-10-02" },
+    { user_id: "b", day: "2026-10-02" },
+    { user_id: "a", day: "2026-09-30" },
+    { user_id: "c", day: "2026-09-26" },
+    { user_id: "d", day: "2026-09-10" },
+    { user_id: "e", day: "2026-08-01" },
+  ];
+
+  it("counts daily, weekly and monthly active founders", () => {
+    expect(activeUsers(rows, "2026-10-02")).toEqual({ daily: 2, weekly: 3, monthly: 4 });
+  });
+
+  it("zero-fills a daily series, oldest first", () => {
+    const series = dailyActive(rows, "2026-10-02", 3);
+    expect(series).toEqual([
+      { day: "2026-09-30", users: 1 },
+      { day: "2026-10-01", users: 0 },
+      { day: "2026-10-02", users: 2 },
+    ]);
+  });
+
+  it("shows where founders drop off", () => {
+    const f = funnel([
+      { label: "Signed up", count: 100 },
+      { label: "Onboarded", count: 80 },
+      { label: "Deck analysed", count: 40 },
+      { label: "Paid", count: 0 },
+    ]);
+    expect(f[1]).toMatchObject({ ofSignups: 0.8, fromPrevious: 0.8 });
+    expect(f[2]).toMatchObject({ ofSignups: 0.4, fromPrevious: 0.5 });
+    expect(f[3]).toMatchObject({ ofSignups: 0, fromPrevious: 0 });
+    expect(funnel([{ label: "Signed up", count: 0 }])[0].ofSignups).toBe(0);
   });
 });

@@ -136,3 +136,35 @@ export function revenueSummary(payments: { amount_kobo: number; product: string;
     }),
   };
 }
+
+/** Daily, weekly and monthly active founders from activity days ("YYYY-MM-DD"), counted back from `today`. */
+export function activeUsers(rows: { user_id: string; day: string }[], today: string) {
+  const t = Date.parse(`${today}T00:00:00Z`);
+  const within = (n: number) =>
+    new Set(rows.filter((r) => t - Date.parse(`${r.day}T00:00:00Z`) < n * 86_400_000 && r.day <= today).map((r) => r.user_id)).size;
+  return { daily: within(1), weekly: within(7), monthly: within(30) };
+}
+
+/** Active founders per day for the last `days` days, oldest first, zero-filled. */
+export function dailyActive(rows: { user_id: string; day: string }[], today: string, days = 30) {
+  const t = Date.parse(`${today}T00:00:00Z`);
+  const byDay = new Map<string, Set<string>>();
+  for (const r of rows) {
+    if (!byDay.has(r.day)) byDay.set(r.day, new Set());
+    byDay.get(r.day)!.add(r.user_id);
+  }
+  return Array.from({ length: days }, (_, i) => {
+    const day = new Date(t - (days - 1 - i) * 86_400_000).toISOString().slice(0, 10);
+    return { day, users: byDay.get(day)?.size ?? 0 };
+  });
+}
+
+/** Funnel steps with the share of sign-ups reaching each one and the drop from the step before. */
+export function funnel(steps: { label: string; count: number }[]) {
+  const top = steps[0]?.count ?? 0;
+  return steps.map((s, i) => ({
+    ...s,
+    ofSignups: top ? s.count / top : 0,
+    fromPrevious: i === 0 ? 1 : steps[i - 1].count ? s.count / steps[i - 1].count : 0,
+  }));
+}
