@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { serverEnv } from "@/lib/env";
 import { priceOf, type Currency } from "@/lib/billing/prices";
+import type { PaymentProduct } from "@/lib/supabase/database.types";
 
 /** Minimal Paystack API client (https://paystack.com/docs/api). Server-only. */
 
@@ -63,14 +64,17 @@ export async function verifyTransaction(reference: string): Promise<PaystackTran
   return call("GET", `/transaction/verify/${encodeURIComponent(reference)}`);
 }
 
-const cachedPlanCodes = new Map<Currency, string>();
+const cachedPlanCodes = new Map<string, string>();
+const PLAN_NAMES = { pro_monthly: "RaiseReady Pro", pro_plus_monthly: "RaiseReady Pro Plus" } as const;
+export type SubscriptionProduct = keyof typeof PLAN_NAMES & PaymentProduct;
 
-/** The Paystack plan for Pro in this currency, found by name and price or created on first use. */
-export async function ensureProPlan(currency: Currency = "NGN"): Promise<string> {
-  const cached = cachedPlanCodes.get(currency);
+/** The Paystack plan for Pro or Pro Plus in this currency, found by name and price or created on first use. */
+export async function ensurePlan(product: SubscriptionProduct, currency: Currency = "NGN"): Promise<string> {
+  const key = `${product}:${currency}`;
+  const cached = cachedPlanCodes.get(key);
   if (cached) return cached;
-  const name = currency === "NGN" ? "RaiseReady Pro" : `RaiseReady Pro (${currency})`;
-  const amount = priceOf("pro_monthly", currency);
+  const name = currency === "NGN" ? PLAN_NAMES[product] : `${PLAN_NAMES[product]} (${currency})`;
+  const amount = priceOf(product, currency);
   const plans = await call<{ plan_code: string; name: string; amount: number; interval: string; currency: string; is_deleted?: boolean }[]>(
     "GET",
     `/plan?perPage=100&interval=monthly&amount=${amount}`,
@@ -79,7 +83,7 @@ export async function ensureProPlan(currency: Currency = "NGN"): Promise<string>
   const code = existing
     ? existing.plan_code
     : (await call<{ plan_code: string }>("POST", "/plan", { name, interval: "monthly", amount, currency })).plan_code;
-  cachedPlanCodes.set(currency, code);
+  cachedPlanCodes.set(key, code);
   return code;
 }
 

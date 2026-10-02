@@ -54,6 +54,7 @@ export async function getDeckUsage(userId: string): Promise<DeckUsage> {
   ]);
   return {
     proActive: usage.proActive,
+    tier: usage.tier,
     deckCredits: usage.profile.deck_credits ?? 0,
     proDecksThisMonth: pro.count ?? 0,
     // The free preview is for a founder's first deck.
@@ -239,7 +240,7 @@ export async function editSlide(userId: string, deckId: string, index: number, i
 export async function rewriteSlide(userId: string, deckId: string, index: number, request: string): Promise<Slide> {
   const deck = await loadOwnDeck(userId, deckId);
   const content = assertEditable(deck, deckContent(deck), index);
-  const access = rewriteAccess(deck);
+  const access = rewriteAccess(deck, (await getUsage(userId, null)).tier);
   if (!access.ok) throw new PlanLimitError(access.reason);
   const ask = request.trim().slice(0, 500);
   if (!ask) throw new DeckError("Say how the slide should change.");

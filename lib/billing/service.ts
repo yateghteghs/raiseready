@@ -1,16 +1,17 @@
 import { randomUUID } from "node:crypto";
 
-import { lagosMonthStart, isProActive, type Usage } from "@/lib/billing/entitlements";
+import { lagosMonthStart, tierOf, type Tier, type Usage } from "@/lib/billing/entitlements";
 import {
   createSubscription,
-  ensureProPlan,
+  disableSubscription,
+  ensurePlan,
   initializeTransaction,
   metadataOf,
   planCodeOf,
   subscriptionManageLink,
   type PaystackTransaction,
 } from "@/lib/billing/paystack";
-import { CREDIT_PACKS, DECK_BUILDER } from "@/lib/billing/plans";
+import { CREDIT_PACKS, DECK_BUILDER, PLAN_LIMITS, PLAN_PRODUCTS, planOfProduct } from "@/lib/billing/plans";
 import {
   availableCurrencies,
   codeProblem,
@@ -23,12 +24,13 @@ import {
 import { getReferralSettings } from "@/lib/billing/referral-settings";
 import { hasUnlockedReferralCredits, releaseLockedRewards } from "@/lib/referrals/rewards";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Json, PaymentProduct, SubscriptionStatus, Tables } from "@/lib/supabase/database.types";
+import type { Json, PaidPlan, PaymentProduct, SubscriptionStatus, Tables } from "@/lib/supabase/database.types";
 
 export class BillingError extends Error {}
 
 const PRODUCTS: Record<PaymentProduct, { credits: number; label: string }> = {
   pro_monthly: { credits: 0, label: "Pro (monthly)" },
+  pro_plus_monthly: { credits: 0, label: "Pro Plus (monthly)" },
   credits_3: { credits: CREDIT_PACKS[0].simulations, label: CREDIT_PACKS[0].name },
   credits_10: { credits: CREDIT_PACKS[1].simulations, label: CREDIT_PACKS[1].name },
   deck_builder: { credits: 0, label: DECK_BUILDER.name },
@@ -56,11 +58,29 @@ export async function getSubscription(userId: string): Promise<Tables<"subscript
 }
 
 /** Everything the plan rules need, read fresh from the database (never from the browser). */
-export async function getUsage(userId: string, startupId: string | null): Promise<Usage & { profile: Tables<"profiles"> }> {
+/** The founder's team, if they belong to one (active or not). */
+export async function getMembership(userId: string): Promise<Pick<Tables<"teams">, "id" | "name" | "ends_at" | "owner_id"> | null> {
+  const admin = createAdminClient();
+  const { data: member } = await admin.from("team_members").select("team_id").eq("user_id", userId).maybeSingle();
+  if (!member) return null;
+  const { data: team } = await admin.from("teams").select("id, name, ends_at, owner_id").eq("id", member.team_id).maybeSingle();
+  return team ?? null;
+}
+
+export type FullUsage = Usage & {
+  tier: Tier;
+  profile: Tables<"profiles">;
+  /** The team giving this founder Pro Plus, while it's active. */
+  team: Pick<Tables<"teams">, "id" | "name" | "ends_at"> | null;
+};
+
+export async function getUsage(userId: string, startupId: string | null): Promise<FullUsage> {
   const admin = createAdminClient();
   const { data: profile, error } = await admin.from("profiles").select("*").eq("id", userId).single();
   if (error || !profile) throw new Error(`Could not load profile: ${error?.message}`);
-  const subscription = await getSubscription(userId);
+  const [subscription, membership] = await Promise.all([getSubscription(userId), getMembership(userId)]);
+  const team = membership && new Date(membership.ends_at).getTime() > Date.now() ? membership : null;
+  const tier = tierOf(profile.plan, subscription, team);
 
   let assessments = 0;
   let freeSimulationsUsed = 0;
@@ -82,7 +102,9 @@ export async function getUsage(userId: string, startupId: string | null): Promis
   }
   return {
     profile,
-    proActive: isProActive(profile.plan, subscription),
+    tier,
+    team,
+    proActive: tier !== "free",
     credits: profile.credits,
     assessments,
     freeSimulationsUsed,
@@ -177,9 +199,14 @@ export async function startCheckout(
 ): Promise<string> {
   if (!user.email) throw new BillingError("Your account has no email address. Contact support.");
   const currency = isCurrency(options.currency) ? options.currency : "NGN";
-  if (product === "pro_monthly") {
+  const plan = planOfProduct(product);
+  if (plan) {
     const usage = await getUsage(user.id, null);
-    if (usage.proActive) throw new BillingError("You're already on Pro.");
+    if (usage.team) throw new BillingError(`Your team, ${usage.team.name}, already gives you Pro Plus.`);
+    if (usage.tier === plan) throw new BillingError(`You're already on ${PLAN_LIMITS[plan].name}.`);
+    if (usage.tier === "pro_plus" && plan === "pro") {
+      throw new BillingError("To move to Pro, cancel Pro Plus first. You keep Pro Plus until the end of the month you've paid for.");
+    }
   }
 
   const q = await quote(user.id, product, currency, options.code);
@@ -208,7 +235,7 @@ export async function startCheckout(
     return "/app/billing?payment=success";
   }
 
-  const planCode = product === "pro_monthly" && q.discount === 0 ? await ensureProPlan(currency) : undefined;
+  const planCode = plan && q.discount === 0 ? await ensurePlan(PLAN_PRODUCTS[plan] as "pro_monthly" | "pro_plus_monthly", currency) : undefined;
   const tx = await initializeTransaction({
     email: user.email,
     amountKobo: q.amount,
@@ -266,19 +293,32 @@ export async function applyChargeSuccess(tx: PaystackTransaction, raw: unknown):
       .insert({ code_id: payment.discount_code_id, user_id: payment.user_id, payment_reference: tx.reference });
   }
 
-  if (payment.product === "pro_monthly") {
-    await admin.from("profiles").update({ plan: "pro" }).eq("id", payment.user_id);
+  const plan = planOfProduct(payment.product);
+  if (plan) {
     const existing = await getSubscription(payment.user_id);
     const periodEnd = plusOneMonth(tx.paid_at);
     // A discounted first month was a one-off charge: start the plan from next month.
-    const renews = planCodeOf(tx.plan) !== null || (await startRenewalAfterDiscount(tx, payment.currency, periodEnd, payment.user_id));
+    const renews =
+      planCodeOf(tx.plan) !== null || (await startRenewalAfterDiscount(tx, payment.currency, periodEnd, payment.user_id, plan));
     const status = renews ? "active" : "non_renewing";
-    if (existing) {
+    const ended = existing && (existing.status === "cancelled" || existing.status === "completed");
+    if (existing && !ended && existing.plan !== plan) {
+      // An upgrade from Pro: end the Pro subscription so it isn't charged
+      // again, and start a separate record for Pro Plus.
+      await endSubscription(existing, payment.user_id);
+      await admin.from("subscriptions").insert({ user_id: payment.user_id, plan, status, current_period_end: periodEnd });
+    } else if (existing && !ended) {
       await admin.from("subscriptions").update({ status, current_period_end: periodEnd }).eq("id", existing.id);
     } else {
-      await admin.from("subscriptions").insert({ user_id: payment.user_id, status, current_period_end: periodEnd });
+      // First subscription, or a new one after the last ended: a fresh record.
+      await admin.from("subscriptions").insert({ user_id: payment.user_id, plan, status, current_period_end: periodEnd });
     }
-    await audit("billing.pro_started", payment.user_id, { reference: tx.reference, renews });
+    await admin.from("profiles").update({ plan }).eq("id", payment.user_id);
+    await audit(plan === "pro" ? "billing.pro_started" : "billing.pro_plus_started", payment.user_id, {
+      reference: tx.reference,
+      renews,
+      upgraded_from: existing && existing.plan !== plan ? existing.plan : undefined,
+    });
   } else if (payment.product === "deck_builder") {
     const { error } = await admin.rpc("add_deck_credits", { p_user_id: payment.user_id, p_amount: 1 });
     if (error) throw new Error(`Could not add the deck: ${error.message}`);
@@ -303,7 +343,13 @@ export async function applyChargeSuccess(tx: PaystackTransaction, raw: unknown):
  * starting when that month ends, on the card they just used. Returns false
  * (and logs why) if it can't, in which case Pro simply ends after the month.
  */
-async function startRenewalAfterDiscount(tx: PaystackTransaction, currency: string, startDate: string, userId: string): Promise<boolean> {
+async function startRenewalAfterDiscount(
+  tx: PaystackTransaction,
+  currency: string,
+  startDate: string,
+  userId: string,
+  plan: PaidPlan,
+): Promise<boolean> {
   const customerCode = tx.customer?.customer_code;
   const authorizationCode = tx.authorization?.reusable ? tx.authorization.authorization_code : undefined;
   if (!customerCode || !authorizationCode || !isCurrency(currency)) {
@@ -311,13 +357,29 @@ async function startRenewalAfterDiscount(tx: PaystackTransaction, currency: stri
     return false;
   }
   try {
-    const planCode = await ensureProPlan(currency);
+    const planCode = await ensurePlan(PLAN_PRODUCTS[plan] as "pro_monthly" | "pro_plus_monthly", currency);
     await createSubscription({ customerCode, planCode, authorizationCode, startDate });
     return true;
   } catch (error) {
     console.error("[billing] could not start renewal after discount:", error);
     await audit("billing.renewal_not_started", userId, { reference: tx.reference, reason: "paystack error" });
     return false;
+  }
+}
+
+/**
+ * Stops an old subscription after an upgrade. Its record is marked cancelled
+ * straight away; Paystack's own "disabled" event later finds nothing to do.
+ * If Paystack can't be reached, staff are alerted through the audit log.
+ */
+async function endSubscription(sub: Tables<"subscriptions">, userId: string): Promise<void> {
+  await createAdminClient().from("subscriptions").update({ status: "cancelled" }).eq("id", sub.id);
+  if (!sub.provider_subscription_code) return;
+  try {
+    await disableSubscription(sub.provider_subscription_code);
+  } catch (error) {
+    console.error("[billing] could not cancel the old subscription after an upgrade:", error);
+    await audit("billing.old_subscription_not_cancelled", userId, { subscription_code: sub.provider_subscription_code });
   }
 }
 
@@ -360,24 +422,28 @@ async function applyRenewal(tx: PaystackTransaction, raw: unknown): Promise<bool
   const { data: profile } = await admin.from("profiles").select("id").eq("paystack_customer_code", customerCode).maybeSingle();
   if (!profile) return false;
 
+  // Which plan renewed: the founder's current subscription, or the price paid.
+  const existing = await getSubscription(profile.id);
+  const plan: PaidPlan =
+    existing?.plan ?? (isCurrency(tx.currency) && tx.amount === priceOf("pro_plus_monthly", tx.currency) ? "pro_plus" : "pro");
+
   const { error } = await admin.from("payments").insert({
     user_id: profile.id,
     provider: "paystack",
     reference: tx.reference,
     amount_kobo: tx.amount,
     currency: tx.currency,
-    product: "pro_monthly",
+    product: PLAN_PRODUCTS[plan],
     status: "success",
     raw_event: raw as Json,
   });
   if (error) return false; // already recorded (unique reference)
 
-  await admin.from("profiles").update({ plan: "pro" }).eq("id", profile.id);
-  const existing = await getSubscription(profile.id);
+  await admin.from("profiles").update({ plan }).eq("id", profile.id);
   if (existing) {
     await admin.from("subscriptions").update({ status: "active", current_period_end: plusOneMonth(tx.paid_at) }).eq("id", existing.id);
   }
-  await audit("billing.pro_renewed", profile.id, { reference: tx.reference });
+  await audit(plan === "pro" ? "billing.pro_renewed" : "billing.pro_plus_renewed", profile.id, { reference: tx.reference });
   await releaseLockedRewards(profile.id);
   return true;
 }
@@ -420,7 +486,9 @@ export async function applySubscriptionEvent(event: string, data: Record<string,
     ...(sub.next_payment_date ? { current_period_end: sub.next_payment_date } : {}),
   };
 
-  const { data: byCode } = await admin.from("subscriptions").select("id").eq("provider_subscription_code", code).maybeSingle();
+  const { data: byCode } = await admin.from("subscriptions").select("id, status").eq("provider_subscription_code", code).maybeSingle();
+  // A subscription we already ended (after an upgrade) stays ended.
+  if (byCode && byCode.status === "cancelled" && status !== "cancelled" && status !== "completed") return;
   if (byCode) {
     await admin.from("subscriptions").update(fields).eq("id", byCode.id);
   } else {
@@ -429,15 +497,24 @@ export async function applySubscriptionEvent(event: string, data: Record<string,
       .select("id")
       .eq("user_id", profile.id)
       .is("provider_subscription_code", null)
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     if (pending) await admin.from("subscriptions").update(fields).eq("id", pending.id);
-    else await admin.from("subscriptions").insert({ user_id: profile.id, ...fields });
+    else {
+      const { data: owner } = await admin.from("profiles").select("plan").eq("id", profile.id).maybeSingle();
+      await admin.from("subscriptions").insert({ user_id: profile.id, plan: owner?.plan === "pro_plus" ? "pro_plus" : "pro", ...fields });
+    }
   }
 
   if (status === "cancelled" || status === "completed") {
-    await admin.from("profiles").update({ plan: "free" }).eq("id", profile.id);
-    await audit("billing.pro_ended", profile.id, { event, subscription_code: code });
+    // Only the founder's current subscription ending ends their plan; an old
+    // one ending after an upgrade doesn't.
+    const current = await getSubscription(profile.id);
+    if (!current || current.provider_subscription_code === code || current.status === "cancelled" || current.status === "completed") {
+      await admin.from("profiles").update({ plan: "free" }).eq("id", profile.id);
+      await audit("billing.pro_ended", profile.id, { event, subscription_code: code });
+    }
   }
 }
 

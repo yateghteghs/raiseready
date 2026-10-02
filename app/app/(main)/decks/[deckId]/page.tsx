@@ -9,7 +9,7 @@ import { DeleteDeckButton, UnlockDeckForm } from "@/components/decks/deck-action
 import { BuildDeckForm } from "@/components/decks/build-deck-form";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth/session";
-import { deckUnlockAccess, rewriteAccess } from "@/lib/billing/entitlements";
+import { deckUnlockAccess, rewriteAccess, rewriteLimit } from "@/lib/billing/entitlements";
 import { DECK_BUILDER } from "@/lib/billing/plans";
 import { load } from "@/lib/data-errors";
 import { deckContent, getDeckUsage, visibleSlideCount } from "@/lib/decks/service";
@@ -30,7 +30,7 @@ export default async function DeckPage({ params }: PageProps<"/app/decks/[deckId
     const supabase = await createClient();
     const { data: deck } = await supabase.from("pitch_decks").select("*").eq("id", deckId).maybeSingle();
     if (!deck) return null;
-    return { deck, usage: deck.access === "preview" ? await getDeckUsage(user.id) : null };
+    return { deck, usage: await getDeckUsage(user.id) };
   });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) notFound();
@@ -65,9 +65,10 @@ export default async function DeckPage({ params }: PageProps<"/app/decks/[deckId
   const shown = visibleSlideCount(deck, content.slides.length);
   const slides = content.slides.slice(0, shown);
   const locked = content.slides.slice(shown).map((s) => s.kind);
-  const rewrite = rewriteAccess(deck);
-  const rewriteLimit = deck.access === "pro" ? DECK_BUILDER.proRewritesPerDeck : DECK_BUILDER.creditRewritesPerDeck;
-  const unlock = usage ? deckUnlockAccess(usage) : null;
+  const tier = usage.tier ?? (usage.proActive ? "pro" : "free");
+  const rewrite = rewriteAccess(deck, tier);
+  const rewritesAllowed = rewriteLimit(deck.access, tier);
+  const unlock = deck.access === "preview" ? deckUnlockAccess(usage) : null;
   const placeholders = content.slides.reduce((n, s) => n + s.missing.length, 0);
 
   return (
@@ -98,7 +99,7 @@ export default async function DeckPage({ params }: PageProps<"/app/decks/[deckId
           {unlock?.ok ? (
             <UnlockDeckForm
               deckId={deck.id}
-              label={unlock.via === "pro" ? "Unlock with Pro" : `Unlock with a bought deck (${usage?.deckCredits} left)`}
+              label={unlock.via === "pro" ? (tier === "pro_plus" ? "Unlock with Pro Plus" : "Unlock with Pro") : `Unlock with a bought deck (${usage?.deckCredits} left)`}
             />
           ) : (
             <div className="grid justify-items-start gap-2 text-sm">
@@ -118,7 +119,7 @@ export default async function DeckPage({ params }: PageProps<"/app/decks/[deckId
           {placeholders
             ? `${placeholders} thing${placeholders === 1 ? "" : "s"} to add before you send this deck: look for the highlighted [Add: …] text. `
             : ""}
-          Edit any slide yourself, as often as you like. AI rewrites used: {deck.rewrites_used} of {rewriteLimit}. The
+          Edit any slide yourself, as often as you like. AI rewrites used: {deck.rewrites_used} of {rewritesAllowed}. The
           PowerPoint file includes your speaker notes.
         </p>
       )}
@@ -127,7 +128,7 @@ export default async function DeckPage({ params }: PageProps<"/app/decks/[deckId
         deckId={deck.id}
         slides={slides}
         locked={locked}
-        rewritesLeft={Math.max(0, rewriteLimit - deck.rewrites_used)}
+        rewritesLeft={Math.max(0, rewritesAllowed - deck.rewrites_used)}
         rewriteBlocked={rewrite.ok ? null : rewrite.reason}
       />
 

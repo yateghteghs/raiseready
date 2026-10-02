@@ -6,7 +6,8 @@ import { BuildDeckForm } from "@/components/decks/build-deck-form";
 import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/auth/session";
 import { deckBuildAccess } from "@/lib/billing/entitlements";
-import { DECK_BUILDER } from "@/lib/billing/plans";
+import { DECK_BUILDER, PLAN_LIMITS } from "@/lib/billing/plans";
+import { paidPlanOf } from "@/lib/billing/entitlements";
 import { load } from "@/lib/data-errors";
 import { getDeckUsage } from "@/lib/decks/service";
 import { formatMoney, koboToNaira } from "@/lib/format";
@@ -36,6 +37,7 @@ export default async function DecksPage() {
   if (!loaded.data) return <LoadProblem code="no_startup" />;
   const { decks, hasDocuments, usage } = loaded.data;
   const access = deckBuildAccess(usage);
+  const plan = paidPlanOf(usage);
   const price = formatMoney(koboToNaira(DECK_BUILDER.priceKobo));
 
   return (
@@ -59,7 +61,7 @@ export default async function DecksPage() {
               access.via === "preview"
                 ? `Your first deck is a free preview: you'll see the outline and the first ${DECK_BUILDER.previewSlides} slides, then unlock the rest with Pro or for ${price}.`
                 : access.via === "pro"
-                  ? `Included with Pro: ${DECK_BUILDER.proDecksPerMonth - usage.proDecksThisMonth} of ${DECK_BUILDER.proDecksPerMonth} decks left this month.`
+                  ? `Included with ${PLAN_LIMITS[plan ?? "pro"].name}: ${PLAN_LIMITS[plan ?? "pro"].decksPerMonth - usage.proDecksThisMonth} of ${PLAN_LIMITS[plan ?? "pro"].decksPerMonth} decks left this month.`
                   : `Uses one of your bought decks (${usage.deckCredits} left).`
             }
           />

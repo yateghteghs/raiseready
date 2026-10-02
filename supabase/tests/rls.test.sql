@@ -131,7 +131,22 @@ select rls_test.throws(
   '23514', 'payments are for known products only');
 
 insert into public.payments (user_id, reference, amount_kobo, product) values
-  ('aaaaaaaa-0000-4000-8000-000000000001', 'ref-deck', 750000, 'deck_builder');
+  ('aaaaaaaa-0000-4000-8000-000000000001', 'ref-deck', 750000, 'deck_builder'),
+  ('aaaaaaaa-0000-4000-8000-000000000001', 'ref-plus', 3500000, 'pro_plus_monthly');
+select rls_test.ok(rls_test.affected($$delete from public.payments where reference = 'ref-plus'$$) = 1,
+  'Pro Plus is a payable product');
+select rls_test.throws(
+  $$update public.profiles set plan = 'platinum' where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
+  '23514', 'plans are free, pro or pro_plus only');
+
+insert into public.teams (id, name, seats, ends_at, owner_id) values
+  ('cccccccc-7777-4000-8000-000000000001', 'Lagos Accelerator', 20, now() + interval '90 days', 'bbbbbbbb-0000-4000-8000-000000000002');
+insert into public.team_members (team_id, user_id) values
+  ('cccccccc-7777-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000001');
+select rls_test.throws(
+  $$insert into public.team_members (team_id, user_id) values ('cccccccc-7777-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000001')$$,
+  '23505', 'a founder joins a team only once');
+insert into public.team_enquiries (name, organisation, email, cohort_size) values ('Ada', 'Hub', 'ada@hub.example', 25);
 select rls_test.ok(rls_test.affected($$delete from public.payments where reference = 'ref-deck'$$) = 1,
   'the deck builder is a payable product');
 
@@ -248,6 +263,9 @@ select rls_test.throws('select * from public.startups', '42501', 'anon cannot re
 select rls_test.throws('select * from public.profiles', '42501', 'anon cannot read profiles');
 select rls_test.throws('select * from public.reports', '42501', 'anon cannot read reports');
 select rls_test.throws('select * from public.pitch_decks', '42501', 'anon cannot read pitch decks');
+select rls_test.throws('select * from public.teams', '42501', 'anon cannot read teams');
+select rls_test.throws('select * from public.team_enquiries', '42501', 'anon cannot read team enquiries');
+select rls_test.throws($$insert into public.team_enquiries (name, organisation, email) values ('x', 'y', 'z@z.z')$$, '42501', 'anon cannot write enquiries directly');
 select rls_test.ok((select count(*) from storage.objects) = 0, 'anon sees no storage objects');
 select rls_test.ok(
   (select array_agg(name) from public.showcase_items) = array['Published Co'],
@@ -380,6 +398,11 @@ select rls_test.ok((select count(*) from public.reports) = 1
   'A reads only own reports');
 select rls_test.ok((select array_agg(title) from public.pitch_decks) = array['A deck'],
   'A reads only own pitch decks');
+select rls_test.throws('select * from public.teams', '42501', 'A cannot read teams directly');
+select rls_test.throws('select * from public.team_members', '42501', 'A cannot read team members directly');
+select rls_test.throws(
+  $$insert into public.team_members (team_id, user_id) values ('cccccccc-7777-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000001')$$,
+  '42501', 'A cannot join a team without the server');
 select rls_test.throws(
   $$update public.pitch_decks set access = 'pro'$$,
   '42501', 'A cannot unlock a deck without paying');

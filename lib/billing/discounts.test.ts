@@ -14,7 +14,7 @@ vi.mock("@/lib/billing/paystack", async (original) => ({
     initialized.push(input);
     return { authorization_url: "https://checkout.paystack.test/x", reference: input.reference };
   },
-  ensureProPlan: async (currency: string) => `PLN_${currency}`,
+  ensurePlan: async (product: string, currency: string) => (product === "pro_monthly" ? `PLN_${currency}` : `PLNPLUS_${currency}`),
   createSubscription: async (input: Record<string, unknown>) => {
     subscriptions.push(input);
     return { subscription_code: "SUB_1" };

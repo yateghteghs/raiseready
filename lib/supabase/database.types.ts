@@ -21,7 +21,8 @@ type UpdateOf<Row> = Partial<Row>;
 export type UserRole = "founder" | "viewer" | "support" | "admin" | "super_admin";
 export type ShowcaseKind = "logo" | "testimonial" | "partner";
 export type AccountStatus = "active" | "suspended" | "terminated";
-export type Plan = "free" | "pro";
+export type Plan = "free" | "pro" | "pro_plus";
+export type PaidPlan = "pro" | "pro_plus";
 export type StartupStage = "idea" | "pre_seed" | "seed" | "series_a" | "other";
 export type FundingType = "equity" | "safe" | "convertible_note" | "grant" | "debt" | "other";
 export type DocumentKind = "pitch_deck" | "financial_model" | "business_plan" | "other";
@@ -35,7 +36,7 @@ export type InvestorConfidence = "low" | "medium" | "high";
 export type TurnRole = "investor" | "founder" | "system";
 export type RedFlagType = "contradiction" | "unsupported_claim" | "weak_answer" | "missing_info";
 export type Severity = "low" | "medium" | "high";
-export type PaymentProduct = "pro_monthly" | "credits_3" | "credits_10" | "deck_builder";
+export type PaymentProduct = "pro_monthly" | "pro_plus_monthly" | "credits_3" | "credits_10" | "deck_builder";
 export type DeckStatus = "generating" | "ready" | "failed";
 export type DeckAccess = "preview" | "pro" | "credit";
 export type PaymentCurrency = "NGN" | "USD";
@@ -158,6 +159,30 @@ type RedFlagRow = Timestamps & {
   evidence: Json;
 };
 
+type TeamRow = Timestamps & {
+  id: string;
+  name: string;
+  seats: number;
+  ends_at: string;
+  owner_id: string | null;
+  join_token_hash: string | null;
+  notes: string | null;
+  created_by: string | null;
+};
+
+type TeamMemberRow = { team_id: string; user_id: string; joined_at: string };
+
+type TeamEnquiryRow = {
+  id: string;
+  name: string;
+  organisation: string;
+  email: string;
+  cohort_size: number | null;
+  message: string | null;
+  status: "new" | "contacted" | "closed";
+  created_at: string;
+};
+
 type PitchDeckRow = Timestamps & {
   id: string;
   user_id: string;
@@ -201,6 +226,7 @@ type SubscriptionRow = Timestamps & {
   provider_subscription_code: string | null;
   status: SubscriptionStatus;
   current_period_end: string | null;
+  plan: PaidPlan;
 };
 
 type AiCallRow = Timestamps & {
@@ -431,7 +457,7 @@ export type Database = {
         PaymentRow,
         "id" | "provider" | "currency" | "status" | "raw_event" | "list_amount_kobo" | "discount_code_id" | "referral_discount"
       >;
-      subscriptions: Table<SubscriptionRow, "id" | "provider_subscription_code" | "current_period_end">;
+      subscriptions: Table<SubscriptionRow, "id" | "provider_subscription_code" | "current_period_end" | "plan">;
       ai_calls: Table<
         AiCallRow,
         "id" | "user_id" | "input_tokens" | "output_tokens" | "latency_ms" | "error"
@@ -465,6 +491,9 @@ export type Database = {
         ReferralSettingsRow,
         "id" | "enabled" | "friend_percent_off" | "referrer_credits" | "min_spend_ngn" | "min_spend_usd" | "updated_by"
       >;
+      teams: Table<TeamRow, "id" | "owner_id" | "join_token_hash" | "notes" | "created_by">;
+      team_members: PlainTable<TeamMemberRow, "joined_at">;
+      team_enquiries: PlainTable<TeamEnquiryRow, "id" | "cohort_size" | "message" | "status" | "created_at">;
       pitch_decks: Table<PitchDeckRow, "id" | "status" | "title" | "content" | "rewrites_used" | "unlocked_at" | "error">;
       faq_items: Table<FaqItemRow, "id" | "slug" | "locale" | "category" | "position" | "published" | "created_by">;
       report_signature: Table<ReportSignatureRow, "id" | "signer_name" | "signer_title" | "signature_path" | "enabled" | "updated_by">;
