@@ -13,6 +13,7 @@ import { load } from "@/lib/data-errors";
 import { getLatestKnowledgeProfile, listDocuments } from "@/lib/documents/service";
 import { formatMoney } from "@/lib/format";
 import { FUNDING_TYPE_OPTIONS, labelFor, STAGE_OPTIONS } from "@/lib/startups/options";
+import { COMING_SOON } from "@/lib/roadmap";
 import { getMyStartup } from "@/lib/startups/service";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -199,6 +200,23 @@ export default async function DashboardPage() {
           )}
         </section>
       </div>
+
+      <section aria-labelledby="coming-soon" className="grid gap-4 border-t pt-8">
+        <div>
+          <h2 id="coming-soon" className="text-lg font-semibold">
+            What&apos;s coming
+          </h2>
+          <p className="text-muted-foreground text-sm">What we&apos;re building next for RaiseReady founders.</p>
+        </div>
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {COMING_SOON.map((f) => (
+            <li key={f.title} className="bg-muted/40 grid content-start gap-1 rounded-xl border p-4">
+              <h3 className="text-sm font-semibold">{f.title}</h3>
+              <p className="text-muted-foreground text-sm">{f.body}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

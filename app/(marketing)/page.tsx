@@ -88,20 +88,6 @@ export default async function HomePage() {
         </Section>
       ) : null}
 
-      <Section title={t.comingSoonTitle} intro={t.comingSoonIntro}>
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {m.comingSoon.map((f) => (
-            <li key={f.title} className="bg-card grid content-start gap-2 rounded-xl border p-5">
-              <span className="bg-accent text-accent-foreground justify-self-start rounded-full px-2.5 py-0.5 text-xs font-medium">
-                {t.comingSoonBadge}
-              </span>
-              <h3 className="font-semibold">{f.title}</h3>
-              <p className="text-muted-foreground text-sm">{f.body}</p>
-            </li>
-          ))}
-        </ul>
-      </Section>
-
       <Section title={t.pricingTitle} intro={t.pricingIntro}>
         <PricingCards t={m.pricing} />
       </Section>
