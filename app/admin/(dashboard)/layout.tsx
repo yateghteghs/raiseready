@@ -9,11 +9,13 @@ import { Logo } from "@/components/brand/logo";
 
 const NAV: { href: string; label: string; needs: StaffAction }[] = [
   { href: "/admin", label: "Overview", needs: "view" },
+  { href: "/admin/analytics", label: "Analytics", needs: "view" },
   { href: "/admin/users", label: "Users", needs: "view" },
   { href: "/admin/simulations", label: "Simulations", needs: "view" },
   { href: "/admin/payments", label: "Payments", needs: "view" },
   { href: "/admin/ai-usage", label: "AI usage", needs: "view" },
   { href: "/admin/insights", label: "Insights", needs: "view" },
+  { href: "/admin/errors", label: "Errors", needs: "view" },
   { href: "/admin/notifications", label: "Notifications", needs: "notify" },
   { href: "/admin/website", label: "Website", needs: "manage_content" },
   { href: "/admin/report-signature", label: "Report signature", needs: "manage_content" },

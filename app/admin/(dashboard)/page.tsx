@@ -1,13 +1,15 @@
+import Link from "next/link";
+
 import { num, PageTitle, pct, Stat, StatGrid, usd } from "@/components/admin/ui";
 import { requireStaff } from "@/lib/admin/auth";
-import { overviewMetrics } from "@/lib/admin/data";
+import { activeUserMetrics, overviewMetrics } from "@/lib/admin/data";
 import { formatMoney, koboToNaira } from "@/lib/format";
 
 export const metadata = { title: "Overview" };
 
 export default async function AdminOverview() {
   await requireStaff();
-  const m = await overviewMetrics();
+  const [m, active] = await Promise.all([overviewMetrics(), activeUserMetrics()]);
   return (
     <>
       <PageTitle title="Overview" description="Everything at a glance. AI figures cover the last 30 days." />
@@ -18,6 +20,18 @@ export default async function AdminOverview() {
           <Stat label="Finished onboarding" value={pct(m.onboardingRate)} />
           <Stat label="Startups" value={num(m.startups)} />
           <Stat label="On Pro" value={num(m.pro)} />
+          <Stat label="Active today" value={num(active.daily)} />
+          <Stat label="Active this week" value={num(active.weekly)} />
+          <Stat label="Active this month" value={num(active.monthly)} />
+          <Stat
+            label="More"
+            value={
+              <Link href="/admin/analytics" className="text-primary text-base underline-offset-4 hover:underline">
+                See analytics
+              </Link>
+            }
+            hint="drop-off and feature use"
+          />
         </StatGrid>
       </section>
       <section className="grid gap-3" aria-labelledby="usage-h">

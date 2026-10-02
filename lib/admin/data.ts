@@ -1,4 +1,14 @@
-import { assessmentInsights, redFlagCounts, revenueSummary, summariseAiCalls, type AiCallRow } from "@/lib/admin/aggregate";
+import { lagosDay, hashEmail } from "@/lib/activity/service";
+import {
+  activeUsers,
+  assessmentInsights,
+  dailyActive,
+  funnel,
+  redFlagCounts,
+  revenueSummary,
+  summariseAiCalls,
+  type AiCallRow,
+} from "@/lib/admin/aggregate";
 import { lagosMonthStart } from "@/lib/billing/entitlements";
 import { imageLinks } from "@/lib/images/service";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -197,4 +207,96 @@ async function emailsFor(ids: string[]): Promise<Map<string, string>> {
   const admin = createAdminClient();
   const results = await Promise.all(ids.map((id) => admin.auth.admin.getUserById(id)));
   return new Map(results.flatMap((r, i) => (r.data.user?.email ? [[ids[i], r.data.user.email] as const] : [])));
+}
+
+/** Active founders today/this week/this month, from activity days. */
+export async function activeUserMetrics() {
+  const today = lagosDay();
+  const since = new Date(Date.parse(`${today}T00:00:00Z`) - 29 * 86_400_000).toISOString().slice(0, 10);
+  const rows = rowsOf(
+    await createAdminClient().from("user_activity_days").select("user_id, day").gte("day", since).limit(MAX_ROWS * 10),
+    "activity",
+  );
+  return { ...activeUsers(rows, today), series: dailyActive(rows, today, 30) };
+}
+
+/** Usage analytics: activity, sign-ins, where founders drop off, and which features they use. */
+export async function analytics() {
+  const admin = createAdminClient();
+  const since30 = daysAgo(30);
+  const head = { count: "exact" as const, head: true };
+  const [active, signIns, failedSignIns, users, onboarded, decks, profiles, assessments, sims, paid, aiCalls, reports] =
+    await Promise.all([
+      activeUserMetrics(),
+      headCount(admin.from("sign_in_events").select("id", head).eq("succeeded", true).gte("created_at", since30)),
+      headCount(admin.from("sign_in_events").select("id", head).eq("succeeded", false).gte("created_at", since30)),
+      headCount(admin.from("profiles").select("id", head)),
+      headCount(admin.from("profiles").select("id", head).eq("onboarding_complete", true)),
+      admin.from("documents").select("startup_id").eq("kind", "pitch_deck").limit(MAX_ROWS * 4),
+      admin.from("knowledge_profiles").select("startup_id").limit(MAX_ROWS * 4),
+      admin.from("assessments").select("startup_id").limit(MAX_ROWS * 4),
+      admin.from("simulations").select("startup_id, status, mode").limit(MAX_ROWS * 4),
+      admin.from("payments").select("user_id").eq("status", "success").limit(MAX_ROWS * 4),
+      admin.from("ai_calls").select("purpose, user_id").gte("created_at", since30).limit(MAX_ROWS * 4),
+      headCount(admin.from("reports").select("id", head).gte("created_at", since30)),
+    ]);
+  const distinct = <T>(rows: T[], key: (r: T) => string | null) => new Set(rows.map(key).filter(Boolean)).size;
+  const simRows = rowsOf(sims, "simulations").filter((s) => s.mode === "full");
+
+  const steps = funnel([
+    { label: "Signed up", count: users },
+    { label: "Finished onboarding", count: onboarded },
+    { label: "Uploaded a pitch deck", count: distinct(rowsOf(decks, "documents"), (d) => d.startup_id) },
+    { label: "Deck analysed", count: distinct(rowsOf(profiles, "knowledge profiles"), (p) => p.startup_id) },
+    { label: "Ran an assessment", count: distinct(rowsOf(assessments, "assessments"), (a) => a.startup_id) },
+    { label: "Started a practice meeting", count: distinct(simRows, (s) => s.startup_id) },
+    { label: "Finished a practice meeting", count: distinct(simRows.filter((s) => s.status === "completed"), (s) => s.startup_id) },
+    { label: "Paid", count: distinct(rowsOf(paid, "payments"), (p) => p.user_id) },
+  ]);
+
+  const calls = rowsOf(aiCalls, "AI calls");
+  const byPurpose = new Map<string, { uses: number; users: Set<string> }>();
+  for (const c of calls) {
+    const entry = byPurpose.get(c.purpose) ?? { uses: 0, users: new Set<string>() };
+    entry.uses++;
+    if (c.user_id) entry.users.add(c.user_id);
+    byPurpose.set(c.purpose, entry);
+  }
+  const features = [...byPurpose.entries()]
+    .map(([purpose, v]) => ({ purpose, uses: v.uses, founders: v.users.size }))
+    .sort((a, b) => b.founders - a.founders || b.uses - a.uses);
+
+  return { active, signIns, failedSignIns, funnel: steps, features, reports };
+}
+
+/** Sign-in history and activity for one user's admin page. */
+export async function userActivity(userId: string, email: string) {
+  const admin = createAdminClient();
+  const since30 = daysAgo(30);
+  const [history, failed, days] = await Promise.all([
+    admin
+      .from("sign_in_events")
+      .select("succeeded, surface, failure_code, device, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(20),
+    email
+      ? headCount(
+          admin.from("sign_in_events").select("id", { count: "exact", head: true }).eq("email_hash", hashEmail(email)).eq("succeeded", false).gte("created_at", since30),
+        )
+      : Promise.resolve(0),
+    headCount(admin.from("user_activity_days").select("day", { count: "exact", head: true }).eq("user_id", userId).gte("day", since30.slice(0, 10))),
+  ]);
+  return { history: rowsOf(history, "sign-in history"), failedLast30: failed, activeDaysLast30: days };
+}
+
+/** Recent errors for the admin Errors page, optionally filtered by the reference shown to the user. */
+export async function recentErrors(reference?: string) {
+  let query = createAdminClient()
+    .from("app_errors")
+    .select("id, source, digest, message, path, route_type, user_id, created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (reference) query = query.eq("digest", reference);
+  return rowsOf(await query, "errors");
 }
