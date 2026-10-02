@@ -19,14 +19,18 @@ describe("discount code form", () => {
 
 describe("referral settings form", () => {
   it("accepts 0-100% and 0-50 credits, with the on/off checkbox", () => {
-    expect(referralSettingsSchema.parse({ enabled: "on", friend_percent_off: "15", referrer_credits: "3" })).toEqual({
+    const mins = { min_spend_naira: "37500", min_spend_dollars: "25" };
+    expect(referralSettingsSchema.parse({ enabled: "on", friend_percent_off: "15", referrer_credits: "3", ...mins })).toEqual({
       enabled: true,
       friend_percent_off: 15,
       referrer_credits: 3,
+      min_spend_naira: 37_500,
+      min_spend_dollars: 25,
     });
-    expect(referralSettingsSchema.parse({ friend_percent_off: "0", referrer_credits: "0" }).enabled).toBe(false);
-    expect(referralSettingsSchema.safeParse({ friend_percent_off: "101", referrer_credits: "1" }).success).toBe(false);
-    expect(referralSettingsSchema.safeParse({ friend_percent_off: "10", referrer_credits: "51" }).success).toBe(false);
-    expect(referralSettingsSchema.safeParse({ friend_percent_off: "7.5", referrer_credits: "1" }).success).toBe(false);
+    expect(referralSettingsSchema.parse({ friend_percent_off: "0", referrer_credits: "0", ...mins }).enabled).toBe(false);
+    expect(referralSettingsSchema.safeParse({ friend_percent_off: "101", referrer_credits: "1", ...mins }).success).toBe(false);
+    expect(referralSettingsSchema.safeParse({ friend_percent_off: "10", referrer_credits: "51", ...mins }).success).toBe(false);
+    expect(referralSettingsSchema.safeParse({ friend_percent_off: "7.5", referrer_credits: "1", ...mins }).success).toBe(false);
+    expect(referralSettingsSchema.safeParse({ friend_percent_off: "10", referrer_credits: "1", min_spend_naira: "-1", min_spend_dollars: "25" }).success).toBe(false);
   });
 });

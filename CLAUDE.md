@@ -46,7 +46,9 @@ milestone at a time (spec section 11) and stop for review after each.
   `consume_credit` SQL functions.
 - Prices per currency and discount maths: `lib/billing/prices.ts`. Referral
   programme values are super-admin settings (`referral_settings`, read via
-  `getReferralSettings`, defaults in `DEFAULT_REFERRAL`).
+  `getReferralSettings`, defaults in `DEFAULT_REFERRAL`). Inviter credits stay
+  `locked` until the inviter's own spend reaches the minimum (`unlockProgress`);
+  `releaseLockedRewards` runs after every successful payment.
   USD only when `PAYSTACK_USD_ENABLED=true`. `payments.amount_kobo` is in the
   currency's smallest unit; revenue is always totalled per currency. Discounted
   Pro is a one-off first month, then `createSubscription` starts the plan.

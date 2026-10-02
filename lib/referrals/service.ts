@@ -1,6 +1,9 @@
 import { randomInt } from "node:crypto";
 
+import { unlockProgress } from "@/lib/billing/prices";
+import { getReferralSettings } from "@/lib/billing/referral-settings";
 import { isReferralCode, REFERRAL_ALPHABET as ALPHABET } from "@/lib/referrals/code";
+import { amountSpent } from "@/lib/referrals/rewards";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export { isReferralCode, REFERRAL_COOKIE, REFERRAL_COOKIE_DAYS } from "@/lib/referrals/code";
@@ -45,13 +48,23 @@ export async function linkReferral(newUserId: string, code: string): Promise<voi
   }
 }
 
-/** How a founder's invites are doing. */
+/** How a founder's invites are doing, including credits waiting for them to reach the minimum spend. */
 export async function referralStats(userId: string) {
   const admin = createAdminClient();
-  const [joined, rewards] = await Promise.all([
+  const [joined, rewards, spent, settings] = await Promise.all([
     admin.from("profiles").select("id", { count: "exact", head: true }).eq("referred_by", userId),
-    admin.from("referral_rewards").select("credits").eq("referrer_id", userId),
+    admin.from("referral_rewards").select("credits, status").eq("referrer_id", userId),
+    amountSpent(userId),
+    getReferralSettings(),
   ]);
   const rows = rewards.data ?? [];
-  return { joined: joined.count ?? 0, paid: rows.length, creditsEarned: rows.reduce((s, r) => s + r.credits, 0) };
+  const sum = (status: string) => rows.filter((r) => (r.status ?? "released") === status).reduce((s, r) => s + r.credits, 0);
+  return {
+    joined: joined.count ?? 0,
+    paid: rows.length,
+    creditsEarned: sum("released"),
+    creditsLocked: sum("locked"),
+    /** 0–1: how far their own spending is towards unlocking. */
+    unlockProgress: Math.min(1, unlockProgress(spent, settings)),
+  };
 }

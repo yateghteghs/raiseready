@@ -6,7 +6,7 @@ import { CheckoutButton } from "@/components/billing/checkout-button";
 import { InviteLink } from "@/components/billing/invite-card";
 import { getCurrentUser } from "@/lib/auth/session";
 import { CREDIT_PACKS, FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
-import { availableCurrencies, inviteOfferText, PRICES } from "@/lib/billing/prices";
+import { availableCurrencies, inviteOfferText, minimumSpendText, PRICES } from "@/lib/billing/prices";
 import { getReferralSettings } from "@/lib/billing/referral-settings";
 import { ensureReferralCode, referralStats } from "@/lib/referrals/service";
 import { getSiteUrl } from "@/lib/site-url";
@@ -184,6 +184,27 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
             ? "Nobody has joined with your link yet."
             : `${referrals.joined} ${referrals.joined === 1 ? "founder has" : "founders have"} joined with your link · ${referrals.creditsEarned} credits earned.`}
         </p>
+        {referrals.creditsLocked > 0 ? (
+          <div className="border-primary/30 bg-accent grid gap-2 rounded-lg border p-3 text-sm">
+            <p>
+              <span className="font-medium">
+                {referrals.creditsLocked} {referrals.creditsLocked === 1 ? "credit is" : "credits are"} waiting for you.
+              </span>{" "}
+              They unlock automatically once you&apos;ve spent {minimumSpendText(programme)} on RaiseReady.
+            </p>
+            <div
+              className="bg-background h-2 rounded-full"
+              role="progressbar"
+              aria-label="Progress towards unlocking your referral credits"
+              aria-valuenow={Math.round(referrals.unlockProgress * 100)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div className="bg-primary h-full rounded-full" style={{ width: `${Math.round(referrals.unlockProgress * 100)}%` }} />
+            </div>
+            <p className="text-muted-foreground text-xs">{Math.round(referrals.unlockProgress * 100)}% of the way there</p>
+          </div>
+        ) : null}
       </section>
       ) : null}
 

@@ -123,6 +123,8 @@ describe("referrals", () => {
   beforeEach(() => {
     reset();
     db.profiles[0].referred_by = "ref";
+    // The inviter has already spent ₦37,500, so their credits are usable straight away.
+    db.payments.push({ id: "ref-paid", user_id: "ref", reference: "rr_old", amount_kobo: 3_750_000, currency: "NGN", product: "credits_10", status: "success" });
   });
 
   it("gives an invited founder 10% off their first purchase", async () => {
@@ -148,7 +150,7 @@ describe("referrals", () => {
   });
 
   it("follows the super admin's referral settings", async () => {
-    db.referral_settings = [{ id: 1, enabled: true, friend_percent_off: 25, referrer_credits: 5 }];
+    db.referral_settings = [{ id: 1, enabled: true, friend_percent_off: 25, referrer_credits: 5, min_spend_ngn: 3_750_000, min_spend_usd: 2_500 }];
     expect(await quote("u1", "credits_3", "NGN")).toMatchObject({ amount: 375_000, percentOff: 25 });
     await startCheckout(founder, "credits_3", "https://x/cb");
     await pay(375_000);
@@ -156,7 +158,7 @@ describe("referrals", () => {
   });
 
   it("gives no discount or reward while the programme is off", async () => {
-    db.referral_settings = [{ id: 1, enabled: false, friend_percent_off: 25, referrer_credits: 5 }];
+    db.referral_settings = [{ id: 1, enabled: false, friend_percent_off: 25, referrer_credits: 5, min_spend_ngn: 3_750_000, min_spend_usd: 2_500 }];
     expect(await quote("u1", "credits_3", "NGN")).toMatchObject({ amount: 500_000, source: null });
     await startCheckout(founder, "credits_3", "https://x/cb");
     await pay(500_000);
@@ -164,11 +166,43 @@ describe("referrals", () => {
   });
 
   it("can reward the inviter without discounting the invited founder", async () => {
-    db.referral_settings = [{ id: 1, enabled: true, friend_percent_off: 0, referrer_credits: 1 }];
+    db.referral_settings = [{ id: 1, enabled: true, friend_percent_off: 0, referrer_credits: 1, min_spend_ngn: 3_750_000, min_spend_usd: 2_500 }];
     expect(await quote("u1", "credits_3", "NGN")).toMatchObject({ amount: 500_000 });
     await startCheckout(founder, "credits_3", "https://x/cb");
     await pay(500_000);
     expect(db.profiles.find((p) => p.id === "ref")!.credits).toBe(1);
+  });
+
+  it("locks credits until the inviter has spent the minimum, then releases them once", async () => {
+    db.payments = db.payments.filter((p) => p.user_id !== "ref"); // the inviter hasn't paid yet
+    await startCheckout(founder, "credits_3", "https://x/cb");
+    await pay(450_000);
+    const inviter = () => db.profiles.find((p) => p.id === "ref")!;
+    expect(inviter().credits).toBe(0);
+    expect(db.referral_rewards[0]).toMatchObject({ status: "locked", credits: 2 });
+
+    // The inviter buys a ₦10,000 pack: still locked.
+    const asInviter = { id: "ref", email: "ref@example.com" };
+    await startCheckout(asInviter, "credits_10", "https://x/cb");
+    await pay(1_000_000);
+    expect(inviter().credits).toBe(10);
+    expect(db.referral_rewards[0].status).toBe("locked");
+
+    // Two more ₦10,000 packs and a ₦5,000 pack: ₦35,000. Then one more takes them past ₦37,500.
+    for (const product of ["credits_10", "credits_10", "credits_3"] as const) {
+      await startCheckout(asInviter, product, "https://x/cb");
+      await pay(lastPayment().amount_kobo as number);
+    }
+    expect(db.referral_rewards[0].status).toBe("locked");
+    await startCheckout(asInviter, "credits_3", "https://x/cb");
+    await pay(500_000);
+    expect(db.referral_rewards[0]).toMatchObject({ status: "released" });
+    expect(inviter().credits).toBe(10 + 10 + 10 + 3 + 3 + 2);
+
+    // Later payments don't release it again.
+    await startCheckout(asInviter, "credits_3", "https://x/cb");
+    await pay(500_000);
+    expect(inviter().credits).toBe(10 + 10 + 10 + 3 + 3 + 2 + 3);
   });
 
   it("doesn't reward a suspended referrer", async () => {

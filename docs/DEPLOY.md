@@ -121,7 +121,10 @@ in naira with a foreign card. To also offer dollar prices:
 - Every founder has an invite link on their Billing page. Founders who join
   with it get a discount off their first purchase (10% to start); the inviter
   gets free simulation credits (2 to start) when that founder first pays.
-  Super admins change both, or turn the programme off, under
+  The inviter can only use those credits once they've spent a minimum
+  themselves (₦37,500 or $25 to start; a mix of both counts proportionally).
+  Credits earned before that wait as "locked" and unlock automatically.
+  Super admins change all of this, or turn the programme off, under
   **Admin → Discounts → Referral programme**. Changes apply to new checkouts
   and rewards; payments already started keep their price.
 

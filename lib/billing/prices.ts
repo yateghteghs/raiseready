@@ -5,6 +5,7 @@
  * USD is hidden until PAYSTACK_USD_ENABLED=true is set in Vercel, which should
  * happen only after Paystack approves USD for the business.
  */
+import { formatMoney } from "@/lib/format";
 import type { PaymentProduct } from "@/lib/supabase/database.types";
 
 export type Currency = "NGN" | "USD";
@@ -29,6 +30,13 @@ export const DEFAULT_REFERRAL = {
   friendPercentOff: 10,
   /** Simulation credits for the referrer once the referred founder first pays. */
   referrerCredits: 2,
+  /**
+   * The inviter must have spent this much themselves before their referral
+   * credits unlock (smallest units: ₦37,500 and $25). Spending in both
+   * currencies counts proportionally. 0 in either means no minimum.
+   */
+  minSpendNgn: 3_750_000,
+  minSpendUsd: 2_500,
 };
 
 export type ReferralSettings = typeof DEFAULT_REFERRAL;
@@ -84,12 +92,39 @@ export function normaliseCode(input: string): string {
   return input.trim().toUpperCase().replace(/\s+/g, "");
 }
 
+/** The minimum spend in words, e.g. "₦37,500 (or $25)", or null if there isn't one. */
+export function minimumSpendText(p: Pick<ReferralSettings, "minSpendNgn" | "minSpendUsd">): string | null {
+  if (p.minSpendNgn <= 0 || p.minSpendUsd <= 0) return null;
+  return `${formatMoney(p.minSpendNgn / 100, "NGN")} (or ${formatMoney(p.minSpendUsd / 100, "USD")})`;
+}
+
 /** The invite card's description of the programme, e.g. "Founders who join … and you get …". */
 export function inviteOfferText(p: ReferralSettings): string {
+  const minimum = minimumSpendText(p);
+  const unlock = minimum ? `, usable once you've spent ${minimum} on RaiseReady yourself` : "";
   const credits = `${p.referrerCredits} free simulation ${p.referrerCredits === 1 ? "credit" : "credits"}`;
   const friend = p.friendPercentOff > 0 ? `Founders who join with it get ${p.friendPercentOff}% off their first purchase` : "";
-  if (friend && p.referrerCredits > 0) return `${friend}, and you get ${credits} when they first pay.`;
+  if (friend && p.referrerCredits > 0) return `${friend}, and you get ${credits} when they first pay${unlock}.`;
   if (friend) return `${friend}.`;
-  if (p.referrerCredits > 0) return `You get ${credits} when a founder who joins with it first pays.`;
+  if (p.referrerCredits > 0) return `You get ${credits} when a founder who joins with it first pays${unlock}.`;
   return "";
+}
+
+/**
+ * How far a founder's own spending is towards unlocking referral credits:
+ * 1 or more means unlocked. Each currency counts as a share of its own
+ * minimum, so ₦18,750 plus $12.50 is halfway plus halfway.
+ */
+export function unlockProgress(
+  spent: { currency: string; amount: number }[],
+  minimum: Pick<ReferralSettings, "minSpendNgn" | "minSpendUsd">,
+): number {
+  if (minimum.minSpendNgn <= 0 || minimum.minSpendUsd <= 0) return 1;
+  let progress = 0;
+  for (const s of spent) {
+    if (s.amount <= 0) continue;
+    if (s.currency === "USD") progress += s.amount / minimum.minSpendUsd;
+    else progress += s.amount / minimum.minSpendNgn;
+  }
+  return progress;
 }

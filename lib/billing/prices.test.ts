@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { availableCurrencies, codeProblem, discounted, inviteOfferText, normaliseCode, priceOf } from "@/lib/billing/prices";
+import { availableCurrencies, codeProblem, discounted, inviteOfferText, normaliseCode, priceOf, unlockProgress } from "@/lib/billing/prices";
 
 describe("prices", () => {
   it("keeps USD hidden until it is switched on", () => {
@@ -36,15 +36,40 @@ describe("prices", () => {
   });
 });
 
+const noMinimum = { minSpendNgn: 0, minSpendUsd: 0 };
+const minimum = { minSpendNgn: 3_750_000, minSpendUsd: 2_500 };
+
 describe("invite card text", () => {
   it("describes whichever rewards are on", () => {
-    expect(inviteOfferText({ enabled: true, friendPercentOff: 10, referrerCredits: 2 })).toBe(
+    expect(inviteOfferText({ enabled: true, friendPercentOff: 10, referrerCredits: 2, ...noMinimum })).toBe(
       "Founders who join with it get 10% off their first purchase, and you get 2 free simulation credits when they first pay.",
     );
-    expect(inviteOfferText({ enabled: true, friendPercentOff: 15, referrerCredits: 0 })).toBe("Founders who join with it get 15% off their first purchase.");
-    expect(inviteOfferText({ enabled: true, friendPercentOff: 0, referrerCredits: 1 })).toBe(
+    expect(inviteOfferText({ enabled: true, friendPercentOff: 15, referrerCredits: 0, ...minimum })).toBe(
+      "Founders who join with it get 15% off their first purchase.",
+    );
+    expect(inviteOfferText({ enabled: true, friendPercentOff: 0, referrerCredits: 1, ...noMinimum })).toBe(
       "You get 1 free simulation credit when a founder who joins with it first pays.",
     );
-    expect(inviteOfferText({ enabled: true, friendPercentOff: 0, referrerCredits: 0 })).toBe("");
+    expect(inviteOfferText({ enabled: true, friendPercentOff: 0, referrerCredits: 0, ...noMinimum })).toBe("");
+  });
+
+  it("explains the minimum spend when there is one", () => {
+    expect(inviteOfferText({ enabled: true, friendPercentOff: 10, referrerCredits: 2, ...minimum })).toBe(
+      "Founders who join with it get 10% off their first purchase, and you get 2 free simulation credits when they first pay, usable once you've spent ₦37,500 (or $25) on RaiseReady yourself.",
+    );
+  });
+});
+
+describe("unlocking referral credits", () => {
+  it("unlocks at the naira or dollar minimum, counting a mix proportionally", () => {
+    expect(unlockProgress([], minimum)).toBe(0);
+    expect(unlockProgress([{ currency: "NGN", amount: 1_500_000 }], minimum)).toBe(0.4);
+    expect(unlockProgress([{ currency: "NGN", amount: 3_750_000 }], minimum)).toBe(1);
+    expect(unlockProgress([{ currency: "USD", amount: 2_500 }], minimum)).toBe(1);
+    expect(unlockProgress([{ currency: "NGN", amount: 1_875_000 }, { currency: "USD", amount: 1_250 }], minimum)).toBe(1);
+  });
+
+  it("treats a zero minimum as no minimum", () => {
+    expect(unlockProgress([], { minSpendNgn: 0, minSpendUsd: 2_500 })).toBe(1);
   });
 });

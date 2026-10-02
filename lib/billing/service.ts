@@ -21,6 +21,7 @@ import {
   type Currency,
 } from "@/lib/billing/prices";
 import { getReferralSettings } from "@/lib/billing/referral-settings";
+import { hasUnlockedReferralCredits, releaseLockedRewards } from "@/lib/referrals/rewards";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Json, PaymentProduct, SubscriptionStatus, Tables } from "@/lib/supabase/database.types";
 
@@ -284,7 +285,11 @@ export async function applyChargeSuccess(tx: PaystackTransaction, raw: unknown):
     await audit("billing.credits_added", payment.user_id, { reference: tx.reference, credits });
   }
 
-  if (payment.amount_kobo > 0) await rewardReferrer(payment.user_id, tx.reference);
+  if (payment.amount_kobo > 0) {
+    await rewardReferrer(payment.user_id, tx.reference);
+    // This founder may be an inviter whose locked credits this payment unlocks.
+    await releaseLockedRewards(payment.user_id);
+  }
   return true;
 }
 
@@ -323,13 +328,21 @@ async function rewardReferrer(userId: string, reference: string): Promise<void> 
   if (!enabled || credits <= 0) return;
   const { data: earlier } = await admin.from("referral_rewards").select("id").eq("referred_id", userId).maybeSingle();
   if (earlier) return;
+  // Credits are usable only once the inviter has spent the minimum themselves;
+  // until then they wait as "locked" and releaseLockedRewards hands them over.
+  const unlocked = await hasUnlockedReferralCredits(referrerId);
   // The unique index on referred_id also stops two simultaneous rewards.
-  const { error } = await admin
-    .from("referral_rewards")
-    .insert({ referrer_id: referrerId, referred_id: userId, credits, payment_reference: reference });
+  const { error } = await admin.from("referral_rewards").insert({
+    referrer_id: referrerId,
+    referred_id: userId,
+    credits,
+    payment_reference: reference,
+    status: unlocked ? "released" : "locked",
+    released_at: unlocked ? new Date().toISOString() : null,
+  });
   if (error) return;
-  await admin.rpc("add_credits", { p_user_id: referrerId, p_amount: credits });
-  await audit("billing.referral_rewarded", referrerId, { referred_id: userId, credits });
+  if (unlocked) await admin.rpc("add_credits", { p_user_id: referrerId, p_amount: credits });
+  await audit("billing.referral_rewarded", referrerId, { referred_id: userId, credits, locked: !unlocked });
 }
 
 /** A Pro renewal charge: Paystack creates the reference, so we record it now. */
@@ -360,6 +373,7 @@ async function applyRenewal(tx: PaystackTransaction, raw: unknown): Promise<bool
     await admin.from("subscriptions").update({ status: "active", current_period_end: plusOneMonth(tx.paid_at) }).eq("id", existing.id);
   }
   await audit("billing.pro_renewed", profile.id, { reference: tx.reference });
+  await releaseLockedRewards(profile.id);
   return true;
 }
 

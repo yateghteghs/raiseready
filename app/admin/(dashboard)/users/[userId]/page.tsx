@@ -29,6 +29,7 @@ const HISTORY_LABELS: Record<string, string> = {
   "admin.password_reset_sent": "Password reset email sent",
   "admin.credits_granted": "Free credits added",
   "billing.referral_rewarded": "Referral credits earned",
+  "billing.referral_released": "Locked referral credits released",
   "billing.renewal_not_started": "Pro won't renew (discounted month)",
 };
 
@@ -119,7 +120,18 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
         <Stat label="Assessments" value={num(user.counts.assessments)} />
         <Stat label="Simulations" value={num(user.counts.simulations)} />
         <Stat label="Country" value={profile.country ?? "–"} />
-        <Stat label="Founders invited" value={num(user.referrals.invited)} hint={user.referrals.invitedBy ? `Invited by ${user.referrals.invitedBy}` : undefined} />
+        <Stat
+          label="Founders invited"
+          value={num(user.referrals.invited)}
+          hint={
+            [
+              user.referrals.lockedCredits ? `${user.referrals.lockedCredits} referral credits locked until they reach the minimum spend` : null,
+              user.referrals.invitedBy ? `Invited by ${user.referrals.invitedBy}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || undefined
+          }
+        />
       </StatGrid>
 
       <section className="grid gap-3" aria-labelledby="startup-h">

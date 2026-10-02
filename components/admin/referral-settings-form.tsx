@@ -10,7 +10,7 @@ import { initialFormState } from "@/lib/forms";
 export function ReferralSettingsForm({
   initial,
 }: {
-  initial: { enabled: boolean; friendPercentOff: number; referrerCredits: number };
+  initial: { enabled: boolean; friendPercentOff: number; referrerCredits: number; minSpendNgn: number; minSpendUsd: number };
 }) {
   const [state, action] = useActionState(saveReferralSettingsAction, initialFormState);
   const v = state.status === "error" ? state.values : undefined;
@@ -48,6 +48,32 @@ export function ReferralSettingsForm({
           errors={state.fieldErrors}
         />
       </div>
+      <fieldset className="grid gap-2">
+        <legend className="text-sm font-medium">Minimum spend before the inviter can use their credits</legend>
+        <p className="text-muted-foreground text-xs">
+          Credits earned earlier wait as &ldquo;locked&rdquo; and unlock automatically once the inviter has paid this much
+          in total. Spending in both currencies counts proportionally. 0 in either box means no minimum.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextField
+            name="min_spend_naira"
+            label="In naira (₦)"
+            type="number"
+            min={0}
+            step={500}
+            defaultValue={v?.min_spend_naira ?? String(initial.minSpendNgn / 100)}
+            errors={state.fieldErrors}
+          />
+          <TextField
+            name="min_spend_dollars"
+            label="In US dollars ($)"
+            type="number"
+            min={0}
+            defaultValue={v?.min_spend_dollars ?? String(initial.minSpendUsd / 100)}
+            errors={state.fieldErrors}
+          />
+        </div>
+      </fieldset>
       <FormMessage status={state.status} message={state.message} />
       <SubmitButton pendingText="Saving…" className="justify-self-start">
         Save referral settings

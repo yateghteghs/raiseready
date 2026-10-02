@@ -7,6 +7,7 @@ import { getStaff } from "@/lib/admin/auth";
 import { can } from "@/lib/admin/permissions";
 import { createDiscountCode, DiscountCodeError, discountCodeSchema, setDiscountCodeActive } from "@/lib/billing/discount-codes";
 import { referralSettingsSchema, saveReferralSettings } from "@/lib/billing/referral-settings";
+import { releaseAllQualifying } from "@/lib/referrals/rewards";
 import { formValues, validationFailed, type FormState } from "@/lib/forms";
 
 async function manager() {
@@ -46,6 +47,8 @@ export async function saveReferralSettingsAction(_prev: FormState, formData: For
   if (!parsed.success) return validationFailed(parsed.error, values);
   try {
     await saveReferralSettings(staff, parsed.data);
+    // A lower minimum may unlock credits founders are already waiting for.
+    await releaseAllQualifying();
   } catch (error) {
     console.error("[referrals] save failed:", error);
     return { status: "error", message: "Something went wrong. Nothing was saved.", values };
@@ -55,7 +58,7 @@ export async function saveReferralSettingsAction(_prev: FormState, formData: For
   return {
     status: "success",
     message: parsed.data.enabled
-      ? `Saved. Invited founders now get ${parsed.data.friend_percent_off}% off; inviters get ${parsed.data.referrer_credits} credits. Payments already started keep their price.`
+      ? `Saved. Invited founders now get ${parsed.data.friend_percent_off}% off; inviters get ${parsed.data.referrer_credits} credits, usable once they've spent ₦${parsed.data.min_spend_naira.toLocaleString("en-NG")} (or $${parsed.data.min_spend_dollars}). Payments already started keep their price.`
       : "Saved. The referral programme is off: no new discounts or rewards.",
   };
 }

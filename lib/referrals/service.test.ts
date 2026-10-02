@@ -40,7 +40,11 @@ describe("referrals", () => {
 
   it("counts invites and earned credits", async () => {
     db.profiles[1].referred_by = "a";
-    db.referral_rewards = [{ referrer_id: "a", referred_id: "b", credits: 2 }];
-    expect(await referralStats("a")).toEqual({ joined: 1, paid: 1, creditsEarned: 2 });
+    db.referral_rewards = [
+      { referrer_id: "a", referred_id: "b", credits: 2, status: "released" },
+      { referrer_id: "a", referred_id: "c", credits: 2, status: "locked" },
+    ];
+    db.payments = [{ user_id: "a", currency: "NGN", amount_kobo: 1_500_000, status: "success" }];
+    expect(await referralStats("a")).toEqual({ joined: 1, paid: 2, creditsEarned: 2, creditsLocked: 2, unlockProgress: 0.4 });
   });
 });
