@@ -1,0 +1,242 @@
+/**
+ * English text for the translated parts of the site. Every other language
+ * must have exactly the same keys (checked by tests). `{name}` placeholders
+ * are filled in by `fill()`; keep them unchanged in translations.
+ */
+export const en = {
+  common: {
+    language: "Language",
+    changeLanguage: "Change language",
+    menu: "Menu",
+    home: "RaiseReady home",
+    logIn: "Log in",
+    getStarted: "Get started",
+    goToDashboard: "Go to dashboard",
+    tagline: "Don't practice on investors. Practice on AI first.",
+    reviewNotice: "This translation is new. If something reads oddly, tell us.",
+  },
+  nav: {
+    howItWorks: "How it works",
+    pricing: "Pricing",
+    about: "About",
+    faq: "FAQ",
+  },
+  footer: {
+    product: "Product",
+    company: "Company",
+    legal: "Legal",
+    testimonials: "Testimonials",
+    partners: "Partners",
+    privacy: "Privacy",
+    terms: "Terms",
+    legalInEnglish: "Our legal pages are in English.",
+  },
+  home: {
+    eyebrow: "For African startup founders",
+    title: "Don't practice on investors. Practice on AI first.",
+    intro:
+      "Upload your pitch deck, get a structured readiness assessment, then face an AI investor who questions you, follows up on weak answers and flags contradictions with your own documents.",
+    ctaPrimary: "Test my readiness",
+    ctaSecondary: "See how it works",
+    freeNote: "Free to start. No card needed.",
+    logosTitle: "Founders from these startups have practised with RaiseReady",
+    howTitle: "How it works",
+    howIntro: "Four steps from first upload to a pitch that holds up under questioning.",
+    howMore: "More on how it works",
+    africaTitle: "Built for raising in Africa",
+    africaIntro: "Investors here ask about things generic pitch tools ignore. RaiseReady is built to ask them too.",
+    africa: [
+      {
+        title: "Naira first",
+        body: "Amounts are shown in ₦ by default, and every figure keeps its own currency, so dollar raises and naira revenue are never mixed up.",
+      },
+      {
+        title: "Local market questions",
+        body: "Expect questions about FX exposure, regulation and informal competition, not just a Silicon Valley checklist.",
+      },
+      {
+        title: "Three kinds of investor",
+        body: "Practise with a Seed VC, an Angel or a Grant Evaluator, because a grant panel wants different answers from a VC.",
+      },
+    ],
+    testimonialsTitle: "What founders say",
+    testimonialsMore: "Read more stories",
+    comingSoonTitle: "Coming soon",
+    comingSoonIntro: "What we're building next.",
+    comingSoonBadge: "Coming soon",
+    pricingTitle: "Simple pricing",
+    pricingIntro: "Start free. Upgrade when you're actively raising.",
+    finalTitle: "Find your weak spots before investors do.",
+    finalBody: "All you need is your pitch deck as a PDF.",
+  },
+  steps: [
+    { title: "Upload your deck", summary: "Add your pitch deck. Your financial model and business plan are optional." },
+    { title: "Get your readiness score", summary: "See how investor-ready you are across 10 areas, with a clear score and band." },
+    { title: "Face the Investor Room", summary: "Answer questions from an AI investor who pushes back on weak answers." },
+    { title: "Fix and practise again", summary: "Get a report of what investors would challenge and what to fix first." },
+  ],
+  comingSoon: [
+    { title: "Voice practice", body: "Answer the investor out loud, the way you will in the room." },
+    { title: "More investor types", body: "Corporate VCs, impact investors, bank loan officers and diaspora angels." },
+    { title: "Slide-by-slide deck feedback", body: "What each slide says to an investor, with suggested rewrites." },
+    { title: "Data room checklist", body: "The documents investors will ask for at your stage, and which you're missing." },
+    { title: "Practise in your language", body: "The AI investor and your report in French, Portuguese, Swahili, Arabic, Hausa, Yoruba or Igbo." },
+    { title: "Team accounts", body: "For accelerators and hubs: one bill for your cohort and a view of everyone's progress." },
+  ],
+  pricing: {
+    mostPopular: "Most popular",
+    perMonth: "/ month",
+    free: {
+      name: "Free",
+      description: "Try the full loop once.",
+      features: ["{assessments} readiness assessment", "{simulations} Investor Room simulation", "Angel or Seed VC investor", "Friendly or analytical difficulty"],
+      cta: "Start free",
+    },
+    pro: {
+      name: "Pro",
+      description: "For founders actively raising.",
+      features: [
+        "Unlimited readiness assessments",
+        "Up to {simulations} simulations a month",
+        "All investors, including Grant Evaluator",
+        "All difficulties, including tough",
+        "Downloadable PDF reports",
+        "Progress tracking over time",
+      ],
+      cta: "Get started",
+    },
+    credits: {
+      name: "Credits",
+      from: "From {price}",
+      description: "Pay as you go. No subscription.",
+      pack: "{price} for {simulations} simulations",
+      cta: "Get started",
+    },
+    usdNote: "Outside Nigeria? You can also pay in US dollars: Pro {pro} a month, {packs}.",
+    usdPack: "{simulations} simulations {price}",
+  },
+  pricingPage: {
+    eyebrow: "Pricing",
+    title: "Practise as much as you need",
+    intro: "Start with a free assessment and simulation. Upgrade when you're preparing for real meetings.",
+    note: "Free includes {assessments} assessment and {simulations} simulation in total. Pro includes up to {pro} simulations each month. Prices are in Nigerian naira.",
+    questions: "Questions about pricing",
+    allQuestions: "See all questions",
+  },
+  sample: {
+    title: "Readiness report",
+    badge: "Sample",
+    overall: "Overall score",
+    band: "Getting there",
+    areas: "Scores by area",
+    dimensions: ["Problem clarity", "Traction", "Financial readiness", "Competition / moat"],
+    questionsTitle: "Questions to prepare",
+    questions: [
+      "Your deck says 1,200 customers but your model shows 800. Which is right?",
+      "What is your monthly burn, and how many months of runway does this round buy?",
+      "Why won't a bank-backed wallet copy this within a year?",
+    ],
+    caption: "Example only. The startup and numbers are invented.",
+  },
+  auth: {
+    email: "Email",
+    password: "Password",
+    fullName: "Full name",
+    passwordHint: "At least {min} characters.",
+    login: {
+      title: "Log in",
+      description: "Welcome back. Pick up where you left off.",
+      newHere: "New to RaiseReady?",
+      createAccount: "Create an account",
+      forgot: "Forgot password?",
+      submit: "Log in",
+      pending: "Logging in…",
+      linkError: "That link is invalid or has expired. Log in, or request a new link.",
+      suspended: "Your account has been suspended, so you've been signed out. If you think this is a mistake, contact support.",
+      terminated: "Your account has been closed, so you've been signed out. If you think this is a mistake, contact support.",
+    },
+    register: {
+      title: "Create your account",
+      description: "Test your fundraising readiness before you meet investors.",
+      haveAccount: "Already have an account?",
+      logIn: "Log in",
+      submit: "Create account",
+      pending: "Creating account…",
+      agree: "By creating an account you agree to our {terms} and {privacy}.",
+      terms: "Terms",
+      privacy: "Privacy Policy",
+    },
+    forgot: {
+      title: "Reset your password",
+      description: "Enter your email and we'll send you a link to set a new password.",
+      back: "Back to log in",
+      submit: "Send reset link",
+      pending: "Sending…",
+    },
+    reset: {
+      title: "Set a new password",
+      forEmail: "For {email}",
+      newPassword: "New password",
+      confirm: "Confirm new password",
+      submit: "Set new password",
+      pending: "Saving…",
+      expiredTitle: "Link expired",
+      expiredDescription: "This password reset link is invalid or has expired.",
+      expiredBody: "Reset links can only be used once and expire after a short time.",
+      requestNew: "Request a new link",
+    },
+  },
+  faq: {
+    title: "Frequently asked questions",
+    eyebrow: "FAQ",
+    intro: "Quick answers about RaiseReady, pricing and your data.",
+    inEnglish: "These answers aren't available in your language yet, so they're shown in English.",
+    empty: "Questions and answers will appear here soon.",
+    stillStuck: "Still have a question?",
+    stillStuckBody: "See how RaiseReady works, step by step:",
+  },
+  /**
+   * Messages produced on the server (form errors and confirmations), keyed by
+   * their English text. Keep every key; a missing one falls back to English.
+   */
+  text: {
+    "Please fix the highlighted fields.": "Please fix the highlighted fields.",
+    "Enter your email address.": "Enter your email address.",
+    "Enter a valid email address.": "Enter a valid email address.",
+    "Enter a password.": "Enter a password.",
+    "Use at least {min} characters.": "Use at least {min} characters.",
+    "Use at most {max} characters.": "Use at most {max} characters.",
+    "Enter your password.": "Enter your password.",
+    "Enter your name.": "Enter your name.",
+    "Confirm your new password.": "Confirm your new password.",
+    "Passwords do not match.": "Passwords do not match.",
+    "We've sent a confirmation link to {email}. Open it to activate your account.":
+      "We've sent a confirmation link to {email}. Open it to activate your account.",
+    "If an account exists for {email}, we've sent a link to reset the password.":
+      "If an account exists for {email}, we've sent a link to reset the password.",
+    "This reset link has expired. Request a new one from the 'Forgot password' page.":
+      "This reset link has expired. Request a new one from the 'Forgot password' page.",
+    "That email and password don't match. Check them and try again.": "That email and password don't match. Check them and try again.",
+    "Please confirm your email first. Check your inbox for the link we sent.":
+      "Please confirm your email first. Check your inbox for the link we sent.",
+    "An account with this email already exists. Try logging in instead.": "An account with this email already exists. Try logging in instead.",
+    "That password is too easy to guess. Try a longer one.": "That password is too easy to guess. Try a longer one.",
+    "Your new password must be different from your current one.": "Your new password must be different from your current one.",
+    "Too many attempts. Please wait a few minutes and try again.": "Too many attempts. Please wait a few minutes and try again.",
+    "Too many emails sent recently. Please wait a few minutes and try again.":
+      "Too many emails sent recently. Please wait a few minutes and try again.",
+    "This account has been suspended or closed. If you think this is a mistake, contact support.":
+      "This account has been suspended or closed. If you think this is a mistake, contact support.",
+    "Sign-ups are currently closed.": "Sign-ups are currently closed.",
+    "Email sign-up is currently turned off.": "Email sign-up is currently turned off.",
+    "That email address can't be used. Please try a different one.": "That email address can't be used. Please try a different one.",
+    "We can't send emails to this address yet. Please try again later.": "We can't send emails to this address yet. Please try again later.",
+    "We couldn't reach the sign-in service. Please try again in a moment.": "We couldn't reach the sign-in service. Please try again in a moment.",
+    "Something went wrong. Please try again. (Error code: {code})": "Something went wrong. Please try again. (Error code: {code})",
+  },
+};
+
+/** The shape every language must match: same keys, any wording. */
+export type Messages = Widen<typeof en>;
+
+type Widen<T> = T extends string ? string : T extends readonly (infer U)[] ? Widen<U>[] : { [K in keyof T]: Widen<T[K]> };
