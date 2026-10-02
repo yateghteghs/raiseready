@@ -8,6 +8,7 @@ import { LogoStrip, TestimonialCards } from "@/components/marketing/showcase";
 import { HOW_IT_WORKS_STEPS } from "@/components/marketing/steps";
 import { Button } from "@/components/ui/button";
 import { publishedShowcase } from "@/lib/showcase/service";
+import { COMING_SOON } from "@/lib/site";
 
 // Logos and testimonials are edited in the admin area, which also refreshes
 // this page straight away; the timer is a fallback.
@@ -111,6 +112,20 @@ export default async function HomePage() {
           ) : null}
         </Section>
       ) : null}
+
+      <Section title="Coming soon" intro="What we're building next.">
+        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {COMING_SOON.map((f) => (
+            <li key={f.title} className="bg-card grid content-start gap-2 rounded-xl border p-5">
+              <span className="bg-accent text-accent-foreground justify-self-start rounded-full px-2.5 py-0.5 text-xs font-medium">
+                Coming soon
+              </span>
+              <h3 className="font-semibold">{f.title}</h3>
+              <p className="text-muted-foreground text-sm">{f.body}</p>
+            </li>
+          ))}
+        </ul>
+      </Section>
 
       <Section title="Simple pricing" intro="Start free. Upgrade when you're actively raising.">
         <PricingCards />

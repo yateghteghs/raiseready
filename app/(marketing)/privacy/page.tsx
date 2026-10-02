@@ -46,6 +46,16 @@ export default function PrivacyPage() {
           the reason they recorded.
         </li>
         <li>
+          <strong>Sign-in and activity records:</strong> when you sign in (and failed attempts on your
+          account), the type of browser and device used (for example &ldquo;Chrome on Android&rdquo;),
+          and which days you used the app. We use these to keep accounts secure and to understand how
+          RaiseReady is used. We don&apos;t record your location. These records are deleted after 90 days.
+        </li>
+        <li>
+          <strong>Error reports:</strong> if something goes wrong while you use the site, what failed
+          and on which page, so we can fix it. Deleted after 90 days.
+        </li>
+        <li>
           <strong>Messages:</strong> notifications the RaiseReady team sends you in the app, and
           whether you have read them.
         </li>
