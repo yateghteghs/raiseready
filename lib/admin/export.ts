@@ -2,7 +2,7 @@ import { lagosDay } from "@/lib/activity/service";
 import type { Staff } from "@/lib/admin/auth";
 import { toCsv } from "@/lib/admin/csv";
 import { paymentsList, simulationsList, usersList } from "@/lib/admin/data";
-import { difficultyLabel, personaLabel, productLabel } from "@/lib/admin/labels";
+import { difficultyLabel, personaLabel, productLabel, planLabel } from "@/lib/admin/labels";
 import { roleLabel, STATUS_LABELS } from "@/lib/admin/permissions";
 import { koboToNaira } from "@/lib/format";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -27,7 +27,7 @@ export async function exportCsv(staff: Staff, kind: ExportKind): Promise<{ csv: 
       { header: "Stage", value: (u) => u.startup?.stage },
       { header: "Status", value: (u) => STATUS_LABELS[u.status] ?? u.status },
       { header: "Role", value: (u) => roleLabel(u.role) },
-      { header: "Plan", value: (u) => (u.plan === "pro" ? "Pro" : "Free") },
+      { header: "Plan", value: (u) => planLabel(u.plan) },
       { header: "Credits", value: (u) => u.credits },
       { header: "Onboarded", value: (u) => (u.onboarding_complete ? "Yes" : "No") },
       { header: "Joined (UTC)", value: (u) => iso(u.created_at) },

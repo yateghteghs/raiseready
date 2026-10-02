@@ -90,6 +90,14 @@ milestone at a time (spec section 11) and stop for review after each.
   seconds.
 - Company: RaiseReady is a product of Index Prima (`SITE.company` in
   `lib/site.ts`); the footer, legal pages, billing page and PDF reports name it.
+- Plans: free / pro / pro_plus (`PLAN_LIMITS`), plus Teams. `tierOf` decides
+  the founder's level (an active team gives pro_plus); `getUsage` returns
+  `tier` and `team`. Each subscription row records its `plan`; upgrading
+  Pro → Pro Plus ends the Pro subscription (`endSubscription`) and only the
+  current subscription ending downgrades the plan. Teams (`lib/teams`) are
+  set up by super admins (`manage_teams`); join links store only a SHA-256
+  of the token; the team owner sees `cohort()` (scores and activity, never
+  documents, answers or reports). Team tables are server-only.
 - Pitch decks (`lib/decks`, table `pitch_decks`): written by one AI call
   (`lib/ai/prompts/deck.v1.ts`); `checkDeck` rejects numbers not found in the
   founder's material and missing facts become `[Add: ...]`. Access rules

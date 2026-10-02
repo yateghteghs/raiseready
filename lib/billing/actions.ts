@@ -10,7 +10,7 @@ import { BillingError, manageSubscriptionLink, quote, startCheckout } from "@/li
 import type { PaymentProduct } from "@/lib/supabase/database.types";
 import { getSiteUrl } from "@/lib/site-url";
 
-const productSchema = z.enum(["pro_monthly", "credits_3", "credits_10", "deck_builder"]);
+const productSchema = z.enum(["pro_monthly", "pro_plus_monthly", "credits_3", "credits_10", "deck_builder"]);
 
 const optionsSchema = z
   .object({ currency: z.enum(["NGN", "USD"]).optional(), code: z.string().max(40).optional() })

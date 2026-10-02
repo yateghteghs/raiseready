@@ -17,6 +17,7 @@ const PUBLIC_PAGES = [
   "/testimonials",
   "/partners",
   "/faq",
+  "/teams",
 ];
 
 for (const path of PUBLIC_PAGES) {

@@ -35,6 +35,9 @@ export async function SiteFooter() {
           <Link href="/partners" className={link}>
             {m.footer.partners}
           </Link>
+          <Link href="/teams" className={link}>
+            {m.footer.teams}
+          </Link>
         </nav>
         <nav aria-label="Legal" className="grid content-start gap-2">
           <p className="font-medium">{m.footer.legal}</p>

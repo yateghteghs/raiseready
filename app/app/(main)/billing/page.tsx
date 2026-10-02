@@ -6,7 +6,7 @@ import { BuyOptions } from "@/components/billing/buy-options";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { InviteLink } from "@/components/billing/invite-card";
 import { getCurrentUser } from "@/lib/auth/session";
-import { CREDIT_PACKS, DECK_BUILDER, FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
+import { CREDIT_PACKS, DECK_BUILDER, FREE_PLAN, PLAN_LIMITS, PRO_PLAN, PRO_PLUS_PLAN } from "@/lib/billing/plans";
 import { getDeckUsage } from "@/lib/decks/service";
 import { availableCurrencies, inviteOfferText, minimumSpendText, PRICES } from "@/lib/billing/prices";
 import { getReferralSettings } from "@/lib/billing/referral-settings";
@@ -93,11 +93,16 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
           <h2 id="plan-heading" className="text-muted-foreground text-sm">
             Your plan
           </h2>
-          <p className="mt-1 text-2xl font-semibold">{usage.proActive ? "Pro" : "Free"}</p>
-          {usage.proActive && subscription?.current_period_end ? (
+          <p className="mt-1 text-2xl font-semibold">{usage.tier === "free" ? "Free" : PLAN_LIMITS[usage.tier].name}</p>
+          {usage.team ? (
+            <p className="text-muted-foreground text-sm">
+              From your team, {usage.team.name}, until {dateFormat.format(new Date(usage.team.ends_at))}.
+            </p>
+          ) : null}
+          {usage.proActive && !usage.team && subscription?.current_period_end ? (
             <p className="text-muted-foreground text-sm">
               {ending ? "Ends" : "Renews"} on {dateFormat.format(new Date(subscription.current_period_end))}
-              {subscription.status === "attention" ? " · Your last renewal payment failed. Update your card to keep Pro." : ""}
+              {subscription.status === "attention" ? " · Your last renewal payment failed. Update your card to keep your plan." : ""}
             </p>
           ) : null}
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
@@ -105,7 +110,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
               <div>
                 <dt className="text-muted-foreground">Simulations this month</dt>
                 <dd className="font-medium tabular-nums">
-                  {usage.proSimulationsThisMonth} of {PRO_PLAN.simulationsPerMonth}
+                  {usage.proSimulationsThisMonth} of {PLAN_LIMITS[usage.tier === "pro_plus" ? "pro_plus" : "pro"].simulationsPerMonth}
                 </dd>
               </div>
             ) : (
@@ -121,7 +126,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
               </>
             )}
           </dl>
-          {usage.proActive && subscription?.provider_subscription_code ? (
+          {usage.proActive && !usage.team && subscription?.provider_subscription_code ? (
             <div className="mt-4">
               <CheckoutButton product="manage" variant="outline">
                 Manage or cancel subscription
@@ -138,8 +143,8 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
               Pitch decks
             </Link>
             :{" "}
-            {usage.proActive
-              ? `${decks.proDecksThisMonth} of ${DECK_BUILDER.proDecksPerMonth} used this month with Pro`
+            {usage.tier !== "free"
+              ? `${decks.proDecksThisMonth} of ${PLAN_LIMITS[usage.tier].decksPerMonth} used this month with ${PLAN_LIMITS[usage.tier].name}`
               : decks.previewsUsed
                 ? "free preview used"
                 : "free preview available"}
@@ -150,29 +155,50 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
 
       <section aria-labelledby="buy-heading" className="grid gap-4">
         <h2 id="buy-heading" className="text-lg font-semibold">
-          {usage.proActive ? "Need more sessions?" : "Upgrade"}
+          {usage.tier === "pro_plus" ? "Need more sessions?" : "Upgrade"}
         </h2>
         <BuyOptions
           currencies={availableCurrencies()}
           referralPercent={referralDiscount ? programme.friendPercentOff : null}
           options={[
-            ...(usage.proActive
-              ? []
-              : [
+            ...(usage.tier === "free"
+              ? [
                   {
                     product: "pro_monthly" as const,
                     title: "Pro",
                     perMonth: true,
-                    highlight: true,
                     buttonLabel: "Upgrade to Pro",
                     prices: { NGN: PRICES.NGN.pro_monthly, USD: PRICES.USD.pro_monthly },
                     features: [
                       "Unlimited assessments",
                       `Up to ${PRO_PLAN.simulationsPerMonth} simulations a month`,
                       "Every investor and difficulty",
-                      `${DECK_BUILDER.proDecksPerMonth} pitch decks a month`,
+                      `${PLAN_LIMITS.pro.decksPerMonth} pitch decks a month`,
                       "PDF reports and progress tracking",
                     ],
+                  },
+                ]
+              : []),
+            ...(usage.tier === "pro_plus"
+              ? []
+              : [
+                  {
+                    product: "pro_plus_monthly" as const,
+                    title: PRO_PLUS_PLAN.name,
+                    perMonth: true,
+                    highlight: true,
+                    buttonLabel: usage.tier === "pro" ? "Upgrade to Pro Plus" : "Get Pro Plus",
+                    prices: { NGN: PRICES.NGN.pro_plus_monthly, USD: PRICES.USD.pro_plus_monthly },
+                    features: [
+                      "Everything in Pro",
+                      `Up to ${PRO_PLUS_PLAN.simulationsPerMonth} simulations a month`,
+                      `${PLAN_LIMITS.pro_plus.decksPerMonth} pitch decks a month, ${PLAN_LIMITS.pro_plus.rewritesPerDeck} AI rewrites each`,
+                      "Voice practice and slide-by-slide deck feedback as they launch",
+                    ],
+                    note:
+                      usage.tier === "pro"
+                        ? "Pro Plus starts as soon as you pay and your Pro subscription stops renewing. Days left on Pro aren't refunded."
+                        : undefined,
                   },
                 ]),
             ...CREDIT_PACKS.map((pack) => ({

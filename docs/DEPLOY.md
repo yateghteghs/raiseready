@@ -113,12 +113,35 @@ in naira with a foreign card. To also offer dollar prices:
 1. Ask Paystack to enable USD for your business. Dollar payouts need a Zenith
    Bank USD domiciliary account.
 2. Check the dollar prices in `lib/billing/prices.ts` (currently placeholders:
-   Pro $10/month, 3 simulations $4, 10 simulations $7, one pitch deck $5) and ask me to change
+   Pro $10/month, Pro Plus $25/month, 3 simulations $4, 10 simulations $7, one pitch deck $5) and ask me to change
    them if needed.
 3. In Vercel, add `PAYSTACK_USD_ENABLED` = `true`, then redeploy. The Billing
    page then offers "Pay in ₦ Naira / $ US dollars", and the pricing page
    lists the dollar prices. The dollar Pro plan is created in Paystack
    automatically.
+
+**Plans.** Free, Pro (₦15,000 / $10 a month), Pro Plus (₦35,000 / $25 a
+month) and Teams. Pro Plus has its own Paystack plan, created automatically
+the first time someone subscribes, and higher monthly allowances: 100
+practice sessions, 10 pitch decks and 100 AI rewrites per deck (Pro: 30, 3
+and 30). New premium features such as voice practice will be part of Pro
+Plus. A Pro subscriber who upgrades pays for Pro Plus straight away and
+their Pro subscription stops (unused Pro days aren't refunded). To move from
+Pro Plus to Pro, they cancel Pro Plus and subscribe to Pro after it ends.
+Allowances live in `lib/billing/plans.ts` (`PLAN_LIMITS`), prices in
+`lib/billing/prices.ts`.
+
+**Teams** (accelerators, hubs, programmes) are sold directly: enquiries from
+the public `/teams` page appear under **Admin → Teams**. Agree the price,
+invoice the programme yourself (outside Paystack), then in **Admin → Teams**:
+1. Create the team: name, seats, the last day of access, and optionally the
+   programme contact's email (they must have signed up). The contact gets a
+   **Team** page in the app showing each member's score, practice meetings
+   and last activity.
+2. Click **Create join link** and send the link to the programme. Founders
+   who open it and sign in join the team and get Pro Plus until the end date.
+   The link is shown only once; creating a new one turns off the old one.
+3. Change seats or dates, remove members or turn the link off any time.
 
 **Pitch deck builder.** Founders build investor decks under **Pitch deck**.
 Each founder's first deck is a free preview (outline plus the first 3
@@ -171,7 +194,7 @@ history.
 | Viewer | See the admin dashboard. |
 | Support | Also suspend and reactivate founders. |
 | Admin | Also terminate and delete users, send notifications, and give roles up to Support. |
-| Super admin | Everything: send password reset emails, add free credits, manage admins, edit the website's logos/testimonials/partners and the FAQ, and set the report signature. |
+| Super admin | Everything: send password reset emails, add free credits, manage admins and teams, edit the website's logos/testimonials/partners and the FAQ, and set the report signature. |
 
 | Action | What happens |
 |---|---|
@@ -188,6 +211,7 @@ Other admin pages:
 - Each user's page shows their recent sign-ins (with failed attempts), when they were last seen and how many days they were active.
 - **Export CSV** (admin and super admin): download the Users, Simulations or Payments list. Exports contain personal data, so each download is logged; store the files securely and delete them when done.
 - **Notifications** (admin and super admin): message one founder or everyone. Messages appear under the bell in the app header.
+- **Teams** (super admin): create teams, share join links, manage members and see enquiries from the Teams page.
 - **Discounts** (super admin): the referral programme settings, and discount codes (create, turn off, see how often each was used).
 - **Website** (super admin): startup logos, testimonials and partners shown on the home page, `/testimonials` and `/partners`. Tick the permission box only when the company or person has agreed to appear.
 - **FAQ** (super admin): the questions and answers on `/faq` (the most useful pricing ones also appear on the Pricing page). Pick a language at the top. Add, edit, hide or delete entries, and set their order. On another language's tab, **Not yet in …** lists the English questions without a translation; **Translate** shows the English original next to the form. A language with no published entries shows the English FAQ, with a note saying so. Once a language has any published entries, only those are shown, so translate them all before publishing.

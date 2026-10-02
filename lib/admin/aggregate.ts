@@ -135,7 +135,7 @@ export function revenueSummary(
   return {
     allTimeKobo: sum(paid),
     thisMonthKobo: sum(paid.filter((p) => p.created_at >= monthStartIso)),
-    byProduct: ["pro_monthly", "credits_3", "credits_10", "deck_builder"].map((product) => {
+    byProduct: ["pro_monthly", "pro_plus_monthly", "credits_3", "credits_10", "deck_builder"].map((product) => {
       const rows = paid.filter((p) => p.product === product);
       return { product, count: rows.length, kobo: sum(rows) };
     }),

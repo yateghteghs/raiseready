@@ -1,13 +1,16 @@
 import { PERSONAS, DIFFICULTIES } from "@/lib/ai/personas";
-import { CREDIT_PACKS, PRO_PLAN } from "@/lib/billing/plans";
+import { CREDIT_PACKS, DECK_BUILDER, PRO_PLAN, PRO_PLUS_PLAN } from "@/lib/billing/plans";
 import type { Difficulty, Persona } from "@/lib/supabase/database.types";
 
 /** Display labels for admin tables. */
 export const personaLabel = (p: string) => PERSONAS[p as Persona]?.name ?? p;
+export const planLabel = (plan: string) => (plan === "pro_plus" ? "Pro Plus" : plan === "pro" ? "Pro" : "Free");
 export const difficultyLabel = (d: string) => DIFFICULTIES[d as Difficulty]?.label ?? d;
 
 export function productLabel(product: string) {
   if (product === PRO_PLAN.product) return `${PRO_PLAN.name} (monthly)`;
+  if (product === PRO_PLUS_PLAN.product) return `${PRO_PLUS_PLAN.name} (monthly)`;
+  if (product === DECK_BUILDER.product) return DECK_BUILDER.name;
   return CREDIT_PACKS.find((p) => p.product === product)?.name ?? product;
 }
 

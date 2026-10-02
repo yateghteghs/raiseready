@@ -76,7 +76,7 @@ describe("revenue", () => {
       "2026-09-30T23:00:00.000Z",
     );
     expect(r).toMatchObject({ allTimeKobo: 2_000_000, thisMonthKobo: 1_500_000 });
-    expect(r.byProduct[1]).toEqual({ product: "credits_3", count: 1, kobo: 500_000 });
+    expect(r.byProduct.find((p) => p.product === "credits_3")).toEqual({ product: "credits_3", count: 1, kobo: 500_000 });
   });
 });
 

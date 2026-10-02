@@ -1,3 +1,4 @@
+import { planLabel } from "@/lib/admin/labels";
 import Link from "next/link";
 
 import { ExportButton } from "@/components/admin/export-button";
@@ -61,7 +62,7 @@ export default async function AdminUsers({ searchParams }: PageProps<"/admin/use
             ),
           },
           { header: "Role", cell: (u) => roleLabel(u.role) },
-          { header: "Plan", cell: (u) => (u.plan === "pro" ? "Pro" : "Free") },
+          { header: "Plan", cell: (u) => planLabel(u.plan) },
           { header: "Credits", cell: (u) => u.credits, align: "right" },
           { header: "Onboarded", cell: (u) => (u.onboarding_complete ? "Yes" : "No") },
           { header: "Country", cell: (u) => u.country ?? "" },

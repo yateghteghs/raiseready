@@ -1,3 +1,4 @@
+import { planLabel } from "@/lib/admin/labels";
 import { ImageIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -84,7 +85,7 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
             >
               {STATUS_LABELS[profile.status]}
             </span>
-            <span className="bg-muted rounded-full px-2.5 py-0.5">{profile.plan === "pro" ? "Pro" : "Free"}</span>
+            <span className="bg-muted rounded-full px-2.5 py-0.5">{planLabel(profile.plan)}</span>
           </div>
         </div>
       </div>

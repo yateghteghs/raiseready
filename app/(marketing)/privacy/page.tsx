@@ -79,6 +79,13 @@ export default function PrivacyPage() {
           whether you have read them.
         </li>
         <li>
+          <strong>Teams:</strong> if you join a team through your accelerator, hub or programme, its
+          programme contact can see your name, startup name, readiness score, number of practice
+          meetings and when you were last active. They cannot see your documents, answers or reports.
+          You can leave the team at any time under Settings. If your programme contacts us about
+          Teams, we keep their enquiry so we can reply.
+        </li>
+        <li>
           <strong>Language:</strong> if you choose a language, a small cookie on your device remembers
           it for a year. It contains only the language.
         </li>

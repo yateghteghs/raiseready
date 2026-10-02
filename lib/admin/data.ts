@@ -65,7 +65,7 @@ export async function overviewMetrics() {
       admin.from("assessments").select("overall_score").limit(MAX_ROWS),
       headCount(admin.from("simulations").select("id", head).eq("mode", "full")),
       admin.from("simulations").select("overall_score").eq("mode", "full").eq("status", "completed").limit(MAX_ROWS),
-      headCount(admin.from("profiles").select("id", head).eq("plan", "pro")),
+      headCount(admin.from("profiles").select("id", head).in("plan", ["pro", "pro_plus"])),
       admin.from("payments").select("amount_kobo, product, status, created_at, currency").limit(MAX_ROWS),
       admin
         .from("ai_calls")
