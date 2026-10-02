@@ -257,6 +257,8 @@ type NotificationRow = Timestamps & {
   body: string;
   link: string | null;
   created_by: string | null;
+  /** Turned-off messages are hidden from founders but kept for staff. */
+  active: boolean;
 };
 
 type NotificationReadRow = {
@@ -463,7 +465,7 @@ export type Database = {
         "id" | "user_id" | "input_tokens" | "output_tokens" | "latency_ms" | "error"
       >;
       audit_logs: Table<AuditLogRow, "id" | "actor_id" | "target_type" | "target_id" | "metadata">;
-      notifications: Table<NotificationRow, "id" | "user_id" | "link" | "created_by">;
+      notifications: Table<NotificationRow, "id" | "user_id" | "link" | "created_by" | "active">;
       notification_reads: {
         Row: NotificationReadRow;
         Insert: Omit<NotificationReadRow, "read_at"> & { read_at?: string };
@@ -494,6 +496,7 @@ export type Database = {
       teams: Table<TeamRow, "id" | "owner_id" | "join_token_hash" | "notes" | "created_by">;
       team_members: PlainTable<TeamMemberRow, "joined_at">;
       team_enquiries: PlainTable<TeamEnquiryRow, "id" | "cohort_size" | "message" | "status" | "created_at">;
+      price_settings: PlainTable<{ product: PaymentProduct; currency: PaymentCurrency; amount: number; updated_by: string | null; updated_at: string }, "updated_by" | "updated_at">;
       pitch_decks: Table<PitchDeckRow, "id" | "status" | "title" | "content" | "rewrites_used" | "unlocked_at" | "error">;
       faq_items: Table<FaqItemRow, "id" | "slug" | "locale" | "category" | "position" | "published" | "created_by">;
       report_signature: Table<ReportSignatureRow, "id" | "signer_name" | "signer_title" | "signature_path" | "enabled" | "updated_by">;

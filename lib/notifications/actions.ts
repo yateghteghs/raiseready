@@ -7,7 +7,7 @@ import { getStaff } from "@/lib/admin/auth";
 import { can } from "@/lib/admin/permissions";
 import { formValues, validationFailed, type FormState } from "@/lib/forms";
 import { notificationSchema } from "@/lib/notifications/schema";
-import { deleteNotification, NotificationError, sendNotification } from "@/lib/notifications/service";
+import { deleteNotification, NotificationError, sendNotification, setNotificationActive } from "@/lib/notifications/service";
 
 export async function sendNotificationAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const staff = await getStaff();
@@ -30,5 +30,12 @@ export async function deleteNotificationAction(id: string): Promise<void> {
   const staff = await getStaff();
   if (!staff || !can(staff.profile.role, "notify") || !z.uuid().safeParse(id).success) return;
   await deleteNotification(staff, id);
+  revalidatePath("/admin/notifications");
+}
+
+export async function setNotificationActiveAction(id: string, active: boolean): Promise<void> {
+  const staff = await getStaff();
+  if (!staff || !can(staff.profile.role, "notify") || !z.uuid().safeParse(id).success) return;
+  await setNotificationActive(staff, id, active);
   revalidatePath("/admin/notifications");
 }

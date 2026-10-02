@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { availableCurrencies, codeProblem, discounted, inviteOfferText, normaliseCode, priceOf, unlockProgress } from "@/lib/billing/prices";
+import { availableCurrencies, codeProblem, DEFAULT_PRICES, discounted, inviteOfferText, normaliseCode, priceOf, unlockProgress } from "@/lib/billing/prices";
 
 describe("prices", () => {
   it("keeps USD hidden until it is switched on", () => {
     expect(availableCurrencies({})).toEqual(["NGN"]);
     expect(availableCurrencies({ PAYSTACK_USD_ENABLED: "true" })).toEqual(["NGN", "USD"]);
-    expect(priceOf("pro_monthly", "NGN")).toBe(1_500_000);
+    expect(priceOf("pro_monthly", "NGN", DEFAULT_PRICES)).toBe(1_500_000);
   });
 
   it("rounds discounts to whole units and respects the minimum charge", () => {

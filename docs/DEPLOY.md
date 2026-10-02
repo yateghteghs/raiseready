@@ -112,9 +112,9 @@ The billing page shows a "test mode" notice while test keys are in use.
 in naira with a foreign card. To also offer dollar prices:
 1. Ask Paystack to enable USD for your business. Dollar payouts need a Zenith
    Bank USD domiciliary account.
-2. Check the dollar prices in `lib/billing/prices.ts` (currently placeholders:
-   Pro $10/month, Pro Plus $25/month, 3 simulations $4, 10 simulations $7, one pitch deck $5) and ask me to change
-   them if needed.
+2. Check the dollar prices under **Admin → Prices** (the starting values are
+   placeholders: Pro $10/month, Pro Plus $25/month, 3 simulations $4, 10
+   simulations $7, one pitch deck $5) and change them if needed.
 3. In Vercel, add `PAYSTACK_USD_ENABLED` = `true`, then redeploy. The Billing
    page then offers "Pay in ₦ Naira / $ US dollars", and the pricing page
    lists the dollar prices. The dollar Pro plan is created in Paystack
@@ -128,8 +128,14 @@ and 30). New premium features such as voice practice will be part of Pro
 Plus. A Pro subscriber who upgrades pays for Pro Plus straight away and
 their Pro subscription stops (unused Pro days aren't refunded). To move from
 Pro Plus to Pro, they cancel Pro Plus and subscribe to Pro after it ends.
-Allowances live in `lib/billing/plans.ts` (`PLAN_LIMITS`), prices in
-`lib/billing/prices.ts`.
+Allowances live in `lib/billing/plans.ts` (`PLAN_LIMITS`).
+
+**Prices.** Super admins change any price, in naira and dollars, under
+**Admin → Prices**. New prices show on the website and Billing page straight
+away and apply to new purchases. Changing Pro or Pro Plus creates a new plan
+in Paystack for new subscribers; existing subscribers keep the price they
+signed up for until they cancel. Every change is recorded in the audit log.
+The starting values are in `lib/billing/prices.ts`.
 
 **Teams** (accelerators, hubs, programmes) are sold directly: enquiries from
 the public `/teams` page appear under **Admin → Teams**. Agree the price,
@@ -150,8 +156,7 @@ slides). Pro includes 3 full decks a month; anyone can buy a single deck
 without being written again. Full decks download as PowerPoint (with speaker
 notes) and PDF. Founders can edit slides freely; AI rewrites of a slide are
 limited to 2 per bought deck and 30 per Pro deck. Change these numbers in
-`lib/billing/plans.ts` (`DECK_BUILDER`) and the prices in
-`lib/billing/prices.ts`. A deck costs roughly $1–3 in AI fees.
+`lib/billing/plans.ts` (`DECK_BUILDER`); the price is under Admin → Prices. A deck costs roughly $1–3 in AI fees.
 
 **Discount codes and referrals.**
 - Super admins create codes under **Admin → Discounts**: percent off, which
@@ -210,7 +215,8 @@ Other admin pages:
 - **Errors** (all staff): what went wrong on the live site. When a founder sends you the "Reference" from an error screen, search for it here.
 - Each user's page shows their recent sign-ins (with failed attempts), when they were last seen and how many days they were active.
 - **Export CSV** (admin and super admin): download the Users, Simulations or Payments list. Exports contain personal data, so each download is logged; store the files securely and delete them when done.
-- **Notifications** (admin and super admin): message one founder or everyone. Messages appear under the bell in the app header.
+- **Notifications** (admin and super admin): message one founder or everyone. Messages appear under the bell in the app header. **Turn off** hides a sent message from founders without deleting it (turn it on again any time); **Delete** removes it for good.
+- **Prices** (super admin): what each plan and pack costs, in naira and dollars.
 - **Teams** (super admin): create teams, share join links, manage members and see enquiries from the Teams page.
 - **Discounts** (super admin): the referral programme settings, and discount codes (create, turn off, see how often each was used).
 - **Website** (super admin): startup logos, testimonials and partners shown on the home page, `/testimonials` and `/partners`. Tick the permission box only when the company or person has agreed to appear.

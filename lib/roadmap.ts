@@ -9,5 +9,4 @@ export const COMING_SOON = [
   { title: "Slide-by-slide deck feedback", body: "What each slide of your own deck says to an investor, with suggested rewrites." },
   { title: "Data room checklist", body: "The documents investors will ask for at your stage, and which you're missing." },
   { title: "The app in your language", body: "The app, the AI investor and your reports in French, Portuguese, Swahili, Arabic, Hausa, Yoruba or Igbo." },
-  { title: "Team accounts", body: "For accelerators and hubs: one bill for your cohort and a view of everyone's progress." },
 ] as const;

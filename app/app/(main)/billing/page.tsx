@@ -8,7 +8,8 @@ import { InviteLink } from "@/components/billing/invite-card";
 import { getCurrentUser } from "@/lib/auth/session";
 import { CREDIT_PACKS, DECK_BUILDER, FREE_PLAN, PLAN_LIMITS, PRO_PLAN, PRO_PLUS_PLAN } from "@/lib/billing/plans";
 import { getDeckUsage } from "@/lib/decks/service";
-import { availableCurrencies, inviteOfferText, minimumSpendText, PRICES } from "@/lib/billing/prices";
+import { availableCurrencies, inviteOfferText, minimumSpendText } from "@/lib/billing/prices";
+import { getPrices } from "@/lib/billing/price-settings";
 import { getReferralSettings } from "@/lib/billing/referral-settings";
 import { ensureReferralCode, referralStats } from "@/lib/referrals/service";
 import { SITE } from "@/lib/site";
@@ -39,7 +40,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
     if (!user) return null;
     const startup = await getMyStartup();
     const supabase = await createClient();
-    const [usage, subscription, payments, code, referrals, siteUrl, programme, decks] = await Promise.all([
+    const [usage, subscription, payments, code, referrals, siteUrl, programme, decks, prices] = await Promise.all([
       getUsage(user.id, startup?.id ?? null),
       getSubscription(user.id),
       supabase.from("payments").select("*").neq("status", "pending").order("created_at", { ascending: false }).limit(30),
@@ -48,11 +49,13 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
       getSiteUrl(),
       getReferralSettings(),
       getDeckUsage(user.id),
+      getPrices(),
     ]);
     const paidBefore = (payments.data ?? []).some((p) => p.status === "success");
     return {
       usage,
       decks,
+      prices,
       subscription,
       payments: payments.data ?? [],
       referrals,
@@ -63,7 +66,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
   });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) return <LoadProblem code="no_startup" />;
-  const { usage, decks, subscription, payments, referrals, inviteUrl, referralDiscount, programme } = loaded.data;
+  const { usage, decks, prices: PRICES, subscription, payments, referrals, inviteUrl, referralDiscount, programme } = loaded.data;
   const inviteOffer = inviteOfferText(programme);
 
   const testMode = (process.env.PAYSTACK_SECRET_KEY ?? "").startsWith("sk_test_");

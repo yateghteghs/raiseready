@@ -9,6 +9,7 @@ import { deckBuildAccess } from "@/lib/billing/entitlements";
 import { DECK_BUILDER, PLAN_LIMITS } from "@/lib/billing/plans";
 import { paidPlanOf } from "@/lib/billing/entitlements";
 import { load } from "@/lib/data-errors";
+import { getPrices } from "@/lib/billing/price-settings";
 import { getDeckUsage } from "@/lib/decks/service";
 import { formatMoney, koboToNaira } from "@/lib/format";
 import { getMyStartup } from "@/lib/startups/service";
@@ -26,19 +27,20 @@ export default async function DecksPage() {
     const [user, startup] = await Promise.all([getCurrentUser(), getMyStartup()]);
     if (!user || !startup) return null;
     const supabase = await createClient();
-    const [decks, documents, usage] = await Promise.all([
+    const [decks, documents, usage, prices] = await Promise.all([
       supabase.from("pitch_decks").select("id, title, status, access, created_at").eq("startup_id", startup.id).order("created_at", { ascending: false }),
       supabase.from("knowledge_profiles").select("id", { count: "exact", head: true }).eq("startup_id", startup.id),
       getDeckUsage(user.id),
+      getPrices(),
     ]);
-    return { decks: decks.data ?? [], hasDocuments: (documents.count ?? 0) > 0, usage };
+    return { decks: decks.data ?? [], hasDocuments: (documents.count ?? 0) > 0, usage, prices };
   });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) return <LoadProblem code="no_startup" />;
-  const { decks, hasDocuments, usage } = loaded.data;
+  const { decks, hasDocuments, usage, prices } = loaded.data;
   const access = deckBuildAccess(usage);
   const plan = paidPlanOf(usage);
-  const price = formatMoney(koboToNaira(DECK_BUILDER.priceKobo));
+  const price = formatMoney(koboToNaira(prices.NGN.deck_builder));
 
   return (
     <div className="grid gap-10">

@@ -168,6 +168,12 @@ insert into public.notifications (id, user_id, title, body) values
   ('aaaaaaaa-5555-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000001', 'For A', 'Hello A'),
   ('bbbbbbbb-5555-4000-8000-000000000002', 'bbbbbbbb-0000-4000-8000-000000000002', 'For B', 'Hello B'),
   ('cccccccc-5555-4000-8000-000000000003', null, 'For everyone', 'Hello all');
+insert into public.notifications (user_id, title, body, active) values
+  (null, 'Turned off', 'Withdrawn', false);
+insert into public.price_settings (product, currency, amount) values ('pro_monthly', 'NGN', 2000000);
+select rls_test.throws(
+  $$insert into public.price_settings (product, currency, amount) values ('pro_monthly', 'EUR', 1000)$$,
+  '23514', 'prices are in naira or dollars only');
 insert into public.notification_reads (notification_id, user_id) values
   ('bbbbbbbb-5555-4000-8000-000000000002', 'bbbbbbbb-0000-4000-8000-000000000002');
 
@@ -467,7 +473,11 @@ select rls_test.throws(
 -- notifications, showcase, signature
 select rls_test.ok(
   (select array_agg(title order by title) from public.notifications) = array['For A', 'For everyone'],
-  'A reads own and broadcast notifications, not B''s');
+  'A reads own and broadcast notifications, not B''s or turned-off ones');
+select rls_test.throws('select * from public.price_settings', '42501', 'A cannot read price settings directly');
+select rls_test.throws(
+  $$update public.price_settings set amount = 100$$,
+  '42501', 'A cannot change prices');
 select rls_test.ok((select count(*) from public.notification_reads) = 0, 'A cannot see B''s read receipts');
 select rls_test.throws(
   $$insert into public.notifications (user_id, title, body) values ('bbbbbbbb-0000-4000-8000-000000000002', 'Phish', 'Click')$$,

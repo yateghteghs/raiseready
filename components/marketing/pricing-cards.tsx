@@ -2,8 +2,8 @@ import Link from "next/link";
 import { CheckIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { CREDIT_PACKS, DECK_BUILDER, FREE_PLAN, PLAN_LIMITS, PRO_PLAN, PRO_PLUS_PLAN } from "@/lib/billing/plans";
-import { PRICES, usdEnabled } from "@/lib/billing/prices";
+import { CREDIT_PACKS, DECK_BUILDER, FREE_PLAN, PLAN_LIMITS } from "@/lib/billing/plans";
+import { usdEnabled, type PriceTable } from "@/lib/billing/prices";
 import { formatMoney, koboToNaira } from "@/lib/format";
 import type { Messages } from "@/lib/i18n/messages/en";
 import { fill } from "@/lib/i18n/text";
@@ -24,11 +24,13 @@ type Tier = {
   highlighted?: boolean;
 };
 
-export function PricingCards({ t }: { t: Messages["pricing"] }) {
+/** The plan cards. `prices` are the live ones (getPrices), so admin changes show here. */
+export function PricingCards({ t, prices }: { t: Messages["pricing"]; prices: PriceTable }) {
+  const PRICES = prices;
   const tiers: Tier[] = [
     {
       name: t.free.name,
-      price: naira(FREE_PLAN.priceKobo),
+      price: naira(0),
       period: "",
       description: t.free.description,
       features: t.free.features.map((f) =>
@@ -39,7 +41,7 @@ export function PricingCards({ t }: { t: Messages["pricing"] }) {
     },
     {
       name: t.pro.name,
-      price: naira(PRO_PLAN.priceKobo),
+      price: naira(PRICES.NGN.pro_monthly),
       period: t.perMonth,
       description: t.pro.description,
       features: t.pro.features.map((f) => fill(f, { simulations: PLAN_LIMITS.pro.simulationsPerMonth, decks: PLAN_LIMITS.pro.decksPerMonth })),
@@ -50,7 +52,7 @@ export function PricingCards({ t }: { t: Messages["pricing"] }) {
     },
     {
       name: t.plus.name,
-      price: naira(PRO_PLUS_PLAN.priceKobo),
+      price: naira(PRICES.NGN.pro_plus_monthly),
       period: t.perMonth,
       description: t.plus.description,
       features: t.plus.features.map((f) =>
@@ -75,8 +77,8 @@ export function PricingCards({ t }: { t: Messages["pricing"] }) {
     },
   ];
   const payg = [
-    ...CREDIT_PACKS.map((p) => fill(t.credits.pack, { price: naira(p.priceKobo), simulations: p.simulations })),
-    fill(t.credits.deck, { price: naira(DECK_BUILDER.priceKobo) }),
+    ...CREDIT_PACKS.map((p) => fill(t.credits.pack, { price: naira(PRICES.NGN[p.product]), simulations: p.simulations })),
+    fill(t.credits.deck, { price: naira(PRICES.NGN.deck_builder) }),
   ];
 
   return (

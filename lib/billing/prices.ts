@@ -11,7 +11,13 @@ import type { PaymentProduct } from "@/lib/supabase/database.types";
 export type Currency = "NGN" | "USD";
 export const CURRENCIES: Currency[] = ["NGN", "USD"];
 
-export const PRICES: Record<Currency, Record<PaymentProduct, number>> = {
+export type PriceTable = Record<Currency, Record<PaymentProduct, number>>;
+
+/**
+ * Default prices. Super admins can change any of them under Admin → Prices
+ * (stored in price_settings); load the live ones with getPrices().
+ */
+export const DEFAULT_PRICES: PriceTable = {
   NGN: { pro_monthly: 1_500_000, pro_plus_monthly: 3_500_000, credits_3: 500_000, credits_10: 1_000_000, deck_builder: 750_000 },
   // Placeholder dollar prices: confirm before switching USD on.
   USD: { pro_monthly: 1_000, pro_plus_monthly: 2_500, credits_3: 400, credits_10: 700, deck_builder: 500 },
@@ -53,9 +59,18 @@ export function isCurrency(value: unknown): value is Currency {
   return value === "NGN" || value === "USD";
 }
 
-export function priceOf(product: PaymentProduct, currency: Currency): number {
-  return PRICES[currency][product];
+export function priceOf(product: PaymentProduct, currency: Currency, prices: PriceTable): number {
+  return prices[currency][product];
 }
+
+/** Every product, in the order admins and price lists show them. */
+export const PRICED_PRODUCTS: PaymentProduct[] = ["pro_monthly", "pro_plus_monthly", "credits_3", "credits_10", "deck_builder"];
+
+/** Allowed range for a price, in the currency's smallest unit. */
+export const PRICE_LIMITS: Record<Currency, { min: number; max: number }> = {
+  NGN: { min: 10_000, max: 1_000_000_000 },
+  USD: { min: 100, max: 1_000_000 },
+};
 
 /** Price after a percentage discount, rounded to whole naira/dollars, never below the minimum charge unless free. */
 export function discounted(list: number, percentOff: number, currency: Currency): { amount: number; discount: number } {

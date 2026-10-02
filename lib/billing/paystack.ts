@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 import { serverEnv } from "@/lib/env";
-import { priceOf, type Currency } from "@/lib/billing/prices";
+import type { Currency } from "@/lib/billing/prices";
 import type { PaymentProduct } from "@/lib/supabase/database.types";
 
 /** Minimal Paystack API client (https://paystack.com/docs/api). Server-only. */
@@ -68,13 +68,16 @@ const cachedPlanCodes = new Map<string, string>();
 const PLAN_NAMES = { pro_monthly: "RaiseReady Pro", pro_plus_monthly: "RaiseReady Pro Plus" } as const;
 export type SubscriptionProduct = keyof typeof PLAN_NAMES & PaymentProduct;
 
-/** The Paystack plan for Pro or Pro Plus in this currency, found by name and price or created on first use. */
-export async function ensurePlan(product: SubscriptionProduct, currency: Currency = "NGN"): Promise<string> {
-  const key = `${product}:${currency}`;
+/**
+ * The Paystack plan for Pro or Pro Plus at this price, found by name and
+ * amount or created on first use. A new price makes a new plan; existing
+ * subscribers stay on the plan (and price) they signed up to.
+ */
+export async function ensurePlan(product: SubscriptionProduct, currency: Currency, amount: number): Promise<string> {
+  const key = `${product}:${currency}:${amount}`;
   const cached = cachedPlanCodes.get(key);
   if (cached) return cached;
   const name = currency === "NGN" ? PLAN_NAMES[product] : `${PLAN_NAMES[product]} (${currency})`;
-  const amount = priceOf(product, currency);
   const plans = await call<{ plan_code: string; name: string; amount: number; interval: string; currency: string; is_deleted?: boolean }[]>(
     "GET",
     `/plan?perPage=100&interval=monthly&amount=${amount}`,

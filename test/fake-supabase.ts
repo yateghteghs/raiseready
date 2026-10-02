@@ -1,7 +1,7 @@
 /**
  * In-memory stand-in for the subset of the Supabase query builder our services
  * use, for unit tests. Supports select/insert/update/delete with eq, in, is,
- * gte, order, limit, single/maybeSingle, head counts and unique turn indexes.
+ * gte, order, limit, single/maybeSingle, upsert, head counts and unique turn indexes.
  */
 type Row = Record<string, unknown>;
 
@@ -14,7 +14,9 @@ export function createFakeDb() {
     let order: { col: string; asc: boolean } | null = null;
     let limitN: number | null = null;
     let head = false;
-    let mode: "select" | "insert" | "update" | "delete" = "select";
+    let mode: "select" | "insert" | "update" | "delete" | "upsert" = "select";
+    let conflict: string[] = [];
+    let ignoreDuplicates = false;
     let payload: Row | Row[] | null = null;
     let affected: Row[] = [];
     let failure: { message: string; code?: string } | null = null;
@@ -58,6 +60,19 @@ export function createFakeDb() {
           (tables[table] ??= []).push(full);
           affected.push(full);
         }
+      } else if (mode === "upsert") {
+        // Insert, or update the row with the same conflict columns.
+        affected = [];
+        for (const row of (Array.isArray(payload) ? payload : [payload]) as Row[]) {
+          const existing = (tables[table] ?? []).find((r) => conflict.every((c) => r[c] === row[c]));
+          if (existing) {
+            if (!ignoreDuplicates) Object.assign(existing, row);
+            affected.push(existing);
+          } else {
+            (tables[table] ??= []).push({ ...row });
+            affected.push(row);
+          }
+        }
       } else if (mode === "update") {
         affected = matching();
         for (const r of affected) Object.assign(r, payload);
@@ -83,6 +98,13 @@ export function createFakeDb() {
       insert(rows: Row | Row[]) {
         mode = "insert";
         payload = rows;
+        return builder;
+      },
+      upsert(rows: Row | Row[], opts?: { onConflict?: string; ignoreDuplicates?: boolean }) {
+        mode = "upsert";
+        payload = rows;
+        conflict = (opts?.onConflict ?? "id").split(",").map((c) => c.trim());
+        ignoreDuplicates = Boolean(opts?.ignoreDuplicates);
         return builder;
       },
       update(values: Row) {

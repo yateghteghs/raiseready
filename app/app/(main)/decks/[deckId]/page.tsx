@@ -12,6 +12,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { deckUnlockAccess, rewriteAccess, rewriteLimit } from "@/lib/billing/entitlements";
 import { DECK_BUILDER } from "@/lib/billing/plans";
 import { load } from "@/lib/data-errors";
+import { getPrices } from "@/lib/billing/price-settings";
 import { deckContent, getDeckUsage, visibleSlideCount } from "@/lib/decks/service";
 import { formatMoney, koboToNaira } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
@@ -30,11 +31,12 @@ export default async function DeckPage({ params }: PageProps<"/app/decks/[deckId
     const supabase = await createClient();
     const { data: deck } = await supabase.from("pitch_decks").select("*").eq("id", deckId).maybeSingle();
     if (!deck) return null;
-    return { deck, usage: await getDeckUsage(user.id) };
+    const [usage, prices] = await Promise.all([getDeckUsage(user.id), getPrices()]);
+    return { deck, usage, prices };
   });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) notFound();
-  const { deck, usage } = loaded.data;
+  const { deck, usage, prices } = loaded.data;
   const content = deckContent(deck);
 
   const back = (
@@ -105,7 +107,7 @@ export default async function DeckPage({ params }: PageProps<"/app/decks/[deckId
             <div className="grid justify-items-start gap-2 text-sm">
               <p>
                 Unlock every slide, AI rewrites and the PowerPoint and PDF downloads: buy this deck for{" "}
-                {formatMoney(koboToNaira(DECK_BUILDER.priceKobo))}, or get {DECK_BUILDER.proDecksPerMonth} decks a month with Pro.
+                {formatMoney(koboToNaira(prices.NGN.deck_builder))}, or get {DECK_BUILDER.proDecksPerMonth} decks a month with Pro.
                 Your deck won&apos;t be written again; it unlocks as it is.
               </p>
               <Button asChild size="sm">

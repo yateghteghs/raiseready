@@ -44,7 +44,12 @@ milestone at a time (spec section 11) and stop for review after each.
   `applyChargeSuccess` is idempotent so the return-page verification and the
   webhook can both run. Credits change only via the `add_credits` /
   `consume_credit` SQL functions.
-- Prices per currency and discount maths: `lib/billing/prices.ts`. Referral
+- Prices: defaults and discount maths in `lib/billing/prices.ts`; the live
+  prices come from `getPrices()` (`lib/billing/price-settings.ts`, table
+  `price_settings`, edited by super admins under Admin → Prices). Always pass
+  them in (`priceOf(product, currency, prices)`); never read the defaults
+  for a real price. Paystack plans are found by name and amount, so a new
+  price makes a new plan and existing subscribers keep theirs. Referral
   programme values are super-admin settings (`referral_settings`, read via
   `getReferralSettings`, defaults in `DEFAULT_REFERRAL`). Inviter credits stay
   `locked` until the inviter's own spend reaches the minimum (`unlockProgress`);
@@ -62,8 +67,8 @@ milestone at a time (spec section 11) and stop for review after each.
 - Account status (active/suspended/terminated) is enforced in `getSession`
   (`lib/auth/session.ts`) on every request, plus a Supabase Auth ban.
 - Notifications: `lib/notifications` (staff → one founder or everyone; RLS
-  lets founders read only theirs and broadcasts; read receipts are written
-  by the server). Links must stay inside `/app`.
+  lets founders read only theirs and broadcasts, and only `active` ones;
+  staff can turn a message off; read receipts are written by the server). Links must stay inside `/app`.
 - Website showcase (`lib/showcase`, public `showcase` bucket) and report
   signature (`lib/reports/signature.ts`) are super-admin content; editing
   revalidates the public pages.

@@ -21,6 +21,7 @@ import {
   priceOf,
   type Currency,
 } from "@/lib/billing/prices";
+import { getPrices } from "@/lib/billing/price-settings";
 import { getReferralSettings } from "@/lib/billing/referral-settings";
 import { hasUnlockedReferralCredits, releaseLockedRewards } from "@/lib/referrals/rewards";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -151,7 +152,7 @@ async function hasPaid(userId: string): Promise<boolean> {
  */
 export async function quote(userId: string, product: PaymentProduct, currency: Currency, typedCode?: string | null): Promise<PriceQuote> {
   if (!availableCurrencies().includes(currency)) throw new BillingError("Payments in that currency aren't available yet.");
-  const list = priceOf(product, currency);
+  const list = priceOf(product, currency, await getPrices());
   const admin = createAdminClient();
 
   let best: { percent: number; source: PriceQuote["source"] } = { percent: 0, source: null };
@@ -235,7 +236,7 @@ export async function startCheckout(
     return "/app/billing?payment=success";
   }
 
-  const planCode = plan && q.discount === 0 ? await ensurePlan(PLAN_PRODUCTS[plan] as "pro_monthly" | "pro_plus_monthly", currency) : undefined;
+  const planCode = plan && q.discount === 0 ? await ensurePlan(PLAN_PRODUCTS[plan] as "pro_monthly" | "pro_plus_monthly", currency, q.list) : undefined;
   const tx = await initializeTransaction({
     email: user.email,
     amountKobo: q.amount,
@@ -357,7 +358,8 @@ async function startRenewalAfterDiscount(
     return false;
   }
   try {
-    const planCode = await ensurePlan(PLAN_PRODUCTS[plan] as "pro_monthly" | "pro_plus_monthly", currency);
+    const product = PLAN_PRODUCTS[plan] as "pro_monthly" | "pro_plus_monthly";
+    const planCode = await ensurePlan(product, currency, priceOf(product, currency, await getPrices()));
     await createSubscription({ customerCode, planCode, authorizationCode, startDate });
     return true;
   } catch (error) {
@@ -425,7 +427,8 @@ async function applyRenewal(tx: PaystackTransaction, raw: unknown): Promise<bool
   // Which plan renewed: the founder's current subscription, or the price paid.
   const existing = await getSubscription(profile.id);
   const plan: PaidPlan =
-    existing?.plan ?? (isCurrency(tx.currency) && tx.amount === priceOf("pro_plus_monthly", tx.currency) ? "pro_plus" : "pro");
+    existing?.plan ??
+    (isCurrency(tx.currency) && tx.amount === priceOf("pro_plus_monthly", tx.currency, await getPrices()) ? "pro_plus" : "pro");
 
   const { error } = await admin.from("payments").insert({
     user_id: profile.id,

@@ -1,10 +1,9 @@
 /**
  * Plans, prices and limits (spec section 7). The single source of truth for
  * both the pricing page and server-side limit enforcement.
- * Amounts are in kobo (1/100 Naira), as Paystack expects.
+ * Prices are in lib/billing/prices.ts and can be changed by super admins.
  */
 
-import { PRICES } from "@/lib/billing/prices";
 import type { Difficulty, PaidPlan, PaymentProduct, Persona } from "@/lib/supabase/database.types";
 
 export const CURRENCY = "NGN";
@@ -25,7 +24,6 @@ export const PRO_PLAN = {
   id: "pro",
   name: "Pro",
   product: "pro_monthly" as PaymentProduct,
-  priceKobo: PRICES.NGN.pro_monthly,
   interval: "month",
   assessments: Infinity,
   simulationsPerMonth: 30,
@@ -44,7 +42,6 @@ export const PRO_PLUS_PLAN = {
   id: "pro_plus",
   name: "Pro Plus",
   product: "pro_plus_monthly" as PaymentProduct,
-  priceKobo: PRICES.NGN.pro_plus_monthly,
   interval: "month",
   simulationsPerMonth: 100,
 } as const;
@@ -65,8 +62,8 @@ export function planOfProduct(product: PaymentProduct): PaidPlan | null {
 export const TEAMS_PLAN = { name: "Teams", memberPlan: "pro_plus" as PaidPlan } as const;
 
 export const CREDIT_PACKS = [
-  { product: "credits_3" as PaymentProduct, name: "3 simulations", priceKobo: PRICES.NGN.credits_3, simulations: 3 },
-  { product: "credits_10" as PaymentProduct, name: "10 simulations", priceKobo: PRICES.NGN.credits_10, simulations: 10 },
+  { product: "credits_3" as PaymentProduct, name: "3 simulations", simulations: 3 },
+  { product: "credits_10" as PaymentProduct, name: "10 simulations", simulations: 10 },
 ] as const;
 
 /**
@@ -77,7 +74,6 @@ export const CREDIT_PACKS = [
 export const DECK_BUILDER = {
   product: "deck_builder" as PaymentProduct,
   name: "Pitch deck",
-  priceKobo: PRICES.NGN.deck_builder,
   /** Pro's allowances; Pro Plus has more (PLAN_LIMITS). */
   proDecksPerMonth: 3,
   /** AI rewrites of single slides. Typing changes yourself is always free. */

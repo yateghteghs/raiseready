@@ -18,6 +18,8 @@ export async function inbox(userId: string, joinedAt: string, limit = 50): Promi
     supabase
       .from("notifications")
       .select("id, user_id, title, body, link, created_at")
+      // RLS hides turned-off messages too; this keeps the intent visible here.
+      .eq("active", true)
       .order("created_at", { ascending: false })
       .limit(limit),
     supabase.from("notification_reads").select("notification_id").eq("user_id", userId),
@@ -90,11 +92,25 @@ export async function userIdForEmail(email: string): Promise<string | null> {
 export async function recentlySent(limit = 30) {
   const { data, error } = await createAdminClient()
     .from("notifications")
-    .select("id, user_id, title, body, link, created_by, created_at")
+    .select("id, user_id, title, body, link, created_by, created_at, active")
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw new Error(`Could not load notifications: ${error.message}`);
   return data ?? [];
+}
+
+/** Hides a sent message from founders, or shows it again. */
+export async function setNotificationActive(staff: Staff, id: string, active: boolean): Promise<void> {
+  const admin = createAdminClient();
+  const { error } = await admin.from("notifications").update({ active }).eq("id", id);
+  if (error) throw new Error(`Could not update notification: ${error.message}`);
+  await admin.from("audit_logs").insert({
+    actor_id: staff.id,
+    action: active ? "admin.notification_turned_on" : "admin.notification_turned_off",
+    target_type: "notification",
+    target_id: id,
+    metadata: {},
+  });
 }
 
 /** Deletes a sent message (e.g. one sent by mistake). */
