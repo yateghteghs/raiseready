@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { AppFooter } from "@/components/app/app-footer";
+import { AppNav } from "@/components/app/app-nav";
 import { Button } from "@/components/ui/button";
 import { requireStaff } from "@/lib/admin/auth";
 import { can, roleLabel, type StaffAction } from "@/lib/admin/permissions";
@@ -52,13 +53,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
             </form>
           </div>
         </div>
-        <nav aria-label="Admin" className="mx-auto flex max-w-6xl gap-5 overflow-x-auto px-4 pb-3 text-sm sm:px-6">
-          {NAV.filter((n) => can(staff.profile.role, n.needs)).map((n) => (
-            <Link key={n.href} href={n.href} className="text-muted-foreground hover:text-foreground shrink-0">
-              {n.label}
-            </Link>
-          ))}
-        </nav>
+        <AppNav label="Admin" home="/admin" nav={NAV.filter((n) => can(staff.profile.role, n.needs)).map(({ href, label }) => ({ href, label }))} />
       </header>
       <main className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-1 content-start gap-8 px-4 py-8 sm:px-6">{children}</main>
       <AppFooter />

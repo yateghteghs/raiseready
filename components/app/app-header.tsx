@@ -1,23 +1,10 @@
-import { BellIcon, UserIcon } from "lucide-react";
+import { BellIcon, LogOutIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 
+import { AppNav, type NavItem } from "@/components/app/app-nav";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/lib/auth/actions";
 import { Logo } from "@/components/brand/logo";
-
-type NavItem = { href: string; label: string };
-
-function NavLinks({ nav }: { nav: NavItem[] }) {
-  return nav.map((item) => (
-    <Link
-      key={item.href}
-      href={item.href}
-      className="text-muted-foreground hover:text-foreground shrink-0 transition-colors"
-    >
-      {item.label}
-    </Link>
-  ));
-}
 
 export function AppHeader({
   email,
@@ -34,28 +21,21 @@ export function AppHeader({
 }) {
   return (
     <header className="border-b">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <div className="flex min-w-0 items-center gap-6">
-          <Link href="/app" aria-label="RaiseReady dashboard" className="shrink-0">
-            <Logo className="h-8 sm:h-9" />
-          </Link>
-          {nav ? (
-            <nav aria-label="App" className="hidden items-center gap-4 text-sm lg:flex">
-              <NavLinks nav={nav} />
-            </nav>
-          ) : null}
-        </div>
-        <div className="flex items-center gap-3">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6">
+        <Link href="/app" aria-label="RaiseReady dashboard" className="shrink-0">
+          <Logo className="h-6 min-[400px]:h-7 sm:h-9" />
+        </Link>
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           {admin ? (
             <Link href="/admin" className="text-muted-foreground hover:text-foreground text-sm">
               Admin
             </Link>
           ) : null}
-          <Link href="/" className="text-muted-foreground hover:text-foreground text-sm">
+          <Link href="/" className="text-muted-foreground hover:text-foreground hidden text-sm sm:inline">
             Website
           </Link>
           {email ? (
-            <span className="text-muted-foreground hidden max-w-48 truncate text-sm 2xl:inline">{email}</span>
+            <span className="text-muted-foreground hidden max-w-48 truncate text-sm xl:inline">{email}</span>
           ) : null}
           {nav ? (
             <Link
@@ -86,17 +66,14 @@ export function AppHeader({
             </Link>
           ) : null}
           <form action={logout}>
-            <Button type="submit" variant="outline" size="sm">
-              Log out
+            <Button type="submit" variant="outline" size="sm" aria-label="Log out">
+              <LogOutIcon aria-hidden="true" className="size-4 sm:hidden" />
+              <span className="hidden sm:inline">Log out</span>
             </Button>
           </form>
         </div>
       </div>
-      {nav ? (
-        <nav aria-label="App (mobile)" className="flex gap-5 overflow-x-auto border-t px-4 py-3 text-sm lg:hidden">
-          <NavLinks nav={nav} />
-        </nav>
-      ) : null}
+      {nav ? <AppNav nav={nav} /> : null}
     </header>
   );
 }
