@@ -153,6 +153,24 @@ select rls_test.throws(
 
 insert into public.report_signature (id, signer_name, enabled) values (1, 'Signer', true);
 
+insert into public.sign_in_events (user_id, email_hash, succeeded, surface) values
+  ('aaaaaaaa-0000-4000-8000-000000000001', 'hash-a', true, 'app'),
+  ('bbbbbbbb-0000-4000-8000-000000000002', 'hash-b', true, 'app'),
+  (null, 'hash-a', false, 'admin');
+insert into public.sign_in_events (user_id, email_hash, succeeded, surface, created_at) values
+  ('aaaaaaaa-0000-4000-8000-000000000001', 'hash-a', true, 'app', now() - interval '91 days');
+insert into public.user_activity_days (user_id, day) values
+  ('aaaaaaaa-0000-4000-8000-000000000001', current_date),
+  ('aaaaaaaa-0000-4000-8000-000000000001', current_date - 100);
+insert into public.app_errors (source, digest, message) values ('server', '123', 'boom');
+select rls_test.throws(
+  $$insert into public.sign_in_events (email_hash, succeeded, surface) values ('x', true, 'elsewhere')$$,
+  '23514', 'sign-in surface must be app or admin');
+select public.prune_activity();
+select rls_test.ok(
+  (select count(*) from public.sign_in_events) = 3 and (select count(*) from public.user_activity_days) = 1,
+  'prune_activity deletes records older than 90 days');
+
 insert into storage.objects (bucket_id, name) values
   ('documents', 'aaaaaaaa-0000-4000-8000-000000000001/aaaaaaaa-1111-4000-8000-000000000001/deck.pdf'),
   ('documents', 'bbbbbbbb-0000-4000-8000-000000000002/bbbbbbbb-1111-4000-8000-000000000002/deck.pdf'),
@@ -188,6 +206,9 @@ select rls_test.ok(
   'anon sees only published showcase items');
 select rls_test.throws('select * from public.notifications', '42501', 'anon cannot read notifications');
 select rls_test.throws('select * from public.report_signature', '42501', 'anon cannot read the report signature');
+select rls_test.throws('select * from public.sign_in_events', '42501', 'anon cannot read sign-in history');
+select rls_test.throws('select * from public.app_errors', '42501', 'anon cannot read the error log');
+select rls_test.throws('select public.prune_activity()', '42501', 'anon cannot prune activity');
 select rls_test.throws(
   $$insert into public.showcase_items (kind, name) values ('logo', 'Spam')$$,
   '42501', 'anon cannot add showcase items');
@@ -374,6 +395,15 @@ select rls_test.throws(
   $$update public.showcase_items set published = true$$,
   '42501', 'A cannot edit the showcase');
 select rls_test.throws('select * from public.report_signature', '42501', 'A cannot read the report signature');
+select rls_test.throws('select * from public.sign_in_events', '42501', 'A cannot read sign-in history, even their own');
+select rls_test.throws('select * from public.user_activity_days', '42501', 'A cannot read activity records');
+select rls_test.throws(
+  $$insert into public.user_activity_days (user_id, day) values ('aaaaaaaa-0000-4000-8000-000000000001', current_date + 1)$$,
+  '42501', 'A cannot write activity records');
+select rls_test.throws('select * from public.app_errors', '42501', 'A cannot read the error log');
+select rls_test.throws(
+  $$update public.profiles set last_seen_at = now() where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
+  '42501', 'A cannot set last_seen_at (server does)');
 
 -- storage
 select rls_test.ok(

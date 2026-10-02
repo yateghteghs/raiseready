@@ -52,6 +52,7 @@ type ProfileRow = Timestamps & {
   status_reason: string | null;
   status_changed_at: string | null;
   avatar_path: string | null;
+  last_seen_at: string | null;
 };
 
 type StartupRow = Timestamps & {
@@ -240,6 +241,38 @@ type ReportSignatureRow = Timestamps & {
   updated_by: string | null;
 };
 
+type SignInEventRow = {
+  id: string;
+  user_id: string | null;
+  email_hash: string;
+  succeeded: boolean;
+  surface: "app" | "admin";
+  failure_code: string | null;
+  device: string | null;
+  created_at: string;
+};
+
+type UserActivityDayRow = { user_id: string; day: string };
+
+type AppErrorRow = {
+  id: string;
+  source: "server" | "browser";
+  digest: string | null;
+  message: string;
+  path: string | null;
+  route_type: string | null;
+  user_id: string | null;
+  created_at: string;
+};
+
+/** Insert/Update for tables without updated_at. */
+type PlainTable<Row, Optional extends keyof Row> = {
+  Row: Row;
+  Insert: Omit<Row, Optional> & Partial<Pick<Row, Optional>>;
+  Update: Partial<Row>;
+  Relationships: [];
+};
+
 type Table<Row, Optional extends keyof Row> = {
   Row: Row;
   Insert: InsertOf<Row, Optional>;
@@ -263,6 +296,7 @@ export type Database = {
         | "status_reason"
         | "status_changed_at"
         | "avatar_path"
+        | "last_seen_at"
       >;
       startups: Table<
         StartupRow,
@@ -327,12 +361,16 @@ export type Database = {
         ShowcaseItemRow,
         "id" | "quote" | "person_name" | "person_title" | "url" | "image_path" | "permission_confirmed" | "published" | "position" | "created_by"
       >;
+      sign_in_events: PlainTable<SignInEventRow, "id" | "user_id" | "failure_code" | "device" | "created_at">;
+      user_activity_days: PlainTable<UserActivityDayRow, never>;
+      app_errors: PlainTable<AppErrorRow, "id" | "digest" | "path" | "route_type" | "user_id" | "created_at">;
       report_signature: Table<ReportSignatureRow, "id" | "signer_name" | "signer_title" | "signature_path" | "enabled" | "updated_by">;
     };
     Views: { [_ in never]: never };
     Functions: {
       add_credits: { Args: { p_user_id: string; p_amount: number }; Returns: number | null };
       consume_credit: { Args: { p_user_id: string }; Returns: number | null };
+      prune_activity: { Args: Record<string, never>; Returns: undefined };
     };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
