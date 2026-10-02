@@ -19,7 +19,6 @@ export const fr: Messages = {
     faq: "FAQ",
   },
   footer: {
-    poweredBy: "Propulsé par",
     productOf: "RaiseReady est un produit de {company}, entreprise enregistrée au Nigeria ({registration}).",
     product: "Produit",
     company: "Entreprise",

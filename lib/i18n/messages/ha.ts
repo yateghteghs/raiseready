@@ -20,7 +20,6 @@ export const ha: Messages = {
     faq: "Tambayoyi",
   },
   footer: {
-    poweredBy: "Daga",
     productOf: "RaiseReady samfuri ne na {company}, kasuwancin da aka yi wa rajista a Najeriya ({registration}).",
     product: "Samfuri",
     company: "Kamfani",

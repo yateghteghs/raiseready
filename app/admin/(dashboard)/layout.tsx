@@ -32,7 +32,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
       <header className="border-b">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <Link href="/admin" aria-label="RaiseReady admin overview" className="inline-flex shrink-0 items-center gap-2">
-            <Logo className="h-6" />
+            <Logo className="h-8" />
             <span className="bg-primary text-primary-foreground rounded px-1.5 py-0.5 text-xs font-semibold">Admin</span>
           </Link>
           <div className="flex items-center gap-3 text-sm">

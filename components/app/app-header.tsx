@@ -37,7 +37,7 @@ export function AppHeader({
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-6">
           <Link href="/app" aria-label="RaiseReady dashboard" className="shrink-0">
-            <Logo className="h-6 sm:h-7" />
+            <Logo className="h-8 sm:h-9" />
           </Link>
           {nav ? (
             <nav aria-label="App" className="hidden items-center gap-4 text-sm lg:flex">

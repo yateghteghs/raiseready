@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { PoweredBy } from "@/components/brand/powered-by";
 import { SITE } from "@/lib/site";
 
 const LINKS = [
@@ -18,7 +17,6 @@ export function AppFooter() {
     <footer className="mt-auto border-t">
       <div className="text-muted-foreground mx-auto flex max-w-5xl flex-col gap-3 px-4 py-6 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div className="grid gap-1">
-          <PoweredBy />
           <p className="text-xs">
             &copy; {new Date().getFullYear()} {SITE.company.name} ({SITE.company.registration}). {SITE.name} is a product of{" "}
             {SITE.company.name}.

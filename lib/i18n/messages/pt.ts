@@ -19,7 +19,6 @@ export const pt: Messages = {
     faq: "Perguntas frequentes",
   },
   footer: {
-    poweredBy: "Desenvolvido por",
     productOf: "O RaiseReady é um produto da {company}, empresa registada na Nigéria ({registration}).",
     product: "Produto",
     company: "Empresa",

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 /** Everything a signed-out visitor can reach. Runs without accounts or keys. */
 
@@ -55,14 +55,21 @@ for (const locale of ["ar", "yo"]) {
   }
 }
 
+/** The header's language menu; on phones it sits inside the menu button. */
+async function pickLanguage(page: Page, locale: string) {
+  const inHeader = page.locator("header select[name=locale]").first();
+  if (!(await inHeader.isVisible())) await page.getByRole("banner").locator("summary").click();
+  await page.locator("header select[name=locale]:visible").selectOption(locale);
+}
+
 test("visitors can switch language, and untranslated pages stay in English", async ({ page }) => {
   await page.goto("/");
-  await page.locator("footer select[name=locale]").selectOption("fr");
+  await pickLanguage(page, "fr");
   await expect(page.locator("html")).toHaveAttribute("lang", "fr");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Entraînez-vous d'abord avec l'IA/);
   await page.goto("/privacy");
   await expect(page.locator("article")).toHaveAttribute("lang", "en");
-  await page.locator("footer select[name=locale]").selectOption("en");
+  await pickLanguage(page, "en");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 });
 

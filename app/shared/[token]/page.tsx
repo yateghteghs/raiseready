@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { PoweredBy } from "@/components/brand/powered-by";
 import { Logo } from "@/components/brand/logo";
 import { ReportView } from "@/components/reports/report-view";
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,6 @@ export default async function SharedReportPage({ params }: PageProps<"/shared/[t
           investment advice or an endorsement.
         </p>
         <ReportView content={shared.content} logoUrl={shared.logoUrl} />
-        <PoweredBy className="justify-self-center pt-4" />
       </main>
     </div>
   );

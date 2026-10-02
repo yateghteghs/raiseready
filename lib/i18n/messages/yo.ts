@@ -20,7 +20,6 @@ export const yo: Messages = {
     faq: "Àwọn ìbéèrè",
   },
   footer: {
-    poweredBy: "Láti ọwọ́",
     productOf: "RaiseReady jẹ́ ọjà {company}, iṣẹ́ òwò tí a forúkọ rẹ̀ sílẹ̀ ní Nàìjíríà ({registration}).",
     product: "Ọjà",
     company: "Ilé-iṣẹ́",
