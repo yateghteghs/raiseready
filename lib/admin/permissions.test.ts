@@ -55,6 +55,9 @@ describe("staff permissions", () => {
     expect(can("super_admin", "manage_content")).toBe(true);
     expect(can("admin", "manage_content")).toBe(false);
     expect(can("admin", "notify")).toBe(true);
+    expect(can("admin", "export")).toBe(true);
+    expect(can("support", "export")).toBe(false);
+    expect(can("viewer", "export")).toBe(false);
   });
 
   it("lets only super admins manage admins", () => {

@@ -20,9 +20,10 @@ export type StaffAction =
   | "notify"
   | "reset_password"
   | "grant_credits"
-  | "manage_content";
+  | "manage_content"
+  | "export";
 
-const ADMIN_ACTIONS: StaffAction[] = ["view", "suspend", "terminate", "delete", "change_role", "notify"];
+const ADMIN_ACTIONS: StaffAction[] = ["view", "suspend", "terminate", "delete", "change_role", "notify", "export"];
 
 const PERMISSIONS: Record<UserRole, readonly StaffAction[]> = {
   founder: [],

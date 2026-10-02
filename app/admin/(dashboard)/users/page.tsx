@@ -1,27 +1,30 @@
 import Link from "next/link";
 
+import { ExportButton } from "@/components/admin/export-button";
+import { Pager, pageParam } from "@/components/admin/pager";
 import { adminDate, PageTitle, Table } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { requireStaff } from "@/lib/admin/auth";
-import { usersList } from "@/lib/admin/data";
-import { roleLabel, STATUS_LABELS } from "@/lib/admin/permissions";
+import { PAGE_SIZE, usersList } from "@/lib/admin/data";
+import { can, roleLabel, STATUS_LABELS } from "@/lib/admin/permissions";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Users" };
 
 export default async function AdminUsers({ searchParams }: PageProps<"/admin/users">) {
-  await requireStaff("view", "/admin/users");
+  const staff = await requireStaff("view", "/admin/users");
   const params = await searchParams;
-  const q = typeof params.q === "string" ? params.q.trim().toLowerCase().slice(0, 100) : "";
-  const all = await usersList();
-  const users = q
-    ? all.filter((u) => [u.email, u.full_name, u.startup?.name].some((v) => v?.toLowerCase().includes(q)))
-    : all;
+  const q = typeof params.q === "string" ? params.q.trim().slice(0, 100) : "";
+  const page = pageParam(params.page);
+  const { rows: users, total } = await usersList({ page }, q);
 
   return (
     <>
-      <PageTitle title="Users" description="The 500 most recent sign-ups. Open a user to suspend, terminate, delete or change their role." />
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <PageTitle title="Users" description="Newest first. Open a user to see their activity and manage their account." />
+        {can(staff.profile.role, "export") ? <ExportButton kind="users" /> : null}
+      </div>
       {params.deleted === "1" ? (
         <p role="status" className="border-primary/30 bg-accent rounded-xl border p-4 text-sm">
           The account and its data have been deleted.
@@ -65,6 +68,7 @@ export default async function AdminUsers({ searchParams }: PageProps<"/admin/use
           { header: "Joined", cell: (u) => adminDate.format(new Date(u.created_at)) },
         ]}
       />
+      <Pager page={page} total={total} pageSize={PAGE_SIZE} path="/admin/users" params={q ? { q } : {}} />
     </>
   );
 }

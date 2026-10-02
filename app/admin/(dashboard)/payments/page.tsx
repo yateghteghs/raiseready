@@ -1,6 +1,9 @@
+import { ExportButton } from "@/components/admin/export-button";
+import { Pager, pageParam } from "@/components/admin/pager";
 import { adminDate, num, PageTitle, Stat, StatGrid, Table } from "@/components/admin/ui";
 import { requireStaff } from "@/lib/admin/auth";
-import { paymentsList } from "@/lib/admin/data";
+import { PAGE_SIZE, paymentsList } from "@/lib/admin/data";
+import { can } from "@/lib/admin/permissions";
 import { productLabel } from "@/lib/admin/labels";
 import { formatMoney, koboToNaira } from "@/lib/format";
 
@@ -8,12 +11,16 @@ export const metadata = { title: "Payments" };
 
 const STATUS: Record<string, string> = { pending: "Pending", success: "Paid", failed: "Failed", abandoned: "Abandoned", reversed: "Reversed" };
 
-export default async function AdminPayments() {
-  await requireStaff();
-  const { rows, summary } = await paymentsList();
+export default async function AdminPayments({ searchParams }: PageProps<"/admin/payments">) {
+  const staff = await requireStaff("view", "/admin/payments");
+  const page = pageParam((await searchParams).page);
+  const { rows, total, summary } = await paymentsList({ page });
   return (
     <>
-      <PageTitle title="Payments" description="Successful Paystack payments count towards revenue. Showing the 500 most recent." />
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <PageTitle title="Payments" description="Successful Paystack payments count towards revenue. Newest first." />
+        {can(staff.profile.role, "export") ? <ExportButton kind="payments" /> : null}
+      </div>
       <StatGrid>
         <Stat label="This month" value={formatMoney(koboToNaira(summary.thisMonthKobo))} />
         <Stat label="All time" value={formatMoney(koboToNaira(summary.allTimeKobo))} />
@@ -34,6 +41,7 @@ export default async function AdminPayments() {
           { header: "Reference", cell: (p) => <code className="text-xs">{p.reference}</code> },
         ]}
       />
+      <Pager page={page} total={total} pageSize={PAGE_SIZE} path="/admin/payments" />
     </>
   );
 }

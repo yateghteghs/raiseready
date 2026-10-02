@@ -97,35 +97,85 @@ export async function overviewMetrics() {
   };
 }
 
-export async function usersList() {
-  const admin = createAdminClient();
-  const [profiles, startups, emails] = await Promise.all([
-    admin.from("profiles").select("*").order("created_at", { ascending: false }).limit(500),
-    admin.from("startups").select("owner_id, name, stage, country").limit(MAX_ROWS),
-    emailsById(),
-  ]);
-  const startupOf = new Map(rowsOf(startups, "startups").map((s) => [s.owner_id, s]));
-  return rowsOf(profiles, "users").map((p) => ({ ...p, email: emails.get(p.id) ?? "", startup: startupOf.get(p.id) ?? null }));
+/** Rows per admin list page, and the most rows a CSV export holds. */
+export const PAGE_SIZE = 50;
+const EXPORT_MAX = 20_000;
+
+export type Paging = { page: number } | { all: true };
+
+function rangeOf(paging: Paging): [number, number] {
+  if ("all" in paging) return [0, EXPORT_MAX - 1];
+  const from = (Math.max(1, paging.page) - 1) * PAGE_SIZE;
+  return [from, from + PAGE_SIZE - 1];
 }
 
-export async function simulationsList() {
+/** Users, newest first, with their email and startup. `q` searches email, name and startup name. */
+export async function usersList(paging: Paging, q = "") {
   const admin = createAdminClient();
-  const [sims, startups] = await Promise.all([
-    admin.from("simulations").select("id, startup_id, persona, difficulty, mode, status, overall_score, investor_confidence, funded_by, started_at, ended_at").order("started_at", { ascending: false }).limit(200),
-    admin.from("startups").select("id, name").limit(MAX_ROWS),
-  ]);
-  const name = new Map(rowsOf(startups, "startups").map((s) => [s.id, s.name]));
-  return rowsOf(sims, "simulations").map((s) => ({ ...s, startup: name.get(s.startup_id) ?? "Deleted" }));
+  const emails = await emailsById();
+  const term = q.trim().toLowerCase().slice(0, 100);
+
+  let ids: string[] | null = null;
+  if (term) {
+    const like = `%${term.replace(/[%_\\,()]/g, "")}%`;
+    const [byName, byStartup] = await Promise.all([
+      admin.from("profiles").select("id").ilike("full_name", like).limit(500),
+      admin.from("startups").select("owner_id").ilike("name", like).limit(500),
+    ]);
+    const matches = new Set<string>([
+      ...[...emails.entries()].filter(([, e]) => e.toLowerCase().includes(term)).map(([id]) => id),
+      ...rowsOf(byName, "users").map((r) => r.id),
+      ...rowsOf(byStartup, "startups").map((r) => r.owner_id),
+    ]);
+    ids = [...matches].slice(0, 500);
+    if (!ids.length) return { rows: [], total: 0 };
+  }
+
+  const [from, to] = rangeOf(paging);
+  let query = admin.from("profiles").select("*", { count: "exact" }).order("created_at", { ascending: false }).range(from, to);
+  if (ids) query = query.in("id", ids);
+  const profiles = await query;
+  const rows = rowsOf(profiles, "users");
+  const startups = rows.length
+    ? rowsOf(await admin.from("startups").select("owner_id, name, stage, country").in("owner_id", rows.map((r) => r.id)), "startups")
+    : [];
+  const startupOf = new Map(startups.map((s) => [s.owner_id, s]));
+  return {
+    rows: rows.map((p) => ({ ...p, email: emails.get(p.id) ?? "", startup: startupOf.get(p.id) ?? null })),
+    total: profiles.count ?? rows.length,
+  };
 }
 
-export async function paymentsList() {
+export async function simulationsList(paging: Paging) {
   const admin = createAdminClient();
-  const [payments, emails] = await Promise.all([
-    admin.from("payments").select("id, user_id, reference, amount_kobo, currency, product, status, created_at").order("created_at", { ascending: false }).limit(500),
+  const [from, to] = rangeOf(paging);
+  const sims = await admin
+    .from("simulations")
+    .select("id, startup_id, persona, difficulty, mode, status, overall_score, investor_confidence, funded_by, started_at, ended_at", { count: "exact" })
+    .order("started_at", { ascending: false })
+    .range(from, to);
+  const rows = rowsOf(sims, "simulations");
+  const startupIds = [...new Set(rows.map((s) => s.startup_id))];
+  const startups = startupIds.length ? rowsOf(await admin.from("startups").select("id, name").in("id", startupIds), "startups") : [];
+  const name = new Map(startups.map((s) => [s.id, s.name]));
+  return { rows: rows.map((s) => ({ ...s, startup: name.get(s.startup_id) ?? "Deleted" })), total: sims.count ?? rows.length };
+}
+
+export async function paymentsList(paging: Paging) {
+  const admin = createAdminClient();
+  const [from, to] = rangeOf(paging);
+  const [payments, all, emails] = await Promise.all([
+    admin
+      .from("payments")
+      .select("id, user_id, reference, amount_kobo, currency, product, status, created_at", { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(from, to),
+    // Totals cover every payment, not just this page.
+    admin.from("payments").select("amount_kobo, product, status, created_at").limit(EXPORT_MAX),
     emailsById(),
   ]);
   const rows = rowsOf(payments, "payments").map((p) => ({ ...p, email: emails.get(p.user_id) ?? "" }));
-  return { rows, summary: revenueSummary(rows, lagosMonthStart().toISOString()) };
+  return { rows, total: payments.count ?? rows.length, summary: revenueSummary(rowsOf(all, "payments"), lagosMonthStart().toISOString()) };
 }
 
 export async function aiUsage(days: number) {
