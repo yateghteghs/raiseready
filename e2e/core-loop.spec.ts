@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
 /**
@@ -52,6 +52,19 @@ test.afterAll(async () => {
   await client.auth.admin.deleteUser(userId);
 });
 
+/**
+ * Picks a file the way a person does: click the button, then choose the file.
+ * Retries until the page's scripts are ready, since a click before then
+ * doesn't open the file chooser.
+ */
+async function chooseFile(page: Page, button: Locator, file: string) {
+  await expect(async () => {
+    const chooser = page.waitForEvent("filechooser", { timeout: 3_000 });
+    await button.click();
+    await (await chooser).setFiles(file);
+  }).toPass({ timeout: 60_000 });
+}
+
 /** Answers that draw on the sample deck, so the investor has something real to probe. */
 const ANSWERS = [
   "We are Kolo Freight. We let small traders in Lagos book a vetted truck from Apapa port in under ten minutes at a fixed price, with live tracking. Traders wait three to five days today.",
@@ -86,7 +99,9 @@ test("a founder can go from sign-in to feedback, then delete their account", asy
     if (m.type() === "error" || m.type() === "warning") console.log(`[browser ${m.type()}] ${m.text()}`);
   });
   page.on("pageerror", (e) => console.log(`[page error] ${e.message}`));
-  page.on("requestfailed", (r) => console.log(`[request failed] ${r.method()} ${r.url().split("?")[0]} ${r.failure()?.errorText ?? ""}`));
+  page.on("response", (r) => {
+    if (r.status() >= 400) console.log(`[response ${r.status()}] ${r.request().method()} ${r.url().split("?")[0]}`);
+  });
 
   await test.step("log in", async () => {
     await page.goto("/login");
@@ -117,7 +132,7 @@ test("a founder can go from sign-in to feedback, then delete their account", asy
 
   await test.step("upload and analyse the pitch deck", async () => {
     await page.goto("/app/documents");
-    await page.locator("#upload-pitch_deck").setInputFiles(DECK);
+    await chooseFile(page, page.locator("#upload-pitch_deck + button"), DECK);
     const uploaded = page.getByText("sample-deck.pdf").first();
     const failed = page.locator("#upload-pitch_deck-error");
     await expect(uploaded.or(failed)).toBeVisible({ timeout: 60_000 });
@@ -149,7 +164,7 @@ test("a founder can go from sign-in to feedback, then delete their account", asy
 
   await test.step("add a profile picture", async () => {
     await page.goto("/app/settings");
-    await page.locator("#image-avatar").setInputFiles(AVATAR);
+    await chooseFile(page, page.getByRole("button", { name: "Upload" }), AVATAR);
     await expect(page.getByText("Profile picture saved.")).toBeVisible({ timeout: 60_000 });
     await expect(page.getByRole("img", { name: "Profile picture" })).toBeVisible();
   });
