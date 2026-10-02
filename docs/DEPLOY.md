@@ -119,9 +119,11 @@ in naira with a foreign card. To also offer dollar prices:
   and the founder can subscribe again.
 - A 100% code grants the purchase without going to Paystack.
 - Every founder has an invite link on their Billing page. Founders who join
-  with it get 10% off their first purchase; the inviter gets 2 free
-  simulation credits when that founder first pays. These amounts are in
-  `lib/billing/prices.ts`.
+  with it get a discount off their first purchase (10% to start); the inviter
+  gets free simulation credits (2 to start) when that founder first pays.
+  Super admins change both, or turn the programme off, under
+  **Admin → Discounts → Referral programme**. Changes apply to new checkouts
+  and rewards; payments already started keep their price.
 
 ## 5. Admins and staff
 
@@ -163,7 +165,7 @@ Other admin pages:
 - Each user's page shows their recent sign-ins (with failed attempts), when they were last seen and how many days they were active.
 - **Export CSV** (admin and super admin): download the Users, Simulations or Payments list. Exports contain personal data, so each download is logged; store the files securely and delete them when done.
 - **Notifications** (admin and super admin): message one founder or everyone. Messages appear under the bell in the app header.
-- **Discounts** (super admin): create and turn off discount codes; see how often each was used.
+- **Discounts** (super admin): the referral programme settings, and discount codes (create, turn off, see how often each was used).
 - **Website** (super admin): startup logos, testimonials and partners shown on the home page, `/testimonials` and `/partners`. Tick the permission box only when the company or person has agreed to appear.
 - **Report signature** (super admin): the name, title and signature image printed as "Issued by RaiseReady" at the end of new PDF reports. Founders' company logos are added to their reports automatically.
 

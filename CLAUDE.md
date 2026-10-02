@@ -44,8 +44,10 @@ milestone at a time (spec section 11) and stop for review after each.
   `applyChargeSuccess` is idempotent so the return-page verification and the
   webhook can both run. Credits change only via the `add_credits` /
   `consume_credit` SQL functions.
-- Prices per currency, discount maths and referral rewards: `lib/billing/prices.ts`
-  (USD only when `PAYSTACK_USD_ENABLED=true`). `payments.amount_kobo` is in the
+- Prices per currency and discount maths: `lib/billing/prices.ts`. Referral
+  programme values are super-admin settings (`referral_settings`, read via
+  `getReferralSettings`, defaults in `DEFAULT_REFERRAL`).
+  USD only when `PAYSTACK_USD_ENABLED=true`. `payments.amount_kobo` is in the
   currency's smallest unit; revenue is always totalled per currency. Discounted
   Pro is a one-off first month, then `createSubscription` starts the plan.
 - Report share links (`lib/reports/shares.ts`): random token in the URL, only

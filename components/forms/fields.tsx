@@ -33,7 +33,7 @@ function FieldShell({
   children,
 }: Omit<BaseProps, "errors"> & { error?: string; children: React.ReactNode }) {
   return (
-    <div className={cn("grid gap-2", className)}>
+    <div className={cn("grid content-start gap-2", className)}>
       <Label htmlFor={name}>
         {label}
         {optional ? <span className="text-muted-foreground font-normal">(optional)</span> : null}
