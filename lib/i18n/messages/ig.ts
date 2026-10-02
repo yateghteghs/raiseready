@@ -20,6 +20,8 @@ export const ig: Messages = {
     faq: "Ajụjụ",
   },
   footer: {
+    poweredBy: "Site n'aka",
+    productOf: "RaiseReady bụ ngwaahịa {company}, azụmahịa e debanyere aha ya na Naịjirịa ({registration}).",
     product: "Ngwaahịa",
     company: "Ụlọ ọrụ",
     legal: "Iwu",

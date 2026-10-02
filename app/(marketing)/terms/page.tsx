@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ContactEmail, LegalPage } from "@/components/marketing/legal-page";
+import { ContactEmail, LegalPage, Operator } from "@/components/marketing/legal-page";
 
 export const metadata: Metadata = { title: "Terms of service" };
 
@@ -9,7 +9,9 @@ export default function TermsPage() {
   return (
     <LegalPage title="Terms of service">
       <p>
-        These terms apply when you use RaiseReady. By creating an account you agree to them.
+        RaiseReady is provided by <Operator /> (&ldquo;we&rdquo;, &ldquo;us&rdquo;). These terms are an
+        agreement between you and us and apply when you use RaiseReady. By creating an account you agree
+        to them.
       </p>
 
       <h2>What RaiseReady is</h2>
@@ -50,7 +52,8 @@ export default function TermsPage() {
 
       <h2>Plans and payments</h2>
       <p>
-        Paid plans and credits are priced in Nigerian naira and processed by Paystack. Pro renews
+        Paid plans and credits are priced in Nigerian naira (or US dollars where offered) and processed
+        by Paystack. You pay Index Prima, and payments appear on your bank statement under that name. Pro renews
         monthly until you cancel; cancelling stops the next renewal. Usage limits for each plan are
         shown on the <Link href="/pricing">pricing page</Link>. Refunds are handled case by case;
         contact us if something went wrong.

@@ -90,8 +90,18 @@ https://paystack.com/docs/payments/test-payments.
 4. The Pro plan is created in Paystack automatically the first time someone
    upgrades.
 
-**Going live.** Use a Paystack business registered for RaiseReady, not one
-belonging to another company. After Paystack approves the business:
+**Going live.** RaiseReady is a product of **Index Prima** (business name,
+CAC BN 9430651), so payments go to Index Prima's Paystack business and appear
+on customers' statements as Index Prima. Before going live:
+- In Paystack, update Index Prima's business description and category to
+  cover software / online business tools, and add the RaiseReady address
+  (e.g. `https://raiseready.indexprima.com`) as a website.
+- Email Paystack support to confirm in writing that Index Prima can take
+  payments for RaiseReady.
+- Check that Index Prima's registered nature of business at CAC covers
+  technology or software services; CAC can update it if not.
+
+After Paystack approves:
 1. Replace both keys in Vercel with the live ones (`sk_live_…`, `pk_live_…`).
 2. Set the **Live Webhook URL** to the same address.
 3. Redeploy.
@@ -248,8 +258,9 @@ E2E_BASE_URL=https://<your-site> E2E_SUPABASE_URL=… E2E_SUPABASE_SERVICE_ROLE_
 - [ ] Supabase's built-in email sender allows only a few emails an hour, which
       also limits the admin "Send password reset" button. A custom SMTP
       sender (below) removes this limit.
-- [ ] Add a contact email to the privacy and terms pages (they currently say
-      "[contact email to be added]").
+- [ ] Add Index Prima's registered address and a contact email: both are
+      in `lib/site.ts` (`SITE.company.address`, `SITE.contactEmail`). The
+      legal pages show placeholders until then.
 - [ ] Custom email sender: Supabase's built-in one is rate-limited and meant
       for testing. Add your own SMTP provider under **Authentication → Emails
       → SMTP Settings**.
@@ -258,9 +269,10 @@ E2E_BASE_URL=https://<your-site> E2E_SUPABASE_URL=… E2E_SUPABASE_SERVICE_ROLE_
 - [ ] Supabase backups: the free plan doesn't include backups you can
       restore. A paid plan adds daily backups, plus optional point-in-time
       recovery, once you have real users.
-- [ ] Optional: a custom domain under **Vercel → Settings → Domains**. Then
-      update `APP_URL`, the Supabase Site URL and Redirect URLs, and the
-      Paystack webhook URL.
+- [ ] Domain `raiseready.indexprima.com`: in **Vercel → Settings → Domains**
+      add it; Vercel shows a CNAME record to add where indexprima.com's DNS
+      is managed. Then update `APP_URL`, the Supabase Site URL and Redirect
+      URLs (section 1), and the Paystack webhook URL (section 4), and redeploy.
 - [ ] Two-factor authentication on Supabase, Vercel, GitHub, Paystack and
       Anthropic.
 - [ ] `/status` shows all green on the production site.

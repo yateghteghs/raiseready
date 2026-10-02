@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { ContactEmail, LegalPage } from "@/components/marketing/legal-page";
+import { ContactEmail, LegalPage, Operator } from "@/components/marketing/legal-page";
 
 export const metadata: Metadata = { title: "Privacy policy" };
 
@@ -10,6 +10,11 @@ export default function PrivacyPage() {
       <p>
         This policy explains, in plain language, what RaiseReady stores about you, who it is shared
         with, and how to delete it. It is written with the Nigeria Data Protection Act 2023 in mind.
+      </p>
+      <p>
+        RaiseReady is a product of <Operator />. Index Prima decides how your personal data is used
+        and is responsible for it (the &ldquo;data controller&rdquo;). &ldquo;We&rdquo; and
+        &ldquo;us&rdquo; in this policy mean Index Prima.
       </p>
 
       <h2>What we store</h2>

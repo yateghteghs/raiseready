@@ -1,6 +1,6 @@
 import { SITE } from "@/lib/site";
 
-export const LAST_UPDATED = "1 October 2026";
+export const LAST_UPDATED = "2 October 2026";
 
 /** The contact address, or a visible placeholder until one is chosen. */
 export function ContactEmail() {
@@ -8,6 +8,17 @@ export function ContactEmail() {
     <a href={`mailto:${SITE.contactEmail}`}>{SITE.contactEmail}</a>
   ) : (
     <strong>[contact email to be added]</strong>
+  );
+}
+
+/** Who runs RaiseReady, as the legal pages name them. */
+export function Operator() {
+  const c = SITE.company;
+  return (
+    <>
+      <strong>{c.name}</strong>, a business name registered with the Corporate Affairs Commission of Nigeria ({c.registration}),{" "}
+      {c.address ? `of ${c.address}` : <strong>[registered address to be added]</strong>}
+    </>
   );
 }
 

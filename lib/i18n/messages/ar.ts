@@ -19,6 +19,8 @@ export const ar: Messages = {
     faq: "الأسئلة الشائعة",
   },
   footer: {
+    poweredBy: "بدعم من",
+    productOf: "RaiseReady منتج من {company}، وهي نشاط تجاري مسجّل في نيجيريا ({registration}).",
     product: "المنتج",
     company: "الشركة",
     legal: "قانوني",

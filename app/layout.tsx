@@ -24,6 +24,8 @@ export const metadata: Metadata = {
   },
   description:
     "AI-powered fundraising simulator for African founders. Get a readiness assessment, face a tough AI investor, and fix weaknesses before the real meeting.",
+  applicationName: "RaiseReady",
+  publisher: "Index Prima",
 };
 
 export const viewport: Viewport = {

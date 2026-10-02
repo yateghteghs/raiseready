@@ -19,6 +19,8 @@ export const sw: Messages = {
     faq: "Maswali",
   },
   footer: {
+    poweredBy: "Inaendeshwa na",
+    productOf: "RaiseReady ni bidhaa ya {company}, biashara iliyosajiliwa nchini Nigeria ({registration}).",
     product: "Bidhaa",
     company: "Kampuni",
     legal: "Kisheria",

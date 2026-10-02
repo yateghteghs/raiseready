@@ -1,9 +1,11 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
+import { PoweredBy } from "@/components/brand/powered-by";
 import { LanguagePicker } from "@/components/layout/language-picker";
 import { DEFAULT_LOCALE } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/server";
+import { fill } from "@/lib/i18n/text";
 import { MARKETING_NAV, SITE } from "@/lib/site";
 
 export async function SiteFooter() {
@@ -14,6 +16,7 @@ export async function SiteFooter() {
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 text-sm sm:grid-cols-[2fr_1fr_1fr_1fr] sm:px-6">
         <div className="grid content-start gap-3">
           <Logo className="h-6" priority={false} />
+          <PoweredBy label={m.footer.poweredBy} />
           <p className="text-muted-foreground max-w-xs">{m.common.tagline}</p>
           <LanguagePicker locale={locale} label={m.common.changeLanguage} className="-ms-1" />
         </div>
@@ -48,9 +51,12 @@ export async function SiteFooter() {
           {locale !== DEFAULT_LOCALE ? <p className="text-muted-foreground text-xs">{m.footer.legalInEnglish}</p> : null}
         </nav>
       </div>
-      <div className="text-muted-foreground mx-auto max-w-6xl border-t px-4 py-6 text-xs sm:px-6">
-        &copy; {new Date().getFullYear()} {SITE.name}
-        {locale !== DEFAULT_LOCALE ? <span className="ms-2">· {m.common.reviewNotice}</span> : null}
+      <div className="text-muted-foreground mx-auto grid max-w-6xl gap-1 border-t px-4 py-6 text-xs sm:px-6">
+        <p>
+          &copy; {new Date().getFullYear()} {SITE.company.name}.{" "}
+          {fill(m.footer.productOf, { company: SITE.company.name, registration: SITE.company.registration })}
+        </p>
+        {locale !== DEFAULT_LOCALE ? <p>{m.common.reviewNotice}</p> : null}
       </div>
     </footer>
   );

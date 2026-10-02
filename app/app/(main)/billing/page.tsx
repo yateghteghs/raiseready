@@ -9,6 +9,7 @@ import { CREDIT_PACKS, FREE_PLAN, PRO_PLAN } from "@/lib/billing/plans";
 import { availableCurrencies, inviteOfferText, minimumSpendText, PRICES } from "@/lib/billing/prices";
 import { getReferralSettings } from "@/lib/billing/referral-settings";
 import { ensureReferralCode, referralStats } from "@/lib/referrals/service";
+import { SITE } from "@/lib/site";
 import { getSiteUrl } from "@/lib/site-url";
 import { getSubscription, getUsage, productLabel } from "@/lib/billing/service";
 import { load } from "@/lib/data-errors";
@@ -69,7 +70,7 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
     <div className="grid gap-10">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Billing</h1>
-        <p className="text-muted-foreground mt-1">Your plan, credits and payments. Payments are in naira and handled securely by Paystack.</p>
+        <p className="text-muted-foreground mt-1">Your plan, credits and payments. Payments are handled securely by Paystack and appear on your bank statement as {SITE.company.name}, the company behind RaiseReady.</p>
       </div>
 
       {banner ? (

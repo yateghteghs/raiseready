@@ -3,6 +3,13 @@ export const SITE = {
   tagline: "Don't practice on investors. Practice on AI first.",
   /** Public contact address for privacy and support requests. Not yet chosen. */
   contactEmail: null as string | null,
+  /** The registered business that owns and operates RaiseReady. */
+  company: {
+    name: "Index Prima",
+    registration: "BN 9430651",
+    /** Registered business address for the legal pages. Not yet given. */
+    address: null as string | null,
+  },
 };
 
 export const MARKETING_NAV = [

@@ -22,6 +22,8 @@ export const en = {
     faq: "FAQ",
   },
   footer: {
+    poweredBy: "Powered by",
+    productOf: "RaiseReady is a product of {company}, a business registered in Nigeria ({registration}).",
     product: "Product",
     company: "Company",
     legal: "Legal",
