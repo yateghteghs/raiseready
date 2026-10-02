@@ -7,7 +7,7 @@ import type { ReportContent } from "@/lib/reports/content";
 import { SITE } from "@/lib/site";
 
 let fontsRegistered = false;
-function registerFonts() {
+export function registerFonts() {
   if (fontsRegistered) return;
   const dir = path.join(process.cwd(), "lib/reports/fonts");
   // Noto Sans covers ₦ and West African Latin characters, which the built-in PDF fonts lack.

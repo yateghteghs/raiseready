@@ -23,6 +23,8 @@ const PURPOSE_LABELS: Record<string, string> = {
   extraction: "Document analysis",
   assessment: "Assessment",
   report: "Report",
+  deck: "Pitch deck",
+  deck_rewrite: "Slide rewrite",
   simulation_turn: "Investor turn",
   simulation_final: "Simulation feedback",
   simulation_drill: "Drill",

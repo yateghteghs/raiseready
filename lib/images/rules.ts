@@ -29,3 +29,40 @@ export function validateImage(bytes: Uint8Array): ImageCheck {
 export function ownsImagePath(path: string | null | undefined, ownerId: string): path is string {
   return Boolean(path && path.startsWith(`${ownerId}/`) && !path.includes(".."));
 }
+
+/**
+ * Width and height of a PNG or JPEG, read from its header, or null if they
+ * can't be found. Bounded: walks JPEG segments without trusting lengths past
+ * the end of the file.
+ */
+export function imageDimensions(bytes: Uint8Array): { width: number; height: number } | null {
+  const check = validateImage(bytes);
+  if (!check.ok) return null;
+  const u16 = (i: number) => (bytes[i] << 8) | bytes[i + 1];
+  if (check.mime === "image/png") {
+    if (bytes.length < 24) return null;
+    const u32 = (i: number) => ((bytes[i] << 24) >>> 0) + (bytes[i + 1] << 16) + (bytes[i + 2] << 8) + bytes[i + 3];
+    const width = u32(16);
+    const height = u32(20);
+    return width && height ? { width, height } : null;
+  }
+  let i = 2;
+  while (i + 9 < bytes.length) {
+    if (bytes[i] !== 0xff) return null;
+    const marker = bytes[i + 1];
+    if (marker === 0xff) {
+      i += 1;
+      continue;
+    }
+    // Start-of-frame markers carry the size; C4, C8 and CC are not frames.
+    if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+      const height = u16(i + 5);
+      const width = u16(i + 7);
+      return width && height ? { width, height } : null;
+    }
+    const length = u16(i + 2);
+    if (length < 2) return null;
+    i += 2 + length;
+  }
+  return null;
+}
