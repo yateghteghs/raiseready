@@ -29,6 +29,10 @@ export async function GET(request: NextRequest) {
   if (code) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) return signedIn(data.user);
+    // A sign-up link opened in another browser or app: Supabase has already
+    // confirmed the email before sending them here, but can't sign them in
+    // without the original browser's key. Tell them to log in, not that it failed.
+    if (next.startsWith("/app")) return NextResponse.redirect(new URL("/login?confirmed=1", origin));
   } else if (tokenHash && type) {
     const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
     if (!error) return signedIn(data.user);

@@ -169,3 +169,9 @@ test("the Paystack webhook rejects unsigned requests", async ({ request }) => {
   const res = await request.post("/api/paystack/webhook", { data: { event: "charge.success", data: { reference: "x" } } });
   expect(res.status()).toBe(401);
 });
+
+test("a sign-up link opened elsewhere says the email is confirmed", async ({ page }) => {
+  await page.goto("/login?confirmed=1");
+  await expect(page.getByText("Your email is confirmed. Log in to continue.")).toBeVisible();
+  await expect(page.getByText(/invalid or has expired/)).toHaveCount(0);
+});

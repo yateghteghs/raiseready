@@ -169,6 +169,7 @@ export const yo: Messages = {
       forgot: "Ṣé o gbàgbé ọ̀rọ̀ aṣínà?",
       submit: "Wọlé",
       pending: "Ó ń wọlé…",
+      confirmed: "A ti jẹ́rìí sí ímeèlì rẹ. Wọlé láti tẹ̀síwájú.",
       linkError: "Ìjápọ̀ yẹn kò wúlò tàbí ó ti parí. Wọlé, tàbí béèrè fún ìjápọ̀ tuntun.",
       suspended: "A ti dá àkọọ́lẹ̀ rẹ dúró, a sì ti mú ọ jáde. Bí o bá rò pé àṣìṣe ni, kàn sí ẹ̀ka ìrànlọ́wọ́.",
       terminated: "A ti pa àkọọ́lẹ̀ rẹ, a sì ti mú ọ jáde. Bí o bá rò pé àṣìṣe ni, kàn sí ẹ̀ka ìrànlọ́wọ́.",

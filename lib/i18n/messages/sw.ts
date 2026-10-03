@@ -168,6 +168,7 @@ export const sw: Messages = {
       forgot: "Umesahau nenosiri?",
       submit: "Ingia",
       pending: "Inaingia…",
+      confirmed: "Barua pepe yako imethibitishwa. Ingia ili kuendelea.",
       linkError: "Kiungo hicho si sahihi au muda wake umeisha. Ingia, au omba kiungo kipya.",
       suspended: "Akaunti yako imesimamishwa, kwa hiyo umetolewa. Kama unadhani ni kosa, wasiliana na huduma kwa wateja.",
       terminated: "Akaunti yako imefungwa, kwa hiyo umetolewa. Kama unadhani ni kosa, wasiliana na huduma kwa wateja.",

@@ -169,6 +169,7 @@ export const fr: Messages = {
       forgot: "Mot de passe oublié ?",
       submit: "Se connecter",
       pending: "Connexion…",
+      confirmed: "Votre adresse e-mail est confirmée. Connectez-vous pour continuer.",
       linkError: "Ce lien est invalide ou a expiré. Connectez-vous ou demandez un nouveau lien.",
       suspended: "Votre compte a été suspendu et vous avez été déconnecté. Si vous pensez qu'il s'agit d'une erreur, contactez l'assistance.",
       terminated: "Votre compte a été fermé et vous avez été déconnecté. Si vous pensez qu'il s'agit d'une erreur, contactez l'assistance.",

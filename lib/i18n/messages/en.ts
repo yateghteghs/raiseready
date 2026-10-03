@@ -171,6 +171,7 @@ export const en = {
       forgot: "Forgot password?",
       submit: "Log in",
       pending: "Logging in…",
+      confirmed: "Your email is confirmed. Log in to continue.",
       linkError: "That link is invalid or has expired. Log in, or request a new link.",
       suspended: "Your account has been suspended, so you've been signed out. If you think this is a mistake, contact support.",
       terminated: "Your account has been closed, so you've been signed out. If you think this is a mistake, contact support.",

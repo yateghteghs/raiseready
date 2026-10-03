@@ -169,6 +169,7 @@ export const ig: Messages = {
       forgot: "Ichefuru paswọọdụ?",
       submit: "Banye",
       pending: "Na-abanye…",
+      confirmed: "Akwadoro email gị. Banye ka ị gaa n'ihu.",
       linkError: "Njikọ ahụ adịghị mma ma ọ bụ o mebiela. Banye, ma ọ bụ rịọ njikọ ọhụrụ.",
       suspended: "A kwụsịtụrụ akaụntụ gị, ya mere e wepụrụ gị. Ọ bụrụ na i chere na ọ bụ njehie, kpọtụrụ ndị enyemaka.",
       terminated: "E mechiela akaụntụ gị, ya mere e wepụrụ gị. Ọ bụrụ na i chere na ọ bụ njehie, kpọtụrụ ndị enyemaka.",

@@ -18,6 +18,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const t = m.auth.login;
   const next = typeof params.next === "string" ? safeNextPath(params.next) : undefined;
   const linkError = params.error === "link";
+  const confirmed = params.confirmed === "1";
   const blocked = params.error === "suspended" || params.error === "terminated" ? params.error : null;
 
   return (
@@ -35,6 +36,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
     >
       <div className="grid gap-4">
         {linkError ? <FormMessage status="error" message={t.linkError} /> : null}
+        {confirmed ? <FormMessage status="success" message={t.confirmed} /> : null}
         {blocked ? <FormMessage status="error" message={blocked === "suspended" ? t.suspended : t.terminated} /> : null}
         <LoginForm next={next} t={m.auth} />
       </div>

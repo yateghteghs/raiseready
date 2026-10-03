@@ -169,6 +169,7 @@ export const ha: Messages = {
       forgot: "Ka manta kalmar sirri?",
       submit: "Shiga",
       pending: "Ana shiga…",
+      confirmed: "An tabbatar da imel ɗinka. Shiga don ci gaba.",
       linkError: "Wannan hanyar haɗi ba ta da inganci ko ta ƙare. Shiga, ko ka nemi sabuwa.",
       suspended: "An dakatar da asusunka, don haka an fitar da kai. Idan kana ganin kuskure ne, tuntuɓi masu taimako.",
       terminated: "An rufe asusunka, don haka an fitar da kai. Idan kana ganin kuskure ne, tuntuɓi masu taimako.",

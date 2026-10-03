@@ -169,6 +169,7 @@ export const pt: Messages = {
       forgot: "Esqueceu-se da palavra-passe?",
       submit: "Entrar",
       pending: "A entrar…",
+      confirmed: "O seu email foi confirmado. Entre para continuar.",
       linkError: "Esse link é inválido ou expirou. Entre ou peça um novo link.",
       suspended: "A sua conta foi suspensa e a sessão foi terminada. Se acha que é um erro, contacte o apoio.",
       terminated: "A sua conta foi encerrada e a sessão foi terminada. Se acha que é um erro, contacte o apoio.",
