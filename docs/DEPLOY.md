@@ -87,7 +87,7 @@ To turn on the second kind:
 3. In Vercel, add `MAILTRAP_API_TOKEN` with that token, then redeploy.
 4. As a super admin, open **Admin → Overview → Email → Send me a test email**.
 
-Emails come from `hello@indexprima.com` ("RaiseReady"); change it in
+Emails come from `raiseready@indexprima.com` ("RaiseReady"); change it in
 `lib/site.ts` (`SITE.email`). Any address you use must be on the verified
 domain. Every message appears in Mailtrap's Email Logs:
 https://mailtrap.io/sending/email_logs

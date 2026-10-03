@@ -25,7 +25,7 @@ describe("Mailtrap sending", () => {
     expect(url).toBe(MAILTRAP_SEND_URL);
     expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer test-token");
     expect(JSON.parse(String(init?.body))).toEqual({
-      from: { email: "hello@indexprima.com", name: "RaiseReady" },
+      from: { email: "raiseready@indexprima.com", name: "RaiseReady" },
       to: [{ email: "kemi@x.example", name: "Kemi" }],
       subject: "Hi",
       text: "Hello",
