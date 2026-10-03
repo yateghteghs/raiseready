@@ -3,6 +3,11 @@ export const SITE = {
   tagline: "Don't practice on investors. Practice on AI first.",
   /** Public contact address for privacy and support requests. Not yet chosen. */
   contactEmail: null as string | null,
+  /** Sender for emails RaiseReady sends itself (staff invites, tests); must be on a domain verified in Mailtrap. */
+  email: {
+    from: "hello@indexprima.com",
+    fromName: "RaiseReady",
+  },
   /** The registered business that owns and operates RaiseReady. */
   company: {
     name: "Index Prima",

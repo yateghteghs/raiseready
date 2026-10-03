@@ -1,14 +1,18 @@
 import Link from "next/link";
 
 import { num, PageTitle, pct, Stat, StatGrid, usd } from "@/components/admin/ui";
+import { TestEmailButton } from "@/components/admin/test-email";
 import { requireStaff } from "@/lib/admin/auth";
+import { can } from "@/lib/admin/permissions";
+import { emailConfigured } from "@/lib/email/mailtrap";
+import { SITE } from "@/lib/site";
 import { activeUserMetrics, overviewMetrics } from "@/lib/admin/data";
 import { formatMoney, koboToNaira } from "@/lib/format";
 
 export const metadata = { title: "Overview" };
 
 export default async function AdminOverview() {
-  await requireStaff();
+  const staff = await requireStaff();
   const [m, active] = await Promise.all([overviewMetrics(), activeUserMetrics()]);
   return (
     <>
@@ -60,6 +64,24 @@ export default async function AdminOverview() {
           <Stat label="Estimated AI cost (30 days)" value={usd(m.ai.costUsd)} hint={m.ai.unpricedCalls ? `${m.ai.unpricedCalls} calls on unpriced models` : undefined} />
         </StatGrid>
       </section>
+      {can(staff.profile.role, "manage_content") ? (
+        <section className="bg-card grid gap-3 rounded-xl border p-5" aria-labelledby="email-h">
+          <h2 id="email-h" className="font-semibold">
+            Email
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {emailConfigured()
+              ? `Connected to Mailtrap. Staff invites and sign-in links are emailed from ${SITE.email.from}. Sign-up and password emails are sent by Supabase.`
+              : "Not set up: staff invite links are shown on screen for you to send. Add MAILTRAP_API_TOKEN in Vercel to email them automatically."}{" "}
+            Every message appears in{" "}
+            <a href="https://mailtrap.io/sending/email_logs" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">
+              Mailtrap&apos;s Email Logs
+            </a>
+            .
+          </p>
+          {emailConfigured() ? <TestEmailButton /> : null}
+        </section>
+      ) : null}
     </>
   );
 }

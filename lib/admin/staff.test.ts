@@ -20,6 +20,13 @@ const client = Object.assign(Object.create(fake.client), {
 });
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => client }));
 vi.mock("@/lib/site-url", () => ({ getSiteUrl: async () => "https://rr.example" }));
+const emails: { to: { email: string }[]; subject: string; category: string }[] = [];
+vi.mock("@/lib/email/mailtrap", () => ({
+  sendEmail: async (m: (typeof emails)[number]) => {
+    emails.push(m);
+    return { ok: true, ids: ["m1"] };
+  },
+}));
 const existing = new Map<string, string>();
 vi.mock("@/lib/notifications/service", () => ({ userIdForEmail: async (email: string) => existing.get(email) ?? null }));
 
@@ -35,6 +42,7 @@ beforeEach(() => {
   ];
   db.audit_logs = [];
   links.length = 0;
+  emails.length = 0;
   existing.clear();
 });
 
@@ -47,8 +55,10 @@ describe("staff invites", () => {
   });
 
   it("creates the account with its staff role and returns a link to the admin welcome page", async () => {
-    const link = await inviteStaff(actor("super_admin"), { email: "kemi@x.example", full_name: "Kemi", role: "admin" });
+    const { link, emailed } = await inviteStaff(actor("super_admin"), { email: "kemi@x.example", full_name: "Kemi", role: "admin" });
     expect(link).toBe("https://rr.example/auth/callback?token_hash=HASH&type=invite&next=/admin/welcome");
+    expect(emailed).toBe(true);
+    expect(emails[0]).toMatchObject({ to: [{ email: "kemi@x.example" }], category: "Staff invite", text: expect.stringContaining(link) });
     expect(db.profiles.find((p) => p.id === "new-staff")).toMatchObject({ role: "admin", full_name: "Kemi" });
     expect(db.audit_logs[0]).toMatchObject({ action: "admin.staff_invited", target_id: "new-staff" });
   });
@@ -61,7 +71,8 @@ describe("staff invites", () => {
   });
 
   it("makes a new sign-in link for staff only, for super admins", async () => {
-    expect(await newStaffLink(actor("super_admin"), "s2")).toContain("type=magiclink&next=/admin/welcome");
+    expect((await newStaffLink(actor("super_admin"), "s2")).link).toContain("type=magiclink&next=/admin/welcome");
+    expect(emails[0]).toMatchObject({ to: [{ email: "s2@x.example" }], category: "Staff sign-in link" });
     await expect(newStaffLink(actor("super_admin"), "f1")).rejects.toThrow(/isn't staff/);
     await expect(newStaffLink(actor("admin"), "s2")).rejects.toThrow(StaffInviteError);
   });

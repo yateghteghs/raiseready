@@ -61,6 +61,7 @@ below says where to click. After any change to environment variables, redeploy
    | `PAYSTACK_SECRET_KEY` | Paystack secret key (`sk_test_…` until launch) |
    | `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` | Paystack public key (`pk_test_…` until launch) |
    | `APP_URL` | Your site address, no trailing slash |
+   | `MAILTRAP_API_TOKEN` | Optional. Mailtrap Email API token (see "Email" below) |
 
 4. Deploy, then open `https://<your-site>/status`. Every line should show a
    green tick. Each problem it reports says how to fix it.
@@ -68,6 +69,28 @@ below says where to click. After any change to environment variables, redeploy
 Assessments, document analysis and Investor Room replies can take up to five
 minutes. Vercel allows this on current plans with Fluid compute, which is on
 by default. If they time out, check **Settings → Functions**.
+
+## Email (Mailtrap)
+
+Two kinds of email go out:
+- **Sign-up confirmations and password resets** are sent by Supabase, through
+  the SMTP settings under **Supabase → Authentication → Emails**.
+- **Everything RaiseReady sends itself** (staff invites and staff sign-in
+  links for now) goes through Mailtrap's Email API.
+
+To turn on the second kind:
+1. In Mailtrap, verify `indexprima.com` under **Sending Domains** (add the DNS
+   records it shows; all must be green, and the account must pass Mailtrap's
+   compliance check).
+2. Copy the API token from **Sending Domains → indexprima.com → Integration →
+   API** (Transactional Stream).
+3. In Vercel, add `MAILTRAP_API_TOKEN` with that token, then redeploy.
+4. As a super admin, open **Admin → Overview → Email → Send me a test email**.
+
+Emails come from `hello@indexprima.com` ("RaiseReady"); change it in
+`lib/site.ts` (`SITE.email`). Any address you use must be on the verified
+domain. Every message appears in Mailtrap's Email Logs:
+https://mailtrap.io/sending/email_logs
 
 ## 3. Anthropic
 
@@ -211,8 +234,9 @@ select private.set_user_role('you@example.com', 'super_admin');
 
 After that, add staff from **Admin → Users → Staff → Invite a staff member**
 (name, email, role). Staff don't sign up on the website: the invite creates
-their account and gives you a one-time link to send them (by email or
-WhatsApp). They choose a password on the admin welcome page and land in the
+their account and emails them a one-time link (when Mailtrap is set up,
+see "Email" below); the link is also shown to you, to send another way if
+needed. They choose a password on the admin welcome page and land in the
 admin area, with no founder onboarding. Links expire after an hour by
 default (Supabase → Authentication → Emails → "Email OTP expiration" sets
 this); a super admin can make a new one with **New sign-in link** on the

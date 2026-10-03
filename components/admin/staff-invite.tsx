@@ -36,8 +36,8 @@ export function StaffInviteForm({ roles }: { roles: { value: string; label: stri
       <div>
         <h2 className="font-semibold">Invite a staff member</h2>
         <p className="text-muted-foreground text-sm">
-          Staff don&apos;t sign up on the website. Create their account here, then send them the link. They choose a
-          password and go straight to the admin area.
+          Staff don&apos;t sign up on the website. Create their account here; we email them a link (when email is set
+          up) and show it to you too. They choose a password and go straight to the admin area.
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
@@ -57,7 +57,7 @@ export function StaffInviteForm({ roles }: { roles: { value: string; label: stri
 /** A fresh one-time sign-in link, for staff who haven't set a password or are locked out. */
 export function StaffLinkButton({ userId }: { userId: string }) {
   const [pending, start] = useTransition();
-  const [result, setResult] = useState<{ link?: string; error?: string } | null>(null);
+  const [result, setResult] = useState<{ link?: string; emailed?: boolean; error?: string } | null>(null);
   return (
     <div className="grid gap-2">
       <Button type="button" size="sm" variant="outline" disabled={pending} onClick={() => start(async () => setResult(await newStaffLinkAction(userId)))}>
@@ -68,7 +68,12 @@ export function StaffLinkButton({ userId }: { userId: string }) {
           {result.error}
         </p>
       ) : null}
-      {result?.link ? <CopyLink link={result.link} /> : null}
+      {result?.link ? (
+        <>
+          {result.emailed ? <p className="text-muted-foreground text-xs">Emailed to them. Here it is too:</p> : null}
+          <CopyLink link={result.link} />
+        </>
+      ) : null}
     </div>
   );
 }

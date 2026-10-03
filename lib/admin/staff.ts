@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 import type { Staff } from "@/lib/admin/auth";
-import { can, isStaff, userActionProblem } from "@/lib/admin/permissions";
+import { can, isStaff, roleLabel, userActionProblem } from "@/lib/admin/permissions";
+import { sendEmail } from "@/lib/email/mailtrap";
+import { staffInviteEmail, staffSignInEmail } from "@/lib/email/templates";
 import { userIdForEmail } from "@/lib/notifications/service";
 import { getSiteUrl } from "@/lib/site-url";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -31,12 +33,15 @@ async function staffLink(hashedToken: string, type: "invite" | "magiclink"): Pro
   return `${site}/auth/callback?token_hash=${encodeURIComponent(hashedToken)}&type=${type}&next=/admin/welcome`;
 }
 
+/** A staff link, and whether it was also emailed (Mailtrap set up and accepted it). */
+export type StaffLink = { link: string; emailed: boolean };
+
 /**
  * Creates a staff account and returns a one-time link for them to set their
- * password. Staff never go through founder sign-up or onboarding. The link
- * is shown to the inviter to send; it isn't emailed.
+ * password. Staff never go through founder sign-up or onboarding. The link is
+ * emailed when Mailtrap is set up, and always shown to the inviter as well.
  */
-export async function inviteStaff(staff: Staff, input: z.infer<typeof staffInviteSchema>): Promise<string> {
+export async function inviteStaff(staff: Staff, input: z.infer<typeof staffInviteSchema>): Promise<StaffLink> {
   const problem = staffInviteProblem(staff.profile.role, input.role);
   if (problem) throw new StaffInviteError(problem);
   const admin = createAdminClient();
@@ -67,11 +72,17 @@ export async function inviteStaff(staff: Staff, input: z.infer<typeof staffInvit
     target_id: data.user.id,
     metadata: { role: input.role },
   });
-  return staffLink(data.properties.hashed_token, "invite");
+  const link = await staffLink(data.properties.hashed_token, "invite");
+  const sent = await sendEmail({
+    to: [{ email: input.email, name: input.full_name }],
+    ...staffInviteEmail({ name: input.full_name, role: roleLabel(input.role), link }),
+    category: "Staff invite",
+  });
+  return { link, emailed: sent.ok };
 }
 
 /** A fresh one-time sign-in link for a staff member who hasn't set a password or can't get in. */
-export async function newStaffLink(staff: Staff, targetId: string): Promise<string> {
+export async function newStaffLink(staff: Staff, targetId: string): Promise<StaffLink> {
   const admin = createAdminClient();
   const { data: target } = await admin.from("profiles").select("id, role, status").eq("id", targetId).maybeSingle();
   if (!target || !isStaff(target.role)) throw new StaffInviteError("This person isn't staff.");
@@ -89,5 +100,7 @@ export async function newStaffLink(staff: Staff, targetId: string): Promise<stri
     target_id: targetId,
     metadata: {},
   });
-  return staffLink(data.properties.hashed_token, "magiclink");
+  const link = await staffLink(data.properties.hashed_token, "magiclink");
+  const sent = await sendEmail({ to: [{ email: user.user.email }], ...staffSignInEmail({ link }), category: "Staff sign-in link" });
+  return { link, emailed: sent.ok };
 }
