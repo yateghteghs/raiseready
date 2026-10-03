@@ -184,6 +184,13 @@ export const pt: Messages = {
       agree: "Ao criar uma conta, aceita os nossos {terms} e a nossa {privacy}.",
       terms: "Termos",
       privacy: "Política de Privacidade",
+      checkTitle: "Verifique o seu email",
+      checkBody: "Enviámos um link de confirmação para {email}. Abra-o para ativar a sua conta.",
+      checkSpam: "Pode demorar um minuto a chegar. Se não o encontrar, veja na pasta de spam ou promoções.",
+      resend: "Enviar novamente",
+      resending: "A enviar…",
+      wrongEmail: "Email errado?",
+      startAgain: "Recomeçar",
     },
     forgot: {
       title: "Redefinir a palavra-passe",
@@ -225,6 +232,8 @@ export const pt: Messages = {
     "Enter your name.": "Indique o seu nome.",
     "Confirm your new password.": "Confirme a nova palavra-passe.",
     "Passwords do not match.": "As palavras-passe não coincidem.",
+    "We've sent it again. It can take a minute to arrive.":
+      "Enviámos novamente. Pode demorar um minuto a chegar.",
     "We've sent a confirmation link to {email}. Open it to activate your account.":
       "Enviámos um link de confirmação para {email}. Abra-o para ativar a sua conta.",
     "If an account exists for {email}, we've sent a link to reset the password.":

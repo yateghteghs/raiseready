@@ -183,6 +183,13 @@ export const sw: Messages = {
       agree: "Kwa kufungua akaunti unakubali {terms} na {privacy} yetu.",
       terms: "Masharti",
       privacy: "Sera ya Faragha",
+      checkTitle: "Angalia barua pepe yako",
+      checkBody: "Tumetuma kiungo cha uthibitisho kwa {email}. Kifungue ili kuwezesha akaunti yako.",
+      checkSpam: "Inaweza kuchukua dakika moja kufika. Usipoiona, angalia folda ya spam au matangazo.",
+      resend: "Tuma tena",
+      resending: "Inatuma…",
+      wrongEmail: "Barua pepe si sahihi?",
+      startAgain: "Anza upya",
     },
     forgot: {
       title: "Weka upya nenosiri lako",
@@ -224,6 +231,8 @@ export const sw: Messages = {
     "Enter your name.": "Andika jina lako.",
     "Confirm your new password.": "Thibitisha nenosiri lako jipya.",
     "Passwords do not match.": "Manenosiri hayalingani.",
+    "We've sent it again. It can take a minute to arrive.":
+      "Tumeituma tena. Inaweza kuchukua dakika moja kufika.",
     "We've sent a confirmation link to {email}. Open it to activate your account.":
       "Tumetuma kiungo cha uthibitisho kwa {email}. Kifungue ili kuwezesha akaunti yako.",
     "If an account exists for {email}, we've sent a link to reset the password.":

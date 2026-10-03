@@ -115,7 +115,35 @@ async function registerInEnglish(_prev: FormState, formData: FormData): Promise<
   return {
     status: "success",
     message: `We've sent a confirmation link to ${parsed.data.email}. Open it to activate your account.`,
+    values: { email: parsed.data.email },
   };
+}
+
+/** "Send it again" on the check-your-email screen. Results are translated. */
+export async function resendConfirmation(email: string): Promise<FormState> {
+  return localiseState(await resendConfirmationInEnglish(email));
+}
+
+async function resendConfirmationInEnglish(email: string): Promise<FormState> {
+  if (!isSupabaseConfigured()) return NOT_CONFIGURED;
+  const parsed = forgotPasswordSchema.safeParse({ email });
+  if (!parsed.success) return validationFailed(parsed.error, {});
+  const supabase = await createClient();
+  const siteUrl = await getSiteUrl();
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email: parsed.data.email,
+    options: { emailRedirectTo: `${siteUrl}/auth/callback?next=/app/onboarding` },
+  });
+  if (error) {
+    logAuthError("resend confirmation", error);
+    const message =
+      error.status === 504
+        ? "We couldn't send your confirmation email just now. Wait a minute, then check your inbox or try again."
+        : friendlyAuthError(error);
+    return { status: "error", message };
+  }
+  return { status: "success", message: "We've sent it again. It can take a minute to arrive." };
 }
 
 /** Results are translated into the visitor's language. */

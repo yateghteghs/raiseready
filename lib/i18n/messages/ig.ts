@@ -184,6 +184,13 @@ export const ig: Messages = {
       agree: "Site n'imepe akaụntụ, ị kwenyere na {terms} na {privacy} anyị.",
       terms: "Usoro",
       privacy: "Iwu Nzuzo",
+      checkTitle: "Lelee email gị",
+      checkBody: "Anyị ezitela njikọ nkwado na {email}. Mepee ya ka ị rụọ ọrụ akaụntụ gị.",
+      checkSpam: "Ọ nwere ike were otu nkeji tupu ọ bịarute. Ọ bụrụ na ịhụghị ya, lelee folda spam ma ọ bụ nkwalite.",
+      resend: "Zighachi ya ọzọ",
+      resending: "Na-ezipu…",
+      wrongEmail: "Email ezighi ezi?",
+      startAgain: "Malite ọzọ",
     },
     forgot: {
       title: "Tọgharịa paswọọdụ gị",
@@ -225,6 +232,8 @@ export const ig: Messages = {
     "Enter your name.": "Tinye aha gị.",
     "Confirm your new password.": "Kwado paswọọdụ ọhụrụ gị.",
     "Passwords do not match.": "Paswọọdụ ndị ahụ adabaghị.",
+    "We've sent it again. It can take a minute to arrive.":
+      "Anyị ezighachila ya. Ọ nwere ike were otu nkeji tupu ọ bịarute.",
     "We've sent a confirmation link to {email}. Open it to activate your account.":
       "Anyị ezigala njikọ nkwado na {email}. Mepee ya iji mee ka akaụntụ gị rụọ ọrụ.",
     "If an account exists for {email}, we've sent a link to reset the password.":

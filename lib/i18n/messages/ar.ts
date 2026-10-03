@@ -183,6 +183,13 @@ export const ar: Messages = {
       agree: "بإنشاء حساب، فإنك توافق على {terms} و{privacy}.",
       terms: "الشروط",
       privacy: "سياسة الخصوصية",
+      checkTitle: "تحقّق من بريدك الإلكتروني",
+      checkBody: "أرسلنا رابط تأكيد إلى {email}. افتحه لتفعيل حسابك.",
+      checkSpam: "قد يستغرق وصوله دقيقة. إن لم تجده، فتحقّق من مجلد الرسائل غير المرغوب فيها أو العروض.",
+      resend: "أرسله مرة أخرى",
+      resending: "جارٍ الإرسال…",
+      wrongEmail: "عنوان البريد خاطئ؟",
+      startAgain: "ابدأ من جديد",
     },
     forgot: {
       title: "إعادة تعيين كلمة المرور",
@@ -224,6 +231,8 @@ export const ar: Messages = {
     "Enter your name.": "أدخل اسمك.",
     "Confirm your new password.": "أكّد كلمة المرور الجديدة.",
     "Passwords do not match.": "كلمتا المرور غير متطابقتين.",
+    "We've sent it again. It can take a minute to arrive.":
+      "أرسلناه مرة أخرى. قد يستغرق وصوله دقيقة.",
     "We've sent a confirmation link to {email}. Open it to activate your account.":
       "أرسلنا رابط تأكيد إلى {email}. افتحه لتفعيل حسابك.",
     "If an account exists for {email}, we've sent a link to reset the password.":

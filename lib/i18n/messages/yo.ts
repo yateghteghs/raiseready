@@ -184,6 +184,13 @@ export const yo: Messages = {
       agree: "Nípa ṣíṣí àkọọ́lẹ̀, o gbà sí {terms} àti {privacy} wa.",
       terms: "Àwọn òfin lílò",
       privacy: "Ìlànà Àṣírí",
+      checkTitle: "Ṣàyẹ̀wò ímeèlì rẹ",
+      checkBody: "A ti fi ìjápọ̀ ìjẹ́rìí ránṣẹ́ sí {email}. Ṣí i láti mú àkọọ́lẹ̀ rẹ ṣiṣẹ́.",
+      checkSpam: "Ó lè gba ìṣẹ́jú kan kí ó tó dé. Tí o kò bá rí i, wo inú fódà spam tàbí ìpolówó.",
+      resend: "Fi ránṣẹ́ lẹ́ẹ̀kan sí i",
+      resending: "Ó ń fi ránṣẹ́…",
+      wrongEmail: "Ímeèlì kò tọ̀nà?",
+      startAgain: "Bẹ̀rẹ̀ lẹ́ẹ̀kan sí i",
     },
     forgot: {
       title: "Tún ọ̀rọ̀ aṣínà rẹ ṣe",
@@ -225,6 +232,8 @@ export const yo: Messages = {
     "Enter your name.": "Tẹ orúkọ rẹ.",
     "Confirm your new password.": "Jẹ́rìí ọ̀rọ̀ aṣínà tuntun rẹ.",
     "Passwords do not match.": "Àwọn ọ̀rọ̀ aṣínà kò bára mu.",
+    "We've sent it again. It can take a minute to arrive.":
+      "A ti tún un fi ránṣẹ́. Ó lè gba ìṣẹ́jú kan kí ó tó dé.",
     "We've sent a confirmation link to {email}. Open it to activate your account.":
       "A ti fi ìjápọ̀ ìjẹ́rìísí ránṣẹ́ sí {email}. Ṣí i láti mú àkọọ́lẹ̀ rẹ ṣiṣẹ́.",
     "If an account exists for {email}, we've sent a link to reset the password.":

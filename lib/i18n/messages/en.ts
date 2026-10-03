@@ -186,6 +186,13 @@ export const en = {
       agree: "By creating an account you agree to our {terms} and {privacy}.",
       terms: "Terms",
       privacy: "Privacy Policy",
+      checkTitle: "Check your email",
+      checkBody: "We've sent a confirmation link to {email}. Open it to activate your account.",
+      checkSpam: "It can take a minute to arrive. If you can't find it, check your spam or promotions folder.",
+      resend: "Send it again",
+      resending: "Sending…",
+      wrongEmail: "Wrong email address?",
+      startAgain: "Start again",
     },
     forgot: {
       title: "Reset your password",
@@ -231,6 +238,8 @@ export const en = {
     "Enter your name.": "Enter your name.",
     "Confirm your new password.": "Confirm your new password.",
     "Passwords do not match.": "Passwords do not match.",
+    "We've sent it again. It can take a minute to arrive.":
+      "We've sent it again. It can take a minute to arrive.",
     "We've sent a confirmation link to {email}. Open it to activate your account.":
       "We've sent a confirmation link to {email}. Open it to activate your account.",
     "If an account exists for {email}, we've sent a link to reset the password.":

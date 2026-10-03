@@ -184,6 +184,13 @@ export const ha: Messages = {
       agree: "Ta hanyar buɗe asusu ka amince da {terms} da {privacy} namu.",
       terms: "Sharuɗɗa",
       privacy: "Manufar Sirri",
+      checkTitle: "Duba imel ɗinka",
+      checkBody: "Mun aika hanyar haɗin tabbatarwa zuwa {email}. Buɗe ta don kunna asusunka.",
+      checkSpam: "Zai iya ɗaukar minti ɗaya kafin ya iso. Idan ba ka gan shi ba, duba babban fayil na spam ko tallace-tallace.",
+      resend: "Sake aikawa",
+      resending: "Ana aikawa…",
+      wrongEmail: "Imel ɗin ba daidai ba ne?",
+      startAgain: "Fara daga farko",
     },
     forgot: {
       title: "Sake saita kalmar sirrinka",
@@ -225,6 +232,8 @@ export const ha: Messages = {
     "Enter your name.": "Rubuta sunanka.",
     "Confirm your new password.": "Tabbatar da sabuwar kalmar sirrinka.",
     "Passwords do not match.": "Kalmomin sirrin ba su yi daidai ba.",
+    "We've sent it again. It can take a minute to arrive.":
+      "Mun sake aikawa. Zai iya ɗaukar minti ɗaya kafin ya iso.",
     "We've sent a confirmation link to {email}. Open it to activate your account.":
       "Mun aika hanyar tabbatarwa zuwa {email}. Buɗe ta don kunna asusunka.",
     "If an account exists for {email}, we've sent a link to reset the password.":

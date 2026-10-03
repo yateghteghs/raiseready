@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+
+import { CheckEmail } from "@/components/auth/check-email";
 
 import { SubmitButton } from "@/components/auth/submit-button";
 import { FormMessage, TextField } from "@/components/forms/fields";
@@ -12,15 +14,17 @@ import { fill } from "@/lib/i18n/text";
 
 export function RegisterForm({ t }: { t: Messages["auth"] }) {
   const [state, action] = useActionState(register, initialFormState);
+  // "Start again" hides the check-your-email screen until the next sign-up.
+  const [dismissed, setDismissed] = useState<typeof state | null>(null);
   const errors = state.fieldErrors;
 
-  if (state.status === "success") {
-    return <FormMessage status="success" message={state.message} />;
+  if (state.status === "success" && dismissed !== state) {
+    return <CheckEmail email={state.values?.email ?? ""} t={t.register} onStartAgain={() => setDismissed(state)} />;
   }
 
   return (
     <form action={action} className="grid gap-4">
-      <FormMessage status={state.status} message={state.message} />
+      {state.status === "success" ? null : <FormMessage status={state.status} message={state.message} />}
       <TextField
         name="full_name"
         label={t.fullName}

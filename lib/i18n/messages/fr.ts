@@ -184,6 +184,13 @@ export const fr: Messages = {
       agree: "En créant un compte, vous acceptez nos {terms} et notre {privacy}.",
       terms: "Conditions",
       privacy: "Politique de confidentialité",
+      checkTitle: "Vérifiez vos e-mails",
+      checkBody: "Nous avons envoyé un lien de confirmation à {email}. Ouvrez-le pour activer votre compte.",
+      checkSpam: "Il peut mettre une minute à arriver. Si vous ne le trouvez pas, regardez dans vos spams ou l'onglet Promotions.",
+      resend: "Renvoyer",
+      resending: "Envoi…",
+      wrongEmail: "Mauvaise adresse e-mail ?",
+      startAgain: "Recommencer",
     },
     forgot: {
       title: "Réinitialiser votre mot de passe",
@@ -225,6 +232,8 @@ export const fr: Messages = {
     "Enter your name.": "Saisissez votre nom.",
     "Confirm your new password.": "Confirmez votre nouveau mot de passe.",
     "Passwords do not match.": "Les mots de passe ne correspondent pas.",
+    "We've sent it again. It can take a minute to arrive.":
+      "Nous l'avons renvoyé. Il peut mettre une minute à arriver.",
     "We've sent a confirmation link to {email}. Open it to activate your account.":
       "Nous avons envoyé un lien de confirmation à {email}. Ouvrez-le pour activer votre compte.",
     "If an account exists for {email}, we've sent a link to reset the password.":
