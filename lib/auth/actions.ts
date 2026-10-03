@@ -94,7 +94,13 @@ async function registerInEnglish(_prev: FormState, formData: FormData): Promise<
   });
   if (error) {
     logAuthError("sign-up", error);
-    return { status: "error", message: friendlyAuthError(error), values };
+    // A gateway timeout here means Supabase couldn't hand the confirmation
+    // email to the mail provider in time, not that it was unreachable.
+    const message =
+      error.status === 504
+        ? "We couldn't send your confirmation email just now. Wait a minute, then check your inbox or try again."
+        : friendlyAuthError(error);
+    return { status: "error", message, values };
   }
 
   // Arrived through a founder's invite link? Link the accounts. Supabase

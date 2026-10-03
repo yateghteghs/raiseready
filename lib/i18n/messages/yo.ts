@@ -246,6 +246,8 @@ export const yo: Messages = {
     "Email sign-up is currently turned off.": "Ìforúkọsílẹ̀ pẹ̀lú ímeèlì ti wà ní pípa fún báyìí.",
     "That email address can't be used. Please try a different one.": "A kò lè lo àdírẹ́sì ímeèlì yẹn. Jọ̀wọ́ gbìyànjú òmíràn.",
     "We can't send emails to this address yet. Please try again later.": "A kò tíì lè fi ímeèlì ránṣẹ́ sí àdírẹ́sì yìí. Jọ̀wọ́ gbìyànjú lẹ́yìn náà.",
+    "We couldn't send your confirmation email just now. Wait a minute, then check your inbox or try again.":
+      "A kò lè fi ímeèlì ìjẹ́rìí rẹ ránṣẹ́ báyìí. Dúró fún ìṣẹ́jú kan, lẹ́yìn náà wo àpótí ímeèlì rẹ tàbí gbìyànjú lẹ́ẹ̀kan sí i.",
     "We couldn't reach the sign-in service. Please try again in a moment.": "A kò lè dé ọ̀dọ̀ iṣẹ́ wíwọlé. Jọ̀wọ́ tún gbìyànjú láìpẹ́.",
     "Something went wrong. Please try again. (Error code: {code})": "Nǹkan kan kò lọ dáadáa. Jọ̀wọ́ tún gbìyànjú. (Kóòdù àṣìṣe: {code})",
   },

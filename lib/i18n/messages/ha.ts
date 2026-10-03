@@ -246,6 +246,8 @@ export const ha: Messages = {
     "Email sign-up is currently turned off.": "An kashe yin rajista ta imel a yanzu.",
     "That email address can't be used. Please try a different one.": "Ba za a iya amfani da wannan imel ba. Da fatan ka gwada wani.",
     "We can't send emails to this address yet. Please try again later.": "Ba za mu iya aika imel zuwa wannan adireshi ba tukuna. Sake gwadawa daga baya.",
+    "We couldn't send your confirmation email just now. Wait a minute, then check your inbox or try again.":
+      "Ba mu iya aika imel ɗin tabbatarwa yanzu ba. Jira minti ɗaya, sannan ka duba akwatin saƙonka ko ka sake gwadawa.",
     "We couldn't reach the sign-in service. Please try again in a moment.": "Ba mu iya isa ga sabis ɗin shiga ba. Sake gwadawa nan da ɗan lokaci.",
     "Something went wrong. Please try again. (Error code: {code})": "Wani abu ya faru ba daidai ba. Da fatan ka sake gwadawa. (Lambar kuskure: {code})",
   },

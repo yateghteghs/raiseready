@@ -252,6 +252,8 @@ export const en = {
     "Email sign-up is currently turned off.": "Email sign-up is currently turned off.",
     "That email address can't be used. Please try a different one.": "That email address can't be used. Please try a different one.",
     "We can't send emails to this address yet. Please try again later.": "We can't send emails to this address yet. Please try again later.",
+    "We couldn't send your confirmation email just now. Wait a minute, then check your inbox or try again.":
+      "We couldn't send your confirmation email just now. Wait a minute, then check your inbox or try again.",
     "We couldn't reach the sign-in service. Please try again in a moment.": "We couldn't reach the sign-in service. Please try again in a moment.",
     "Something went wrong. Please try again. (Error code: {code})": "Something went wrong. Please try again. (Error code: {code})",
   },

@@ -246,6 +246,8 @@ export const sw: Messages = {
     "That email address can't be used. Please try a different one.": "Anwani hiyo ya barua pepe haiwezi kutumika. Tafadhali jaribu nyingine.",
     "We can't send emails to this address yet. Please try again later.":
       "Bado hatuwezi kutuma barua pepe kwa anwani hii. Tafadhali jaribu tena baadaye.",
+    "We couldn't send your confirmation email just now. Wait a minute, then check your inbox or try again.":
+      "Hatukuweza kutuma barua pepe yako ya uthibitisho sasa hivi. Subiri dakika moja, kisha angalia kikasha chako au ujaribu tena.",
     "We couldn't reach the sign-in service. Please try again in a moment.":
       "Hatukuweza kufikia huduma ya kuingia. Tafadhali jaribu tena baada ya muda mfupi.",
     "Something went wrong. Please try again. (Error code: {code})": "Kuna hitilafu. Tafadhali jaribu tena. (Msimbo wa hitilafu: {code})",

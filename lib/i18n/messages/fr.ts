@@ -248,6 +248,8 @@ export const fr: Messages = {
     "That email address can't be used. Please try a different one.": "Cette adresse e-mail ne peut pas être utilisée. Essayez-en une autre.",
     "We can't send emails to this address yet. Please try again later.":
       "Nous ne pouvons pas encore envoyer d'e-mails à cette adresse. Réessayez plus tard.",
+    "We couldn't send your confirmation email just now. Wait a minute, then check your inbox or try again.":
+      "Nous n'avons pas pu envoyer votre e-mail de confirmation pour le moment. Attendez une minute, puis vérifiez votre boîte de réception ou réessayez.",
     "We couldn't reach the sign-in service. Please try again in a moment.":
       "Impossible de joindre le service de connexion. Réessayez dans un instant.",
     "Something went wrong. Please try again. (Error code: {code})": "Une erreur s'est produite. Veuillez réessayer. (Code d'erreur : {code})",

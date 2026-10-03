@@ -247,6 +247,8 @@ export const pt: Messages = {
     "That email address can't be used. Please try a different one.": "Esse endereço de e-mail não pode ser usado. Experimente outro.",
     "We can't send emails to this address yet. Please try again later.":
       "Ainda não conseguimos enviar e-mails para este endereço. Tente mais tarde.",
+    "We couldn't send your confirmation email just now. Wait a minute, then check your inbox or try again.":
+      "Não conseguimos enviar o seu email de confirmação agora. Aguarde um minuto e depois verifique a sua caixa de entrada ou tente novamente.",
     "We couldn't reach the sign-in service. Please try again in a moment.":
       "Não foi possível contactar o serviço de entrada. Tente de novo dentro de momentos.",
     "Something went wrong. Please try again. (Error code: {code})": "Algo correu mal. Tente de novo. (Código de erro: {code})",

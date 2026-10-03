@@ -245,6 +245,8 @@ export const ar: Messages = {
     "Email sign-up is currently turned off.": "التسجيل بالبريد الإلكتروني متوقف حاليًا.",
     "That email address can't be used. Please try a different one.": "لا يمكن استخدام هذا البريد الإلكتروني. جرّب عنوانًا آخر.",
     "We can't send emails to this address yet. Please try again later.": "لا يمكننا إرسال رسائل إلى هذا العنوان بعد. حاول لاحقًا.",
+    "We couldn't send your confirmation email just now. Wait a minute, then check your inbox or try again.":
+      "تعذّر إرسال رسالة التأكيد إلى بريدك الآن. انتظر دقيقة، ثم تحقّق من بريدك الوارد أو حاول مرة أخرى.",
     "We couldn't reach the sign-in service. Please try again in a moment.": "تعذّر الوصول إلى خدمة تسجيل الدخول. حاول مرة أخرى بعد قليل.",
     "Something went wrong. Please try again. (Error code: {code})": "حدث خطأ ما. يُرجى المحاولة مرة أخرى. (رمز الخطأ: {code})",
   },

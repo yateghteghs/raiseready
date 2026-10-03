@@ -246,6 +246,8 @@ export const ig: Messages = {
     "Email sign-up is currently turned off.": "Ndebanye aha site na email agbanyụọla ugbu a.",
     "That email address can't be used. Please try a different one.": "A pụghị iji adreesị email ahụ. Biko nwaa nke ọzọ.",
     "We can't send emails to this address yet. Please try again later.": "Anyị enweghị ike iziga email na adreesị a ugbu a. Biko nwaa ọzọ ma emechaa.",
+    "We couldn't send your confirmation email just now. Wait a minute, then check your inbox or try again.":
+      "Anyị enweghị ike izipu email nkwado gị ugbu a. Chere otu nkeji, wee lelee igbe ozi gị ma ọ bụ nwaa ọzọ.",
     "We couldn't reach the sign-in service. Please try again in a moment.": "Anyị enweghị ike iru ọrụ ịbanye. Biko nwaa ọzọ n'oge na-adịghị anya.",
     "Something went wrong. Please try again. (Error code: {code})": "Ihe adịghị mma mere. Biko nwaa ọzọ. (Koodu njehie: {code})",
   },
