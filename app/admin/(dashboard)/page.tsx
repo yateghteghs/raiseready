@@ -71,7 +71,7 @@ export default async function AdminOverview() {
           </h2>
           <p className="text-muted-foreground text-sm">
             {emailConfigured()
-              ? `Connected to Mailtrap. Staff invites and sign-in links are emailed from ${SITE.email.from}. Sign-up and password emails are sent by Supabase.`
+              ? `Connected to Mailtrap. Account emails (sign-up, password reset, sign-in links) come from ${SITE.email.system.name} <${SITE.email.system.email}>; staff invites and test emails from ${SITE.email.personal.name} <${SITE.email.personal.email}>.`
               : "Not set up: staff invite links are shown on screen for you to send. Add MAILTRAP_API_TOKEN in Vercel to email them automatically."}{" "}
             Every message appears in{" "}
             <a href="https://mailtrap.io/sending/email_logs" target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">

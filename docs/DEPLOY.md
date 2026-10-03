@@ -101,10 +101,17 @@ calls RaiseReady, which sends the email with Mailtrap's API.
 5. Sign up with a new email: the confirmation comes from RaiseReady, and its
    link works in any browser.
 
-Emails come from `raiseready@indexprima.com` ("RaiseReady"); change it in
-`lib/site.ts` (`SITE.email`). Any address you use must be on the verified
-domain. Every message appears in Mailtrap's Email Logs:
-https://mailtrap.io/sending/email_logs
+Two senders are set in `lib/site.ts` (`SITE.email`):
+- **RaiseReady <no-reply@indexprima.com>** for automatic account emails
+  (sign-up confirmation, password reset, sign-in links, codes). Use the same
+  address as the Sender in Supabase's SMTP settings, if you use SMTP.
+- **Mhenuter from RaiseReady <raiseready@indexprima.com>** for emails from a
+  person: staff invites, test emails, and future welcome or product emails.
+  Create a mailbox or forwarder for this address in cPanel (Email Accounts or
+  Forwarders) so replies reach someone.
+
+Both must be on the domain verified in Mailtrap. Every message appears in
+Mailtrap's Email Logs: https://mailtrap.io/sending/email_logs
 
 ## 3. Anthropic
 

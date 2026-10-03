@@ -11,6 +11,8 @@ export type EmailMessage = {
   html?: string;
   /** Groups messages in Mailtrap's Email Logs and stats, e.g. "Staff invite". */
   category: string;
+  /** Which sender in `SITE.email` it comes from; account emails default to the no-reply one. */
+  sender?: keyof typeof SITE.email;
 };
 
 export type SendResult = { ok: true; ids: string[] } | { ok: false; reason: string };
@@ -33,7 +35,7 @@ export async function sendEmail(message: EmailMessage, fetcher: typeof fetch = f
       method: "POST",
       headers: { Authorization: `Bearer ${MAILTRAP_API_TOKEN}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: { email: SITE.email.from, name: SITE.email.fromName },
+        from: SITE.email[message.sender ?? "system"],
         to: message.to,
         subject: message.subject,
         text: message.text,

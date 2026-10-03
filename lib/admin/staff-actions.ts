@@ -54,7 +54,7 @@ export async function sendTestEmailAction(): Promise<{ message?: string; error?:
   if (!staff || !can(staff.profile.role, "manage_content")) return { error: "Only a super admin can send a test email." };
   if (!emailConfigured()) return { error: "Email isn't set up: add MAILTRAP_API_TOKEN in Vercel, then redeploy." };
   if (!staff.email) return { error: "Your account has no email address." };
-  const result = await sendEmail({ to: [{ email: staff.email }], ...testEmail({ sentBy: staff.email }), category: "Test" });
+  const result = await sendEmail({ to: [{ email: staff.email }], ...testEmail({ sentBy: staff.email }), category: "Test", sender: "personal" });
   return result.ok
     ? { message: `Sent to ${staff.email}. It should arrive within a minute; check spam too. Mailtrap's Email Logs show every message.` }
     : { error: `Mailtrap didn't send it: ${result.reason}. Check the token, and that indexprima.com is verified in Mailtrap.` };

@@ -25,13 +25,19 @@ describe("Mailtrap sending", () => {
     expect(url).toBe(MAILTRAP_SEND_URL);
     expect((init?.headers as Record<string, string>).Authorization).toBe("Bearer test-token");
     expect(JSON.parse(String(init?.body))).toEqual({
-      from: { email: "raiseready@indexprima.com", name: "RaiseReady" },
+      from: { email: "no-reply@indexprima.com", name: "RaiseReady" },
       to: [{ email: "kemi@x.example", name: "Kemi" }],
       subject: "Hi",
       text: "Hello",
       html: "<p>Hello</p>",
       category: "Test",
     });
+  });
+
+  it("sends personal emails from Mhenuter's address", async () => {
+    const fetcher = fakeFetch(200, { success: true, message_ids: ["m2"] });
+    await sendEmail({ ...message, sender: "personal" }, fetcher as never);
+    expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).from).toEqual({ email: "raiseready@indexprima.com", name: "Mhenuter from RaiseReady" });
   });
 
   it("returns Mailtrap's reason instead of throwing", async () => {

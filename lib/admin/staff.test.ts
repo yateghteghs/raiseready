@@ -58,7 +58,7 @@ describe("staff invites", () => {
     const { link, emailed } = await inviteStaff(actor("super_admin"), { email: "kemi@x.example", full_name: "Kemi", role: "admin" });
     expect(link).toBe("https://rr.example/auth/callback?token_hash=HASH&type=invite&next=/admin/welcome");
     expect(emailed).toBe(true);
-    expect(emails[0]).toMatchObject({ to: [{ email: "kemi@x.example" }], category: "Staff invite", text: expect.stringContaining(link) });
+    expect(emails[0]).toMatchObject({ to: [{ email: "kemi@x.example" }], category: "Staff invite", sender: "personal", text: expect.stringContaining(link) });
     expect(db.profiles.find((p) => p.id === "new-staff")).toMatchObject({ role: "admin", full_name: "Kemi" });
     expect(db.audit_logs[0]).toMatchObject({ action: "admin.staff_invited", target_id: "new-staff" });
   });

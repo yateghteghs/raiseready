@@ -77,6 +77,7 @@ export async function inviteStaff(staff: Staff, input: z.infer<typeof staffInvit
     to: [{ email: input.email, name: input.full_name }],
     ...staffInviteEmail({ name: input.full_name, role: roleLabel(input.role), link }),
     category: "Staff invite",
+    sender: "personal",
   });
   return { link, emailed: sent.ok };
 }

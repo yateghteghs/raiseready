@@ -129,7 +129,7 @@ milestone at a time (spec section 11) and stop for review after each.
 - Email: Supabase sends auth emails (its SMTP settings). Everything the app
   sends itself goes through `sendEmail` (`lib/email/mailtrap.ts`, Mailtrap's
   Email API, `MAILTRAP_API_TOKEN`), which never throws; templates in
-  `lib/email/templates.ts` escape all user text; the sender is `SITE.email`.
+  `lib/email/templates.ts` escape all user text; senders are `SITE.email.system` (no-reply, account emails, the default) and `SITE.email.personal` (Mhenuter, replies welcome).
   Without a token nothing is emailed, so callers must still work (e.g. staff
   invite links are also shown on screen). Supabase's Send Email hook
   (`app/api/auth/send-email`, Standard Webhooks signature with
