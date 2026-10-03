@@ -62,6 +62,7 @@ below says where to click. After any change to environment variables, redeploy
    | `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` | Paystack public key (`pk_test_…` until launch) |
    | `APP_URL` | Your site address, no trailing slash |
    | `MAILTRAP_API_TOKEN` | Optional. Mailtrap Email API token (see "Email" below) |
+   | `SEND_EMAIL_HOOK_SECRET` | Optional. Supabase Send Email hook secret (see "Email" below) |
 
 4. Deploy, then open `https://<your-site>/status`. Every line should show a
    green tick. Each problem it reports says how to fix it.
@@ -86,6 +87,19 @@ To turn on the second kind:
    API** (Transactional Stream).
 3. In Vercel, add `MAILTRAP_API_TOKEN` with that token, then redeploy.
 4. As a super admin, open **Admin → Overview → Email → Send me a test email**.
+
+**Recommended: send sign-up and password emails through Mailtrap's API too.**
+Supabase's SMTP connection to Mailtrap can time out ("context deadline
+exceeded" in Supabase's Auth logs). The Send Email hook avoids SMTP: Supabase
+calls RaiseReady, which sends the email with Mailtrap's API.
+1. Set `MAILTRAP_API_TOKEN` as above and check the test email arrives.
+2. In **Supabase → Authentication → Hooks**, add a **Send Email** hook of
+   type **HTTPS**, URL `https://<your-site>/api/auth/send-email`, and click
+   **Generate secret**. Copy the secret (it starts `v1,whsec_`).
+3. In Vercel, add `SEND_EMAIL_HOOK_SECRET` with that secret, then redeploy.
+4. Enable the hook in Supabase and save. Supabase then stops using SMTP.
+5. Sign up with a new email: the confirmation comes from RaiseReady, and its
+   link works in any browser.
 
 Emails come from `raiseready@indexprima.com` ("RaiseReady"); change it in
 `lib/site.ts` (`SITE.email`). Any address you use must be on the verified

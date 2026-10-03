@@ -45,3 +45,51 @@ export function testEmail(input: { sentBy: string }): Built {
   const what = `This is a test email from ${SITE.name}, sent from the admin area by ${input.sentBy}. If you can read it, email sending through Mailtrap works.`;
   return { subject: `${SITE.name} test email`, text: what, html: layout([what]) };
 }
+
+/** Account emails sent for Supabase Auth (through the Send Email hook). */
+export function accountEmail(
+  input:
+    | { kind: "confirm" | "reset" | "signin" | "email_change"; name?: string; link: string }
+    | { kind: "code"; name?: string; code: string },
+): Built {
+  const hello = input.name ? `Hi ${input.name},` : "Hi,";
+  const ignore = "If you didn't ask for this, you can ignore this email.";
+  switch (input.kind) {
+    case "confirm": {
+      const what = `Welcome to ${SITE.name}. Confirm your email address to activate your account and set up your startup.`;
+      return {
+        subject: `Confirm your ${SITE.name} account`,
+        text: `${hello}\n\n${what}\n\n${input.link}\n\n${ignore}`,
+        html: layout([hello, what], { label: "Confirm my email", href: input.link }, [ignore]),
+      };
+    }
+    case "reset": {
+      const what = `We received a request to reset your ${SITE.name} password. Open the link below to choose a new one.`;
+      return {
+        subject: `Reset your ${SITE.name} password`,
+        text: `${hello}\n\n${what}\n\n${input.link}\n\n${ignore}`,
+        html: layout([hello, what], { label: "Choose a new password", href: input.link }, [ignore]),
+      };
+    }
+    case "signin": {
+      const what = `Here is your link to sign in to ${SITE.name}.`;
+      return {
+        subject: `Your ${SITE.name} sign-in link`,
+        text: `${hello}\n\n${what}\n\n${input.link}\n\n${ignore}`,
+        html: layout([hello, what], { label: "Sign in", href: input.link }, [ignore]),
+      };
+    }
+    case "email_change": {
+      const what = `Confirm this new email address for your ${SITE.name} account.`;
+      return {
+        subject: `Confirm your new ${SITE.name} email`,
+        text: `${hello}\n\n${what}\n\n${input.link}\n\n${ignore}`,
+        html: layout([hello, what], { label: "Confirm new email", href: input.link }, [ignore]),
+      };
+    }
+    case "code": {
+      const what = `Your ${SITE.name} verification code is ${input.code}.`;
+      return { subject: `Your ${SITE.name} verification code`, text: `${hello}\n\n${what}\n\n${ignore}`, html: layout([hello, what], undefined, [ignore]) };
+    }
+  }
+}

@@ -23,6 +23,8 @@ const serverSchema = publicSchema.extend({
   APP_URL: z.url(),
   /** Mailtrap Email API token (Sending Domains → Integration → API). Optional: without it, nothing is emailed. */
   MAILTRAP_API_TOKEN: z.string().min(1).optional(),
+  /** Secret for Supabase's Send Email hook (Authentication → Hooks), e.g. "v1,whsec_…". Optional. */
+  SEND_EMAIL_HOOK_SECRET: z.string().min(1).optional(),
 });
 
 export type PublicEnv = z.infer<typeof publicSchema>;

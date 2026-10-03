@@ -5,7 +5,7 @@ import { MAILTRAP_SEND_URL, sendEmail } from "@/lib/email/mailtrap";
 const message = { to: [{ email: "kemi@x.example", name: "Kemi" }], subject: "Hi", text: "Hello", html: "<p>Hello</p>", category: "Test" };
 
 function fakeFetch(status: number, body: unknown) {
-  return vi.fn(async (..._args: Parameters<typeof fetch>) => new Response(JSON.stringify(body), { status }));
+  return vi.fn<typeof fetch>(async () => new Response(JSON.stringify(body), { status }));
 }
 
 describe("Mailtrap sending", () => {
