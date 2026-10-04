@@ -1,8 +1,8 @@
 export const SITE = {
   name: "RaiseReady",
   tagline: "Don't practice on investors. Practice on AI first.",
-  /** Public contact address for privacy and support requests. Not yet chosen. */
-  contactEmail: null as string | null,
+  /** Public contact address for privacy and support requests (a real mailbox). */
+  contactEmail: "raiseready@indexprima.com" as string | null,
   /**
    * Who emails come from (addresses must be on a domain verified in Mailtrap).
    * - system: automatic account emails nobody should reply to (sign-up

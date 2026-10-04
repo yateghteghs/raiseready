@@ -401,9 +401,10 @@ E2E_BASE_URL=https://<your-site> E2E_SUPABASE_URL=… E2E_SUPABASE_SERVICE_ROLE_
 - [ ] Supabase's built-in email sender allows only a few emails an hour, which
       also limits the admin "Send password reset" button. A custom SMTP
       sender (below) removes this limit.
-- [ ] Add Index Prima's registered address and a contact email: both are
-      in `lib/site.ts` (`SITE.company.address`, `SITE.contactEmail`). The
-      legal pages show placeholders until then.
+- [x] Contact email: `raiseready@indexprima.com` (`SITE.contactEmail` in
+      `lib/site.ts`), shown on the legal and Partners pages.
+- [ ] Add Index Prima's registered address (`SITE.company.address` in
+      `lib/site.ts`). The legal pages show a placeholder until then.
 - [ ] Custom email sender: Supabase's built-in one is rate-limited and meant
       for testing. Add your own SMTP provider under **Authentication → Emails
       → SMTP Settings**.
