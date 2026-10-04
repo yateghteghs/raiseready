@@ -201,3 +201,15 @@ test("first-time visitors can accept or decline cookies, and change their mind",
   await expect(notice).toBeHidden();
   expect((await context.cookies()).find((c) => c.name === "rr_consent")?.value).toBe("all");
 });
+
+test("the eye button shows and hides the password", async ({ page }) => {
+  await page.goto("/login");
+  const password = page.getByLabel("Password", { exact: true });
+  await password.fill("secret-pass");
+  await expect(password).toHaveAttribute("type", "password");
+  await page.getByRole("button", { name: "Show password" }).click();
+  await expect(password).toHaveAttribute("type", "text");
+  await page.getByRole("button", { name: "Hide password" }).click();
+  await expect(password).toHaveAttribute("type", "password");
+  await expect(password).toHaveValue("secret-pass");
+});

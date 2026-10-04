@@ -169,6 +169,8 @@ export const yo: Messages = {
     password: "Ọ̀rọ̀ aṣínà",
     fullName: "Orúkọ kíkún",
     passwordHint: "Ó kéré tán lẹ́tà {min}.",
+    showPassword: "Fi ọ̀rọ̀ aṣínà hàn",
+    hidePassword: "Fi ọ̀rọ̀ aṣínà pamọ́",
     login: {
       title: "Wọlé",
       description: "Káàbọ̀ padà. Tẹ̀síwájú láti ibi tí o dúró sí.",

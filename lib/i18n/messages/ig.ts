@@ -169,6 +169,8 @@ export const ig: Messages = {
     password: "Paswọọdụ",
     fullName: "Aha zuru ezu",
     passwordHint: "Opekata mpe mkpụrụedemede {min}.",
+    showPassword: "Gosi okwuntughe",
+    hidePassword: "Zoo okwuntughe",
     login: {
       title: "Banye",
       description: "Nnọọ ọzọ. Gaa n'ihu site n'ebe ị kwụsịrị.",

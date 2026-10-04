@@ -169,6 +169,8 @@ export const pt: Messages = {
     password: "Palavra-passe",
     fullName: "Nome completo",
     passwordHint: "Pelo menos {min} caracteres.",
+    showPassword: "Mostrar palavra-passe",
+    hidePassword: "Ocultar palavra-passe",
     login: {
       title: "Entrar",
       description: "Bem-vindo de volta. Continue de onde parou.",

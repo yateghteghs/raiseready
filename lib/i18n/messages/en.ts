@@ -171,6 +171,8 @@ export const en = {
     password: "Password",
     fullName: "Full name",
     passwordHint: "At least {min} characters.",
+    showPassword: "Show password",
+    hidePassword: "Hide password",
     login: {
       title: "Log in",
       description: "Welcome back. Pick up where you left off.",

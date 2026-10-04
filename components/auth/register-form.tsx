@@ -44,6 +44,7 @@ export function RegisterForm({ t }: { t: Messages["auth"] }) {
         name="password"
         label={t.password}
         type="password"
+        revealLabels={{ show: t.showPassword, hide: t.hidePassword }}
         autoComplete="new-password"
         minLength={PASSWORD_MIN_LENGTH}
         hint={fill(t.passwordHint, { min: PASSWORD_MIN_LENGTH })}

@@ -168,6 +168,8 @@ export const sw: Messages = {
     password: "Nenosiri",
     fullName: "Jina kamili",
     passwordHint: "Angalau herufi {min}.",
+    showPassword: "Onyesha nenosiri",
+    hidePassword: "Ficha nenosiri",
     login: {
       title: "Ingia",
       description: "Karibu tena. Endelea pale ulipoishia.",

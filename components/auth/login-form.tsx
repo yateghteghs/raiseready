@@ -30,6 +30,7 @@ export function LoginForm({ next, t }: { next?: string; t: Messages["auth"] }) {
           name="password"
           label={t.password}
           type="password"
+          revealLabels={{ show: t.showPassword, hide: t.hidePassword }}
           autoComplete="current-password"
           errors={errors}
         />

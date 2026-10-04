@@ -168,6 +168,8 @@ export const ar: Messages = {
     password: "كلمة المرور",
     fullName: "الاسم الكامل",
     passwordHint: "{min} أحرف على الأقل.",
+    showPassword: "إظهار كلمة المرور",
+    hidePassword: "إخفاء كلمة المرور",
     login: {
       title: "تسجيل الدخول",
       description: "مرحبًا بعودتك. تابع من حيث توقفت.",

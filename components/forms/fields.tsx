@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { PasswordInput, type RevealLabels } from "@/components/forms/password-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -60,19 +61,24 @@ export function TextField({
   errors,
   optional,
   className,
+  revealLabels,
   ...input
-}: BaseProps & Omit<React.ComponentProps<"input">, "name">) {
+}: BaseProps & Omit<React.ComponentProps<"input">, "name"> & { revealLabels?: RevealLabels }) {
   const error = errors?.[name]?.[0];
+  const props = {
+    id: name,
+    name,
+    required: !optional,
+    "aria-invalid": error ? true : undefined,
+    "aria-describedby": describe(name, hint, error),
+  };
   return (
     <FieldShell {...{ name, label, hint, error, optional, className }}>
-      <Input
-        id={name}
-        name={name}
-        required={!optional}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describe(name, hint, error)}
-        {...input}
-      />
+      {input.type === "password" ? (
+        <PasswordInput {...props} {...input} labels={revealLabels} />
+      ) : (
+        <Input {...props} {...input} />
+      )}
     </FieldShell>
   );
 }

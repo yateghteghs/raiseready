@@ -169,6 +169,8 @@ export const ha: Messages = {
     password: "Kalmar sirri",
     fullName: "Cikakken suna",
     passwordHint: "Aƙalla haruffa {min}.",
+    showPassword: "Nuna kalmar sirri",
+    hidePassword: "Ɓoye kalmar sirri",
     login: {
       title: "Shiga",
       description: "Barka da dawowa. Ci gaba daga inda ka tsaya.",

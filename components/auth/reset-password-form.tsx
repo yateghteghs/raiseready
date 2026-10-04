@@ -22,6 +22,7 @@ export function ResetPasswordForm({ t, next }: { t: Messages["auth"]; next?: str
         name="password"
         label={t.reset.newPassword}
         type="password"
+        revealLabels={{ show: t.showPassword, hide: t.hidePassword }}
         autoComplete="new-password"
         minLength={PASSWORD_MIN_LENGTH}
         hint={fill(t.passwordHint, { min: PASSWORD_MIN_LENGTH })}
@@ -31,6 +32,7 @@ export function ResetPasswordForm({ t, next }: { t: Messages["auth"]; next?: str
         name="confirm_password"
         label={t.reset.confirm}
         type="password"
+        revealLabels={{ show: t.showPassword, hide: t.hidePassword }}
         autoComplete="new-password"
         errors={errors}
       />
