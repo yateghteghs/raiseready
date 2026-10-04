@@ -213,3 +213,15 @@ test("the eye button shows and hides the password", async ({ page }) => {
   await expect(password).toHaveAttribute("type", "password");
   await expect(password).toHaveValue("secret-pass");
 });
+
+test("an invite link fills in the invite code on sign-up", async ({ page }) => {
+  await page.goto("/register?ref=ABCD2345");
+  await expect(page.getByLabel("Invite code (optional)")).toHaveValue("ABCD2345");
+});
+
+test("the status page loads and shows details while sign-in can't work", async ({ page }) => {
+  // The E2E server has no real Supabase project, so nobody could sign in to see the details.
+  await page.goto("/status");
+  await expect(page.getByRole("heading", { name: "System status" })).toBeVisible();
+  await expect(page.getByText("NEXT_PUBLIC_SUPABASE_URL")).toBeVisible();
+});

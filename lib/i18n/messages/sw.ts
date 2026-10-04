@@ -200,6 +200,8 @@ export const sw: Messages = {
       resending: "Inatuma…",
       wrongEmail: "Barua pepe si sahihi?",
       startAgain: "Anza upya",
+      inviteCode: "Msimbo wa mwaliko (si lazima)",
+      inviteHint: "Ikiwa mwanzilishi mwingine alikualika, msimbo wake unaonekana hapa.",
     },
     forgot: {
       title: "Weka upya nenosiri lako",
@@ -231,6 +233,8 @@ export const sw: Messages = {
     stillStuckBody: "Ona jinsi RaiseReady inavyofanya kazi, hatua kwa hatua:",
   },
   text: {
+    "That invite code doesn't look right. Check it, or leave the box empty.":
+      "Msimbo huo wa mwaliko hauonekani sahihi. Uangalie, au acha kisanduku kitupu.",
     "Please fix the highlighted fields.": "Tafadhali rekebisha sehemu zilizoangaziwa.",
     "Enter your email address.": "Andika anwani yako ya barua pepe.",
     "Enter a valid email address.": "Andika anwani sahihi ya barua pepe.",

@@ -66,13 +66,14 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
       payments: payments.data ?? [],
       referrals,
       inviteUrl: `${siteUrl}/register?ref=${code}`,
+      inviteCode: code,
       programme,
       referralDiscount: programme.enabled && programme.friendPercentOff > 0 && Boolean(usage.profile.referred_by) && !paidBefore,
     };
   });
   if (!loaded.ok) return <LoadProblem code={loaded.code} />;
   if (!loaded.data) return <LoadProblem code="no_startup" />;
-  const { usage, decks, prices: PRICES, ctx, subscription, payments, referrals, inviteUrl, referralDiscount, programme } = loaded.data;
+  const { usage, decks, prices: PRICES, ctx, subscription, payments, referrals, inviteUrl, inviteCode, referralDiscount, programme } = loaded.data;
   const inviteOffer = inviteOfferText(programme, ctx.currency);
 
   const testMode = (process.env.PAYSTACK_SECRET_KEY ?? "").startsWith("sk_test_");
@@ -228,6 +229,10 @@ export default async function BillingPage({ searchParams }: PageProps<"/app/bill
           </p>
         </div>
         <InviteLink url={inviteUrl} />
+        <p className="text-muted-foreground text-sm">
+          Or give them your invite code to type in when they sign up:{" "}
+          <span className="text-foreground font-mono font-medium">{inviteCode}</span>
+        </p>
         <p className="text-muted-foreground text-sm">
           {referrals.joined === 0
             ? "Nobody has joined with your link yet."

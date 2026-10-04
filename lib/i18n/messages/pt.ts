@@ -201,6 +201,8 @@ export const pt: Messages = {
       resending: "A enviar…",
       wrongEmail: "Email errado?",
       startAgain: "Recomeçar",
+      inviteCode: "Código de convite (opcional)",
+      inviteHint: "Se outro fundador o convidou, o código dele aparece aqui.",
     },
     forgot: {
       title: "Redefinir a palavra-passe",
@@ -232,6 +234,8 @@ export const pt: Messages = {
     stillStuckBody: "Veja como o RaiseReady funciona, passo a passo:",
   },
   text: {
+    "That invite code doesn't look right. Check it, or leave the box empty.":
+      "Esse código de convite não parece correto. Verifique-o ou deixe a caixa vazia.",
     "Please fix the highlighted fields.": "Corrija os campos assinalados.",
     "Enter your email address.": "Indique o seu endereço de e-mail.",
     "Enter a valid email address.": "Indique um endereço de e-mail válido.",

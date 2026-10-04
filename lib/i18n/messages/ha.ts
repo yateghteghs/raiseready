@@ -201,6 +201,8 @@ export const ha: Messages = {
       resending: "Ana aikawa…",
       wrongEmail: "Imel ɗin ba daidai ba ne?",
       startAgain: "Fara daga farko",
+      inviteCode: "Lambar gayyata (ba dole ba)",
+      inviteHint: "Idan wani mai kafa kamfani ya gayyace ka, lambarsa za ta bayyana a nan.",
     },
     forgot: {
       title: "Sake saita kalmar sirrinka",
@@ -232,6 +234,8 @@ export const ha: Messages = {
     stillStuckBody: "Duba yadda RaiseReady ke aiki, mataki-mataki:",
   },
   text: {
+    "That invite code doesn't look right. Check it, or leave the box empty.":
+      "Wannan lambar gayyata ba ta yi daidai ba. Duba ta, ko ka bar akwatin babu komai.",
     "Please fix the highlighted fields.": "Da fatan za a gyara wuraren da aka haskaka.",
     "Enter your email address.": "Rubuta adireshin imel ɗinka.",
     "Enter a valid email address.": "Rubuta ingantaccen adireshin imel.",

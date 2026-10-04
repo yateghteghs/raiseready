@@ -46,5 +46,5 @@ export async function adminLogin(_prev: FormState, formData: FormData): Promise<
   record(true, null);
 
   const next = safeNextPath(formData.get("next"), "/admin");
-  redirect(next.startsWith("/admin") ? next : "/admin");
+  redirect(next.startsWith("/admin") || next === "/status" ? next : "/admin");
 }

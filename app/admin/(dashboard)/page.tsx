@@ -95,6 +95,13 @@ export default async function AdminOverview() {
             </li>
           </ul>
           {emailConfigured() ? <TestEmailButton /> : null}
+          <p className="text-muted-foreground text-sm">
+            Every setting (Supabase, email, AI, Paystack) is checked on the{" "}
+            <Link href="/status" className="underline underline-offset-4">
+              system status page
+            </Link>
+            .
+          </p>
         </section>
       ) : null}
     </>

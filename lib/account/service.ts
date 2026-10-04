@@ -71,7 +71,7 @@ export async function cancelSubscriptions(userId: string): Promise<number> {
     } catch (cause) {
       console.error(cause);
       throw new AccountError(
-        "We couldn't cancel the Pro subscription with Paystack, so nothing has been changed. Please try again in a few minutes, or cancel the subscription from the Billing page first.",
+        "We couldn't cancel your paid subscription with Paystack, so nothing has been changed. Please try again in a few minutes, or cancel the subscription from the Billing page first.",
       );
     }
   }

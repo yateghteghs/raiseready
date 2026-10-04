@@ -112,7 +112,7 @@ async function registerInEnglish(_prev: FormState, formData: FormData): Promise<
   // Arrived through a founder's invite link? Link the accounts. Supabase
   // returns a user with no identities when the email is already registered,
   // so existing accounts are never re-linked.
-  const ref = (await cookies()).get(REFERRAL_COOKIE)?.value;
+  const ref = parsed.data.invite_code || (await cookies()).get(REFERRAL_COOKIE)?.value;
   if (ref && data.user && (data.user.identities?.length ?? 0) > 0) await linkReferral(data.user.id, ref);
 
   // With email confirmation off, Supabase signs the user in immediately (and

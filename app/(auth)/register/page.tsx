@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import Link from "next/link";
 
 import { AuthCard } from "@/components/auth/auth-card";
 import { RegisterForm } from "@/components/auth/register-form";
 import { getMessages } from "@/lib/i18n/server";
+import { isReferralCode, REFERRAL_COOKIE } from "@/lib/referrals/code";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { m } = await getMessages();
   return { title: m.auth.register.title };
 }
 
-export default async function RegisterPage() {
-  const { m } = await getMessages();
+export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ ref?: string }> }) {
+  const [{ m }, jar, { ref }] = await Promise.all([getMessages(), cookies(), searchParams]);
+  // The invite link's code, from the link itself or the cookie it left.
+  const fromLink = ref?.toUpperCase();
+  const fromCookie = jar.get(REFERRAL_COOKIE)?.value;
+  const inviteCode = isReferralCode(fromLink) ? fromLink : isReferralCode(fromCookie) ? fromCookie : undefined;
   const t = m.auth.register;
   // "{terms}" and "{privacy}" become links; the words around them come from the translation.
   const [before, middle, after] = t.agree.split(/\{terms\}|\{privacy\}/);
@@ -40,7 +46,7 @@ export default async function RegisterPage() {
         </p>
       }
     >
-      <RegisterForm t={m.auth} />
+      <RegisterForm t={m.auth} inviteCode={inviteCode} />
       <p className="text-muted-foreground mt-4 text-xs">
         {before}
         {termsFirst ? terms : privacy}

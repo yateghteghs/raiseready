@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { checkAppUrl, checkPublicKey, checkServiceKey, checkSupabaseUrl, supabaseKeyKind } from "@/lib/health";
+import { checkAppUrl, checkPublicKey, checkServiceKey, checkSupabaseUrl, showDetails, supabaseKeyKind } from "@/lib/health";
 
 const jwt = (role: string) =>
   ["e30", Buffer.from(JSON.stringify({ role })).toString("base64url"), "sig"].join(".");
@@ -62,5 +62,17 @@ describe("status page: email and migrations", async () => {
     for (const m of MIGRATION_MARKERS) expect(existsSync(`supabase/migrations/${m.file}`)).toBe(true);
     const files = MIGRATION_MARKERS.map((m) => m.file);
     expect(files).toEqual([...files].sort().reverse());
+  });
+});
+
+describe("status page details", () => {
+  const ok = (name: string) => ({ name, ok: true, detail: "" });
+  const bad = (name: string) => ({ name, ok: false, detail: "" });
+
+  it("shows details to staff only, unless sign-in itself is broken", () => {
+    expect(showDetails([ok("Database tables"), bad("PAYSTACK_SECRET_KEY")], true)).toBe(true);
+    expect(showDetails([ok("Database tables"), bad("PAYSTACK_SECRET_KEY")], false)).toBe(false);
+    expect(showDetails([bad("Database tables")], false)).toBe(true);
+    expect(showDetails([bad("NEXT_PUBLIC_SUPABASE_URL")], false)).toBe(true);
   });
 });

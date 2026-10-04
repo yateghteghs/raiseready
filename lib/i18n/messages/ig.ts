@@ -201,6 +201,8 @@ export const ig: Messages = {
       resending: "Na-ezipu…",
       wrongEmail: "Email ezighi ezi?",
       startAgain: "Malite ọzọ",
+      inviteCode: "Koodu oku (ọ dịghị mkpa)",
+      inviteHint: "Ọ bụrụ na onye nchoputa ọzọ kpọrọ gị, koodu ya ga-apụta ebe a.",
     },
     forgot: {
       title: "Tọgharịa paswọọdụ gị",
@@ -232,6 +234,8 @@ export const ig: Messages = {
     stillStuckBody: "Hụ otu RaiseReady si arụ ọrụ, nzọụkwụ na nzọụkwụ:",
   },
   text: {
+    "That invite code doesn't look right. Check it, or leave the box empty.":
+      "Koodu oku ahụ adịghị ka ọ ziri ezi. Lelee ya, ma ọ bụ hapụ igbe ahụ efu.",
     "Please fix the highlighted fields.": "Biko dozie ebe ndị e gosiri.",
     "Enter your email address.": "Tinye adreesị email gị.",
     "Enter a valid email address.": "Tinye adreesị email ziri ezi.",

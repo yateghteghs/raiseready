@@ -203,6 +203,8 @@ export const en = {
       resending: "Sending…",
       wrongEmail: "Wrong email address?",
       startAgain: "Start again",
+      inviteCode: "Invite code (optional)",
+      inviteHint: "If another founder invited you, their code is filled in here.",
     },
     forgot: {
       title: "Reset your password",
@@ -238,6 +240,8 @@ export const en = {
    * their English text. Keep every key; a missing one falls back to English.
    */
   text: {
+    "That invite code doesn't look right. Check it, or leave the box empty.":
+      "That invite code doesn't look right. Check it, or leave the box empty.",
     "Please fix the highlighted fields.": "Please fix the highlighted fields.",
     "Enter your email address.": "Enter your email address.",
     "Enter a valid email address.": "Enter a valid email address.",

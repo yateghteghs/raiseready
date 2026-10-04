@@ -201,6 +201,8 @@ export const yo: Messages = {
       resending: "Ó ń fi ránṣẹ́…",
       wrongEmail: "Ímeèlì kò tọ̀nà?",
       startAgain: "Bẹ̀rẹ̀ lẹ́ẹ̀kan sí i",
+      inviteCode: "Kóòdù ìpè (kò pọn dandan)",
+      inviteHint: "Tí olùdásílẹ̀ míràn bá pè ọ́, kóòdù rẹ̀ yóò hàn níbí.",
     },
     forgot: {
       title: "Tún ọ̀rọ̀ aṣínà rẹ ṣe",
@@ -232,6 +234,8 @@ export const yo: Messages = {
     stillStuckBody: "Wo bí RaiseReady ṣe ń ṣiṣẹ́, ní ìgbésẹ̀ kọ̀ọ̀kan:",
   },
   text: {
+    "That invite code doesn't look right. Check it, or leave the box empty.":
+      "Kóòdù ìpè yẹn kò dàbí ẹni pé ó tọ̀nà. Ṣàyẹ̀wò rẹ̀, tàbí fi àpótí náà sílẹ̀ ní òfo.",
     "Please fix the highlighted fields.": "Jọ̀wọ́ ṣàtúnṣe àwọn àyè tí a sàmì sí.",
     "Enter your email address.": "Tẹ àdírẹ́sì ímeèlì rẹ.",
     "Enter a valid email address.": "Tẹ àdírẹ́sì ímeèlì tó wúlò.",

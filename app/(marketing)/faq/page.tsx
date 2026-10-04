@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ChevronDownIcon } from "lucide-react";
 
 import { PageHero, Section } from "@/components/marketing/section";
+import { getPlanRules } from "@/lib/billing/plan-settings";
+import { fillPlanNumbers } from "@/lib/faq/placeholders";
 import { publishedFaq } from "@/lib/faq/service";
 import { getMessages } from "@/lib/i18n/server";
 
@@ -14,7 +16,15 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function FaqPage() {
   const { locale, m } = await getMessages();
   const t = m.faq;
-  const faq = await publishedFaq(locale);
+  const [loaded, rules] = await Promise.all([publishedFaq(locale), getPlanRules()]);
+  // Answers can quote plan numbers as {pro.simulations}; fill in today's values.
+  const faq = {
+    ...loaded,
+    sections: loaded.sections.map((s) => ({
+      ...s,
+      items: s.items.map((i) => ({ ...i, question: fillPlanNumbers(i.question, rules), answer: fillPlanNumbers(i.answer, rules) })),
+    })),
+  };
   const fellBack = faq.locale !== locale;
   // FAQPage structured data, so search engines can show the answers. "<" is
   // escaped so an answer can never close the script tag.

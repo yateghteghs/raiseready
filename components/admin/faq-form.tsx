@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { SubmitButton } from "@/components/auth/submit-button";
 import { FormMessage, TextareaField, TextField } from "@/components/forms/fields";
 import { saveFaqAction } from "@/lib/faq/actions";
+import { PLAN_PLACEHOLDERS } from "@/lib/faq/placeholders";
 import { initialFormState } from "@/lib/forms";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -28,7 +29,16 @@ export function FaqForm({ id, locale, initial, submitLabel }: { id?: string; loc
         <TextField name="position" label="Order" type="number" min={0} max={9999} optional defaultValue={v.position ?? String(initial?.position ?? 0)} errors={errors} />
       </div>
       <TextField name="question" label="Question" maxLength={300} defaultValue={v.question ?? initial?.question} errors={errors} dir={dir} />
-      <TextareaField name="answer" label="Answer" rows={4} maxLength={4000} defaultValue={v.answer ?? initial?.answer} errors={errors} dir={dir} />
+      <TextareaField
+        name="answer"
+        label="Answer"
+        rows={4}
+        maxLength={4000}
+        hint={`To quote a plan number that follows Admin → Plans, write ${Object.keys(PLAN_PLACEHOLDERS).map((k) => `{${k}}`).join(", ")}.`}
+        defaultValue={v.answer ?? initial?.answer}
+        errors={errors}
+        dir={dir}
+      />
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="published" defaultChecked={v.published ? v.published === "on" : (initial?.published ?? true)} className="accent-primary" />
         Published (untick to keep as a draft)

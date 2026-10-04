@@ -201,6 +201,8 @@ export const fr: Messages = {
       resending: "Envoi…",
       wrongEmail: "Mauvaise adresse e-mail ?",
       startAgain: "Recommencer",
+      inviteCode: "Code d’invitation (facultatif)",
+      inviteHint: "Si un autre fondateur vous a invité, son code apparaît ici.",
     },
     forgot: {
       title: "Réinitialiser votre mot de passe",
@@ -232,6 +234,8 @@ export const fr: Messages = {
     stillStuckBody: "Découvrez le fonctionnement de RaiseReady, étape par étape :",
   },
   text: {
+    "That invite code doesn't look right. Check it, or leave the box empty.":
+      "Ce code d’invitation ne semble pas correct. Vérifiez-le ou laissez la case vide.",
     "Please fix the highlighted fields.": "Veuillez corriger les champs signalés.",
     "Enter your email address.": "Saisissez votre adresse e-mail.",
     "Enter a valid email address.": "Saisissez une adresse e-mail valide.",

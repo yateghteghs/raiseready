@@ -35,3 +35,13 @@ describe("friendlyAuthError", () => {
     expect(friendlyAuthError({ name: "AuthRetryableFetchError", status: 0 })).toMatch(/couldn't reach/);
   });
 });
+
+describe("invite code on sign-up", () => {
+  const base = { full_name: "Ada Obi", email: "a@b.co", password: "long enough" };
+  it("is optional, upper-cased, and must look like a code when given", () => {
+    expect(registerSchema.safeParse(base).success).toBe(true);
+    expect(registerSchema.safeParse({ ...base, invite_code: "" }).success).toBe(true);
+    expect(registerSchema.parse({ ...base, invite_code: " abcd2345 " }).invite_code).toBe("ABCD2345");
+    expect(registerSchema.safeParse({ ...base, invite_code: "ABC" }).success).toBe(false);
+  });
+});

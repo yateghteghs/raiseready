@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { isReferralCode } from "@/lib/referrals/code";
+
 export const PASSWORD_MIN_LENGTH = 8;
 
 const email = z
@@ -26,6 +28,13 @@ export const registerSchema = z.object({
     .max(100, { error: "Use at most 100 characters." }),
   email,
   password: newPassword,
+  // Typed in, or filled from the invite link the visitor arrived through.
+  invite_code: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .refine((v) => v === "" || isReferralCode(v), { error: "That invite code doesn't look right. Check it, or leave the box empty." })
+    .optional(),
 });
 
 export const forgotPasswordSchema = z.object({ email });

@@ -345,3 +345,27 @@ export async function runHealthChecks(env: Record<string, string | undefined> = 
   results.push(await checkPaystack(env.PAYSTACK_SECRET_KEY));
   return results;
 }
+
+/** Checks that staff must be able to pass before they can sign in to see the details. */
+export const SIGN_IN_CHECKS = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "SUPABASE_SERVICE_ROLE_KEY", "Supabase sign-in service", "Database tables"];
+
+/**
+ * Details are for staff. Everyone else sees them only while sign-in itself is
+ * broken, because then nobody can sign in to read them.
+ */
+export function showDetails(results: CheckResult[], isStaff: boolean): boolean {
+  return isStaff || results.some((r) => !r.ok && SIGN_IN_CHECKS.includes(r.name));
+}
+
+const CACHE_MS = 60_000;
+let cached: { at: number; results: Promise<CheckResult[]> } | null = null;
+
+/** The /status page's checks, reused for a minute so repeated visits don't call every service each time. */
+export function cachedHealthChecks(): Promise<CheckResult[]> {
+  if (!cached || Date.now() - cached.at > CACHE_MS) {
+    const results = runHealthChecks();
+    cached = { at: Date.now(), results };
+    results.catch(() => (cached = null));
+  }
+  return cached.results;
+}

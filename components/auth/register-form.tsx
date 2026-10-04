@@ -12,7 +12,7 @@ import { initialFormState } from "@/lib/forms";
 import type { Messages } from "@/lib/i18n/messages/en";
 import { fill } from "@/lib/i18n/text";
 
-export function RegisterForm({ t }: { t: Messages["auth"] }) {
+export function RegisterForm({ t, inviteCode }: { t: Messages["auth"]; inviteCode?: string }) {
   const [state, action] = useActionState(register, initialFormState);
   // "Start again" hides the check-your-email screen until the next sign-up.
   const [dismissed, setDismissed] = useState<typeof state | null>(null);
@@ -48,6 +48,17 @@ export function RegisterForm({ t }: { t: Messages["auth"] }) {
         autoComplete="new-password"
         minLength={PASSWORD_MIN_LENGTH}
         hint={fill(t.passwordHint, { min: PASSWORD_MIN_LENGTH })}
+        errors={errors}
+      />
+      <TextField
+        name="invite_code"
+        label={t.register.inviteCode}
+        hint={t.register.inviteHint}
+        required={false}
+        autoComplete="off"
+        autoCapitalize="characters"
+        maxLength={8}
+        defaultValue={state.values?.invite_code ?? inviteCode}
         errors={errors}
       />
       <SubmitButton pendingText={t.register.pending} className="w-full">

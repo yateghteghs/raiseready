@@ -200,6 +200,8 @@ export const ar: Messages = {
       resending: "جارٍ الإرسال…",
       wrongEmail: "عنوان البريد خاطئ؟",
       startAgain: "ابدأ من جديد",
+      inviteCode: "رمز الدعوة (اختياري)",
+      inviteHint: "إذا دعاك مؤسس آخر، يظهر رمزه هنا.",
     },
     forgot: {
       title: "إعادة تعيين كلمة المرور",
@@ -231,6 +233,8 @@ export const ar: Messages = {
     stillStuckBody: "اطّلع على طريقة عمل RaiseReady خطوة بخطوة:",
   },
   text: {
+    "That invite code doesn't look right. Check it, or leave the box empty.":
+      "يبدو أن رمز الدعوة غير صحيح. تحقق منه أو اترك الخانة فارغة.",
     "Please fix the highlighted fields.": "يُرجى تصحيح الحقول المحددة.",
     "Enter your email address.": "أدخل عنوان بريدك الإلكتروني.",
     "Enter a valid email address.": "أدخل عنوان بريد إلكتروني صالحًا.",
