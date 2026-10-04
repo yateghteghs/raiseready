@@ -29,7 +29,12 @@ export function emailConfigured(): boolean {
  * caller to explain, instead of breaking the action that triggered it.
  */
 export async function sendEmail(message: EmailMessage, fetcher: typeof fetch = fetch): Promise<SendResult> {
-  if (!emailConfigured()) return { ok: false, reason: "not_configured" };
+  if (!emailConfigured()) {
+    // Recorded too, so Admin → Emails shows why nothing went out.
+    const notSet: SendResult = { ok: false, reason: "not_configured" };
+    await logEmail(message, { ok: false, reason: "Not sent: MAILTRAP_API_TOKEN isn't set on the live site (add it in Vercel, then redeploy)" });
+    return notSet;
+  }
   const result = await deliver(message, fetcher);
   await logEmail(message, result);
   return result;

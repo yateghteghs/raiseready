@@ -68,5 +68,6 @@ describe("Mailtrap sending", () => {
     const fetcher = fakeFetch(200, { success: true });
     expect(await sendEmail(message, fetcher as never)).toEqual({ ok: false, reason: "not_configured" });
     expect(fetcher).not.toHaveBeenCalled();
+    expect(fake.tables.email_log).toEqual([expect.objectContaining({ accepted: false, reason: expect.stringMatching(/MAILTRAP_API_TOKEN isn't set/) })]);
   });
 });

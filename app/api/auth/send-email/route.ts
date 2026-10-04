@@ -32,12 +32,12 @@ export async function POST(request: Request) {
     console.error(`[email] auth hook: unsupported email type "${payload.email_data.email_action_type}"`);
     return hookError(400, "Unsupported email type");
   }
-  if (!emailConfigured()) {
+  const sent = await sendEmail(message);
+  if (!sent.ok && !emailConfigured()) {
     // Without a token nothing can be sent; say so plainly in the logs.
     console.error("[email] auth hook: MAILTRAP_API_TOKEN isn't set, so the confirmation email can't be sent");
     return hookError(503, "Email isn't set up on RaiseReady (MAILTRAP_API_TOKEN missing)");
   }
-  const sent = await sendEmail(message);
   if (!sent.ok) {
     console.error(`[email] auth hook: Mailtrap didn't send "${message.category}": ${sent.reason}`);
     return hookError(502, `Email not sent: ${sent.reason}`);
