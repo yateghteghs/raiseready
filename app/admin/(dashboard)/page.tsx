@@ -79,6 +79,17 @@ export default async function AdminOverview() {
             </a>
             .
           </p>
+          <ul className="grid gap-1 text-sm">
+            <li>
+              {emailConfigured() ? "✓" : "✗"} MAILTRAP_API_TOKEN {emailConfigured() ? "is set" : "is missing in Vercel (add it, then redeploy)"}
+            </li>
+            <li>
+              {process.env.SEND_EMAIL_HOOK_SECRET ? "✓" : "✗"} SEND_EMAIL_HOOK_SECRET{" "}
+              {process.env.SEND_EMAIL_HOOK_SECRET
+                ? "is set (it must match Supabase → Authentication → Hooks)"
+                : "is missing: sign-up emails can't go through Mailtrap until it's set"}
+            </li>
+          </ul>
           {emailConfigured() ? <TestEmailButton /> : null}
         </section>
       ) : null}
