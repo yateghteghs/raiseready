@@ -45,3 +45,22 @@ describe("health checks", () => {
     expect(checkAppUrl("https://raiseready-one.vercel.app/").ok).toBe(false);
   });
 });
+
+describe("status page: email and migrations", async () => {
+  const { checkEmail, MIGRATION_MARKERS } = await import("@/lib/health");
+  const { existsSync } = await import("node:fs");
+
+  it("checks both email settings without showing their values", () => {
+    expect(checkEmail({}).map((c) => c.ok)).toEqual([false, false]);
+    const good = checkEmail({ MAILTRAP_API_TOKEN: "abc", SEND_EMAIL_HOOK_SECRET: "v1,whsec_abc" });
+    expect(good.map((c) => c.ok)).toEqual([true, true]);
+    expect(JSON.stringify(good)).not.toContain("whsec_abc");
+    expect(checkEmail({ SEND_EMAIL_HOOK_SECRET: "whsec_only" })[1]).toMatchObject({ ok: false, detail: expect.stringMatching(/v1,whsec_/) });
+  });
+
+  it("names real migration files, newest first", () => {
+    for (const m of MIGRATION_MARKERS) expect(existsSync(`supabase/migrations/${m.file}`)).toBe(true);
+    const files = MIGRATION_MARKERS.map((m) => m.file);
+    expect(files).toEqual([...files].sort().reverse());
+  });
+});

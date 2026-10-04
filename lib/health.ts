@@ -194,16 +194,75 @@ export async function checkStorage(url: string, serviceKey: string): Promise<Che
     });
     const { data, error } = await supabase.storage.listBuckets();
     if (error) return { name, ok: false, detail: "Couldn't list storage buckets." };
-    const missing = ["documents", "reports"].filter((id) => !data.some((b) => b.id === id));
+    const PRIVATE = ["documents", "reports", "images"];
+    const missing = [...PRIVATE, "showcase"].filter((id) => !data.some((b) => b.id === id));
     if (missing.length) {
       return { name, ok: false, detail: `Missing bucket(s): ${missing.join(", ")}. Re-run the database setup script.` };
     }
-    const pub = data.filter((b) => ["documents", "reports"].includes(b.id) && b.public);
-    if (pub.length) return { name, ok: false, detail: "A document bucket is public. It must be private." };
-    return { name, ok: true, detail: "Private buckets for documents and reports exist." };
+    const pub = data.filter((b) => PRIVATE.includes(b.id) && b.public);
+    if (pub.length) return { name, ok: false, detail: `Bucket(s) ${pub.map((b) => b.id).join(", ")} are public. They must be private.` };
+    return { name, ok: true, detail: "Private buckets for documents, reports and images exist, plus the public showcase bucket." };
   } catch {
     return { name, ok: false, detail: "Couldn't reach storage." };
   }
+}
+
+/**
+ * The newest thing each migration adds, newest first. The first one found
+ * missing names the migration to run (and every newer one after it).
+ */
+export const MIGRATION_MARKERS: { file: string; table: string; column?: string }[] = [
+  { file: "20261001002300_email_log.sql", table: "email_log" },
+  { file: "20261001002200_email_events.sql", table: "email_events" },
+  { file: "20261001002100_welcome_email.sql", table: "profiles", column: "welcome_email_sent_at" },
+  { file: "20261001001900_plan_settings_fx.sql", table: "fx_rates" },
+  { file: "20261001001800_prices_notification_switch.sql", table: "price_settings" },
+  { file: "20261001001700_pro_plus_teams.sql", table: "teams" },
+  { file: "20261001001600_pitch_decks.sql", table: "pitch_decks" },
+  { file: "20261001001500_faq.sql", table: "faq_items" },
+];
+
+/** Finds database migrations that haven't been run yet. */
+export async function checkMigrations(url: string, serviceKey: string): Promise<CheckResult> {
+  const name = "Database up to date";
+  try {
+    const supabase = createClient(url, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
+    const results = await Promise.all(
+      MIGRATION_MARKERS.map(async (m) => {
+        const { error } = await supabase.from(m.table as "profiles").select(m.column ?? "*").limit(1);
+        return { ...m, missing: Boolean(error) && ["PGRST205", "42P01", "42703", "PGRST204"].includes(error!.code) };
+      }),
+    );
+    const missing = results.filter((r) => r.missing).map((r) => r.file).reverse();
+    if (!missing.length) return { name, ok: true, detail: "All database updates have been run." };
+    return {
+      name,
+      ok: false,
+      detail: `Not run yet: ${missing.join(", ")}. Run them in this order in Supabase → SQL Editor (from supabase/migrations), or re-run supabase/setup.sql.`,
+    };
+  } catch {
+    return { name, ok: false, detail: "Couldn't check the database." };
+  }
+}
+
+/** Email settings: Mailtrap for everything RaiseReady sends, and the Supabase hook for sign-up emails. */
+export function checkEmail(env: Record<string, string | undefined>): CheckResult[] {
+  const token = env.MAILTRAP_API_TOKEN?.trim();
+  const secret = env.SEND_EMAIL_HOOK_SECRET?.trim();
+  return [
+    token
+      ? { name: "MAILTRAP_API_TOKEN", ok: true, detail: "Set. Use Admin → Overview → Send me a test email to confirm Mailtrap accepts it." }
+      : { name: "MAILTRAP_API_TOKEN", ok: false, detail: "Not set: receipts, welcome and other emails won't be sent. Add it in Vercel, then redeploy." },
+    !secret
+      ? {
+          name: "SEND_EMAIL_HOOK_SECRET",
+          ok: false,
+          detail: "Not set: sign-up and password emails can only go through Supabase's own sender. Copy the secret from Supabase → Authentication → Hooks.",
+        }
+      : secret.startsWith("v1,whsec_")
+        ? { name: "SEND_EMAIL_HOOK_SECRET", ok: true, detail: "Set. It must match the secret on Supabase's Send Email hook." }
+        : { name: "SEND_EMAIL_HOOK_SECRET", ok: false, detail: 'Doesn\'t look right: copy the whole secret, starting with "v1,whsec_".' },
+  ];
 }
 
 /** Confirms the Anthropic key works and the configured model exists (no tokens used). */
@@ -278,8 +337,10 @@ export async function runHealthChecks(env: Record<string, string | undefined> = 
   if (urlCheck.ok && publicKeyCheck.ok) results.push(await checkAccessRules(url!.trim(), publicKey!.trim()));
   if (urlCheck.ok && serviceKeyCheck.ok) {
     results.push(await checkDatabase(url!.trim(), serviceKey!.trim()));
+    results.push(await checkMigrations(url!.trim(), serviceKey!.trim()));
     results.push(await checkStorage(url!.trim(), serviceKey!.trim()));
   }
+  results.push(...checkEmail(env));
   results.push(...(await checkAnthropic(env.ANTHROPIC_API_KEY, env.ANTHROPIC_MODEL)));
   results.push(await checkPaystack(env.PAYSTACK_SECRET_KEY));
   return results;

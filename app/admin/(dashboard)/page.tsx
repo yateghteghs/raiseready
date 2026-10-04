@@ -23,7 +23,7 @@ export default async function AdminOverview() {
           <Stat label="Users" value={num(m.users)} hint={`${num(m.users7)} new this week · ${num(m.users30)} this month`} />
           <Stat label="Finished onboarding" value={pct(m.onboardingRate)} />
           <Stat label="Startups" value={num(m.startups)} />
-          <Stat label="On Pro" value={num(m.pro)} />
+          <Stat label="On a paid plan" value={num(m.pro)} />
           <Stat label="Active today" value={num(active.daily)} />
           <Stat label="Active this week" value={num(active.weekly)} />
           <Stat label="Active this month" value={num(active.monthly)} />
@@ -54,7 +54,11 @@ export default async function AdminOverview() {
       <section className="grid gap-3" aria-labelledby="money-h">
         <h2 id="money-h" className="font-semibold">Revenue and AI cost</h2>
         <StatGrid>
-          <Stat label="Revenue this month" value={formatMoney(koboToNaira(m.revenue.thisMonthKobo))} />
+          <Stat
+            label="Revenue this month"
+            value={formatMoney(koboToNaira(m.revenue.thisMonthKobo))}
+            hint={m.revenueUsd.thisMonthKobo ? `plus ${formatMoney(m.revenueUsd.thisMonthKobo / 100, "USD")} in dollars` : undefined}
+          />
           <Stat
             label="Revenue all time"
             value={formatMoney(koboToNaira(m.revenue.allTimeKobo))}

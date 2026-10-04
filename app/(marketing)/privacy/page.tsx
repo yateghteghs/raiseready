@@ -196,7 +196,11 @@ export default function PrivacyPage() {
       <h2>8. How long we keep it</h2>
       <ul>
         <li>Most of your data is kept for as long as your account is open.</li>
-        <li>Sign-in records, activity records and error reports are deleted after 90 days.</li>
+        <li>
+          Sign-in records, activity records, error reports and our record of the emails we sent you
+          (address, type of email and whether it was accepted for delivery) are deleted after 90 days,
+          including after you delete your account.
+        </li>
         <li>When you delete a document, the file and its record are removed straight away.</li>
         <li>
           When you delete your account, your profile, startups, documents, assessments, Investor Room
