@@ -3,6 +3,7 @@ import { after, NextResponse, type NextRequest } from "next/server";
 
 import { recordSignIn } from "@/lib/activity/service";
 import { safeNextPath } from "@/lib/auth/redirect";
+import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -22,6 +23,8 @@ export async function GET(request: NextRequest) {
     if (user?.email) {
       const userAgent = request.headers.get("user-agent");
       after(() => recordSignIn({ email: user.email!, userId: user.id, succeeded: true, surface: "app", userAgent }));
+      // Just confirmed their email? Mhenuter's welcome goes out once.
+      after(() => sendWelcomeEmail(user.id));
     }
     return NextResponse.redirect(new URL(next, origin));
   };

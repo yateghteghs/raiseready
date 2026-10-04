@@ -60,6 +60,7 @@ type ProfileRow = Timestamps & {
   last_seen_at: string | null;
   referral_code: string | null;
   referred_by: string | null;
+  welcome_email_sent_at: string | null;
 };
 
 type StartupRow = Timestamps & {
@@ -409,6 +410,7 @@ export type Database = {
         | "referral_code"
         | "referred_by"
         | "deck_credits"
+        | "welcome_email_sent_at"
       >;
       startups: Table<
         StartupRow,

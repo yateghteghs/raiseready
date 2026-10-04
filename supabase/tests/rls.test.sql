@@ -523,6 +523,9 @@ select rls_test.throws(
 select rls_test.throws(
   $$update public.profiles set last_seen_at = now() where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
   '42501', 'A cannot set last_seen_at (server does)');
+select rls_test.throws(
+  $$update public.profiles set welcome_email_sent_at = null where id = 'aaaaaaaa-0000-4000-8000-000000000001'$$,
+  '42501', 'A cannot reset the welcome email (server does)');
 
 -- storage
 select rls_test.ok(

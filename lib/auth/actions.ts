@@ -9,6 +9,7 @@ import { REFERRAL_COOKIE } from "@/lib/referrals/code";
 import { linkReferral } from "@/lib/referrals/service";
 import { authErrorCode, friendlyAuthError, logAuthError } from "@/lib/auth/errors";
 import { isStaffProfile } from "@/lib/admin/auth";
+import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { DEFAULT_AFTER_LOGIN, safeNextPath } from "@/lib/auth/redirect";
 import {
   forgotPasswordSchema,
@@ -61,6 +62,10 @@ async function loginInEnglish(_prev: FormState, formData: FormData): Promise<For
   );
   if (error && error.code !== "invalid_credentials") logAuthError("login", error);
   if (error) return { status: "error", message: friendlyAuthError(error), values };
+
+  // Founders who confirmed in another browser get their welcome on first login.
+  const userId = data.user.id;
+  after(() => sendWelcomeEmail(userId));
 
   const next = safeNextPath(formData.get("next"));
   // Staff land in the admin area unless a link sent them somewhere specific.

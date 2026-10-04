@@ -76,8 +76,12 @@ by default. If they time out, check **Settings → Functions**.
 Two kinds of email go out:
 - **Sign-up confirmations and password resets** are sent by Supabase, through
   the SMTP settings under **Supabase → Authentication → Emails**.
-- **Everything RaiseReady sends itself** (staff invites and staff sign-in
-  links for now) goes through Mailtrap's Email API.
+- **Everything RaiseReady sends itself** goes through Mailtrap's Email API:
+  staff invites and sign-in links, and a **welcome email from Mhenuter**
+  sent once to each new founder right after they confirm their email (or on
+  their first login, if they confirmed in another browser). Founders who
+  signed up before this email existed don't get it. The text is in
+  `lib/email/templates.ts` (`welcomeEmail`).
 
 To turn on the second kind:
 1. In Mailtrap, verify `indexprima.com` under **Sending Domains** (add the DNS

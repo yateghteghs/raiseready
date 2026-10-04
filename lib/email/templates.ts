@@ -93,3 +93,24 @@ export function accountEmail(
     }
   }
 }
+
+/** Sent once, right after a founder confirms their email, from Mhenuter. Replies come to a real inbox. */
+export function welcomeEmail(input: { name?: string; appUrl: string }): Built {
+  const first = input.name?.trim().split(/\s+/)[0];
+  const hello = first ? `Hi ${first},` : "Hi,";
+  const intro = `I'm Mhenuter from ${SITE.name}. Welcome, and thank you for joining. ${SITE.name} helps you find the weak spots in your pitch before investors do.`;
+  const steps = [
+    "1. Upload your pitch deck. Your financial model and business plan are optional, but they make the feedback sharper.",
+    "2. Get your readiness score across 10 areas, with what to fix first.",
+    "3. Practise in the Investor Room with an AI investor who asks follow-ups and spots contradictions.",
+    "4. Download your report and practise again until the hard questions feel easy.",
+  ];
+  const reply = "If anything is unclear, or you have an investor meeting coming up, just reply to this email. I read every reply.";
+  const signOff = `Mhenuter\n${SITE.name}`;
+  const link = `${input.appUrl.replace(/\/+$/, "")}/app`;
+  return {
+    subject: `Welcome to ${SITE.name}`,
+    text: [hello, intro, "Here's how to get the most from it:", ...steps, link, reply, signOff].join("\n\n"),
+    html: layout([hello, intro, "Here's how to get the most from it:", ...steps], { label: "Start with your pitch deck", href: link }, [reply, "Mhenuter", SITE.name]),
+  };
+}
