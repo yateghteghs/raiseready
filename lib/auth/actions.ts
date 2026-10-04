@@ -100,10 +100,10 @@ async function registerInEnglish(_prev: FormState, formData: FormData): Promise<
   });
   if (error) {
     logAuthError("sign-up", error);
-    // A gateway timeout here means Supabase couldn't hand the confirmation
-    // email to the mail provider in time, not that it was unreachable.
+    // A 5xx here comes from the email step (Supabase's mail sender, or our
+    // Send Email hook reporting that Mailtrap didn't send), not from sign-in.
     const message =
-      error.status === 504
+      error.status !== undefined && error.status >= 500
         ? "We couldn't send your confirmation email just now. Wait a minute, then check your inbox or try again."
         : friendlyAuthError(error);
     return { status: "error", message, values };
@@ -144,7 +144,7 @@ async function resendConfirmationInEnglish(email: string): Promise<FormState> {
   if (error) {
     logAuthError("resend confirmation", error);
     const message =
-      error.status === 504
+      error.status !== undefined && error.status >= 500
         ? "We couldn't send your confirmation email just now. Wait a minute, then check your inbox or try again."
         : friendlyAuthError(error);
     return { status: "error", message };

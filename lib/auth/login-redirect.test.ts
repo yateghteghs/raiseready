@@ -71,6 +71,9 @@ describe("sign-up errors", () => {
     form.set("terms", "on");
     const state = await register({ status: "idle" } as never, form);
     expect(state).toMatchObject({ status: "error", message: expect.stringMatching(/couldn't send your confirmation email/) });
+    // The Send Email hook reports a Mailtrap refusal as 502: same message, not "couldn't reach".
+    signUpError = { status: 502, name: "AuthRetryableFetchError" };
+    expect(await register({ status: "idle" } as never, form)).toMatchObject({ message: expect.stringMatching(/couldn't send your confirmation email/) });
     signUpError = null;
   });
 });
