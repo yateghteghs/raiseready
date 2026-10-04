@@ -1,10 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { authRedirectFor, isProtectedPath } from "@/lib/auth/routes";
+import { CONSENT_COOKIE, preferenceMaxAge } from "@/lib/consent";
 import { isReferralCode, REFERRAL_COOKIE, REFERRAL_COOKIE_DAYS } from "@/lib/referrals/code";
 import { updateSession } from "@/lib/supabase/proxy";
 
-/** Remembers an invite code from `?ref=` so sign-up can credit the founder who shared the link. */
+/**
+ * Remembers an invite code from `?ref=` so sign-up can credit the founder who
+ * shared the link: for 30 days with cookie consent, otherwise for the visit.
+ */
 function rememberReferral(request: NextRequest, response: NextResponse): NextResponse {
   const ref = request.nextUrl.searchParams.get("ref")?.toUpperCase();
   if (isReferralCode(ref)) {
@@ -12,7 +16,9 @@ function rememberReferral(request: NextRequest, response: NextResponse): NextRes
       httpOnly: true,
       sameSite: "lax",
       secure: request.nextUrl.protocol === "https:",
-      maxAge: REFERRAL_COOKIE_DAYS * 24 * 60 * 60,
+      ...(preferenceMaxAge(request.cookies.get(CONSENT_COOKIE)?.value, REFERRAL_COOKIE_DAYS)
+        ? { maxAge: REFERRAL_COOKIE_DAYS * 24 * 60 * 60 }
+        : {}),
       path: "/",
     });
   }

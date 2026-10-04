@@ -19,6 +19,14 @@ export const ha: Messages = {
     about: "Game da mu",
     faq: "Tambayoyi",
   },
+  cookies: {
+    title: "Kukis",
+    body: "Muna amfani da kukis don ci gaba da kasancewarka a cikin asusunka, kuma da izininka don tunawa da harshenka, kuɗinka da hanyar gayyatar da ka zo ta ciki. Babu kukis na talla ko bin diddigi.",
+    accept: "Amince",
+    decline: "Masu muhimmanci kawai",
+    privacy: "Manufar sirri",
+    settings: "Saitunan kukis",
+  },
   footer: {
     productOf: "RaiseReady samfuri ne na {company}, kasuwancin da aka yi wa rajista a Najeriya ({registration}).",
     product: "Samfuri",

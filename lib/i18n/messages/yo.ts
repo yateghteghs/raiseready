@@ -19,6 +19,14 @@ export const yo: Messages = {
     about: "Nípa wa",
     faq: "Àwọn ìbéèrè",
   },
+  cookies: {
+    title: "Kúkì",
+    body: "A ń lo kúkì láti jẹ́ kí o wà ní ìwọlé, àti pẹ̀lú àṣẹ rẹ láti rántí èdè rẹ, owó rẹ àti ìjápọ̀ ìpè tí o fi dé. Kò sí kúkì ìpolówó tàbí ìtọpinpin.",
+    accept: "Gbà",
+    decline: "Àwọn pàtàkì nìkan",
+    privacy: "Ìlànà àṣírí",
+    settings: "Ètò kúkì",
+  },
   footer: {
     productOf: "RaiseReady jẹ́ ọjà {company}, iṣẹ́ òwò tí a forúkọ rẹ̀ sílẹ̀ ní Nàìjíríà ({registration}).",
     product: "Ọjà",

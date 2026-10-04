@@ -19,6 +19,14 @@ export const ig: Messages = {
     about: "Gbasara anyị",
     faq: "Ajụjụ",
   },
+  cookies: {
+    title: "Kuki",
+    body: "Anyị na-eji kuki iji mee ka ị nọgide n'ime akaụntụ gị, ma site n'ikike gị iji cheta asụsụ gị, ego gị na njikọ ọkpụkpọ ị jiri bịa. Enweghị kuki mgbasa ozi ma ọ bụ nsochi.",
+    accept: "Nabata",
+    decline: "Ndị dị mkpa naanị",
+    privacy: "Iwu nzuzo",
+    settings: "Ntọala kuki",
+  },
   footer: {
     productOf: "RaiseReady bụ ngwaahịa {company}, azụmahịa e debanyere aha ya na Naịjirịa ({registration}).",
     product: "Ngwaahịa",

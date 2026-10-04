@@ -1,6 +1,6 @@
 import { SITE } from "@/lib/site";
 
-export const LAST_UPDATED = "2 October 2026";
+export const LAST_UPDATED = "4 October 2026";
 
 /** The contact address, or a visible placeholder until one is chosen. */
 export function ContactEmail() {

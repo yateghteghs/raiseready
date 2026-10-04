@@ -18,6 +18,14 @@ export const fr: Messages = {
     about: "À propos",
     faq: "FAQ",
   },
+  cookies: {
+    title: "Cookies",
+    body: "Nous utilisons des cookies pour vous garder connecté et, avec votre accord, pour retenir votre langue, votre devise et le lien d'invitation par lequel vous êtes arrivé. Aucun cookie publicitaire ni de suivi.",
+    accept: "Accepter",
+    decline: "Essentiels uniquement",
+    privacy: "Politique de confidentialité",
+    settings: "Paramètres des cookies",
+  },
   footer: {
     productOf: "RaiseReady est un produit de {company}, entreprise enregistrée au Nigeria ({registration}).",
     product: "Produit",

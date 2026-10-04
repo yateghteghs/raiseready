@@ -21,6 +21,14 @@ export const en = {
     about: "About",
     faq: "FAQ",
   },
+  cookies: {
+    title: "Cookies",
+    body: "We use cookies to keep you signed in, and with your permission to remember your language, currency and the invite link you arrived from. No advertising or tracking cookies.",
+    accept: "Accept",
+    decline: "Essential only",
+    privacy: "Privacy policy",
+    settings: "Cookie settings",
+  },
   footer: {
     productOf: "RaiseReady is a product of {company}, a business registered in Nigeria ({registration}).",
     product: "Product",

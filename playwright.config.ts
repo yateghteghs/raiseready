@@ -11,6 +11,7 @@ import { defineConfig, devices } from "@playwright/test";
  */
 const external = process.env.E2E_BASE_URL?.replace(/\/$/, "");
 const PORT = 3100;
+const baseURL = external ?? `http://localhost:${PORT}`;
 
 export default defineConfig({
   testDir: "e2e",
@@ -20,7 +21,24 @@ export default defineConfig({
   retries: 0,
   reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
   use: {
-    baseURL: external ?? `http://localhost:${PORT}`,
+    baseURL,
+    // Visitors who already chose, so the cookie notice doesn't cover the page.
+    // The cookie notice test clears it.
+    storageState: {
+      cookies: [
+        {
+          name: "rr_consent",
+          value: "essential",
+          domain: new URL(baseURL).hostname,
+          path: "/",
+          expires: -1,
+          httpOnly: false,
+          secure: false,
+          sameSite: "Lax",
+        },
+      ],
+      origins: [],
+    },
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },

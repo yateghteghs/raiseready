@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/brand/logo";
+import { CookieSettingsLink } from "@/components/consent/cookie-settings-link";
 import { DEFAULT_LOCALE } from "@/lib/i18n/config";
 import { getMessages } from "@/lib/i18n/server";
 import { fill } from "@/lib/i18n/text";
@@ -47,6 +48,7 @@ export async function SiteFooter() {
           <Link href="/terms" className={link}>
             {m.footer.terms}
           </Link>
+          <CookieSettingsLink label={m.cookies.settings} className={link} />
           {locale !== DEFAULT_LOCALE ? <p className="text-muted-foreground text-xs">{m.footer.legalInEnglish}</p> : null}
         </nav>
       </div>

@@ -220,14 +220,25 @@ export default function PrivacyPage() {
           when you log out.
         </li>
         <li>
-          <strong>Language</strong> (<code>rr_locale</code>) and <strong>currency</strong>{" "}
-          (<code>rr_currency</code>) remember your choice for a year, if you make one.
+          <strong>Your cookie choice</strong> (<code>rr_consent</code>) remembers for a year whether you
+          accepted all cookies or only essential ones, so we don&apos;t ask again on every visit.
         </li>
         <li>
-          <strong>Invite</strong> (<code>rr_ref</code>) remembers, for 30 days, that you arrived through
-          another founder&apos;s invite link, so the right founder gets the reward.
+          <strong>Language</strong> (<code>rr_locale</code>) and <strong>currency</strong>{" "}
+          (<code>rr_currency</code>) remember your choice, if you make one.
+        </li>
+        <li>
+          <strong>Invite</strong> (<code>rr_ref</code>) remembers that you arrived through another
+          founder&apos;s invite link, so the right founder gets the reward.
         </li>
       </ul>
+      <p>
+        The first time you visit, we ask whether you accept these preference cookies. If you accept,
+        your language and currency are remembered for a year and an invite for 30 days. If you choose
+        &ldquo;Essential only&rdquo;, they last only until you close your browser. Sign-in cookies are
+        needed for RaiseReady to work, so they are set either way. You can change your choice at any
+        time with &ldquo;Cookie settings&rdquo; at the bottom of every page.
+      </p>
 
       <h2>10. Your rights</h2>
       <p>Depending on where you live, you can:</p>

@@ -182,3 +182,22 @@ test("a sign-up link opened elsewhere says the email is confirmed", async ({ pag
   await expect(page.getByText("Your email is confirmed. Log in to continue.")).toBeVisible();
   await expect(page.getByText(/invalid or has expired/)).toHaveCount(0);
 });
+
+test("first-time visitors can accept or decline cookies, and change their mind", async ({ page, context }) => {
+  await context.clearCookies();
+  await page.goto("/");
+  const notice = page.getByRole("region", { name: "Cookies" });
+  await expect(notice).toBeVisible();
+  await notice.getByRole("button", { name: "Essential only" }).click();
+  await expect(notice).toBeHidden();
+  expect((await context.cookies()).find((c) => c.name === "rr_consent")?.value).toBe("essential");
+
+  await page.reload();
+  await expect(notice).toBeHidden();
+
+  await page.getByRole("button", { name: "Cookie settings" }).click();
+  await expect(notice).toBeVisible();
+  await notice.getByRole("button", { name: "Accept" }).click();
+  await expect(notice).toBeHidden();
+  expect((await context.cookies()).find((c) => c.name === "rr_consent")?.value).toBe("all");
+});

@@ -18,6 +18,14 @@ export const sw: Messages = {
     about: "Kuhusu sisi",
     faq: "Maswali",
   },
+  cookies: {
+    title: "Vidakuzi",
+    body: "Tunatumia vidakuzi ili ubaki umeingia, na kwa ruhusa yako kukumbuka lugha yako, sarafu yako na kiungo cha mwaliko ulichotumia kuja. Hakuna vidakuzi vya matangazo wala ufuatiliaji.",
+    accept: "Kubali",
+    decline: "Muhimu pekee",
+    privacy: "Sera ya faragha",
+    settings: "Mipangilio ya vidakuzi",
+  },
   footer: {
     productOf: "RaiseReady ni bidhaa ya {company}, biashara iliyosajiliwa nchini Nigeria ({registration}).",
     product: "Bidhaa",
