@@ -115,8 +115,13 @@ async function registerInEnglish(_prev: FormState, formData: FormData): Promise<
   const ref = (await cookies()).get(REFERRAL_COOKIE)?.value;
   if (ref && data.user && (data.user.identities?.length ?? 0) > 0) await linkReferral(data.user.id, ref);
 
-  // With email confirmation off, Supabase signs the user in immediately.
-  if (data.session) redirect("/app/onboarding");
+  // With email confirmation off, Supabase signs the user in immediately (and
+  // counts the address as confirmed), so the welcome email goes now.
+  if (data.session) {
+    const newUserId = data.session.user.id;
+    after(() => sendWelcomeEmail(newUserId));
+    redirect("/app/onboarding");
+  }
 
   return {
     status: "success",
