@@ -103,6 +103,14 @@ export function simulationAccess(usage: Usage, persona: Persona, difficulty: Dif
   };
 }
 
+/** True when the session just started (paid for by `via`) leaves no allowance and no credits. */
+export function usedLastSession(usage: Usage, via: "free" | "pro" | "credit"): boolean {
+  const rule = ruleFor(usage);
+  const used = (paidPlanOf(usage) ? usage.proSimulationsThisMonth : usage.freeSimulationsUsed) + (via === "credit" ? 0 : 1);
+  const credits = usage.credits - (via === "credit" ? 1 : 0);
+  return used >= rule.simulations && credits <= 0;
+}
+
 export function assessmentAccess(usage: Usage): Access<"free" | "pro"> {
   if (usage.proActive) return { ok: true, via: "pro" };
   const allowed = ruleFor(usage).assessments;

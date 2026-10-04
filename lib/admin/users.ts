@@ -2,6 +2,7 @@ import { AccountError, cancelSubscriptions, deleteAccount } from "@/lib/account/
 import type { Staff } from "@/lib/admin/auth";
 import { userActionProblem, type UserAction } from "@/lib/admin/permissions";
 import { getSiteUrl } from "@/lib/site-url";
+import { notifyAccountStatus } from "@/lib/email/notify";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Json } from "@/lib/supabase/database.types";
 
@@ -54,11 +55,13 @@ export async function applyUserAction(staff: Staff, targetId: string, action: Us
       await setStatus("suspended");
       await setBan(targetId, BAN_FOREVER);
       await audit(staff.id, "admin.user_suspended", targetId, { reason: reason ?? null });
+      notifyAccountStatus(targetId, "suspended", reason);
       return;
     case "reactivate":
       await setBan(targetId, "none");
       await setStatus("active");
       await audit(staff.id, "admin.user_reactivated", targetId, {});
+      notifyAccountStatus(targetId, "reactivated");
       return;
     case "terminate": {
       // A terminated account must not keep paying for Pro.
@@ -74,6 +77,7 @@ export async function applyUserAction(staff: Staff, targetId: string, action: Us
       await admin.from("profiles").update({ role: "founder" }).eq("id", targetId);
       await setBan(targetId, BAN_FOREVER);
       await audit(staff.id, "admin.user_terminated", targetId, { reason: reason ?? null, subscriptions_cancelled: cancelled });
+      notifyAccountStatus(targetId, "terminated", reason);
       return;
     }
     case "delete":

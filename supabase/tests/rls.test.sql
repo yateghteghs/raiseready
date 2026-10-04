@@ -172,6 +172,7 @@ insert into public.notifications (user_id, title, body, active) values
   (null, 'Turned off', 'Withdrawn', false);
 insert into public.price_settings (product, currency, amount) values ('pro_monthly', 'NGN', 2000000);
 insert into public.fx_rates (currency, per_usd) values ('KES', 129.5);
+insert into public.email_events (key, user_id, kind) values ('receipt:T1', 'aaaaaaaa-0000-4000-8000-000000000001', 'receipt');
 select rls_test.throws($$insert into public.fx_rates (currency, per_usd) values ('USD', 1)$$, '23514', 'exchange rates are against the dollar, not for it');
 select rls_test.throws($$insert into public.plan_settings (plan, config) values ('platinum', '{}')$$, '23514', 'plan settings exist only for real plans');
 select rls_test.throws(
@@ -480,6 +481,8 @@ select rls_test.ok(
 select rls_test.throws('select * from public.price_settings', '42501', 'A cannot read price settings directly');
 select rls_test.throws('select * from public.plan_settings', '42501', 'A cannot read plan settings directly');
 select rls_test.throws($$insert into public.fx_rates (currency, per_usd) values ('KES', 1)$$, '42501', 'A cannot set exchange rates');
+select rls_test.throws('select * from public.email_events', '42501', 'A cannot read the email log, even their own rows');
+select rls_test.throws($$insert into public.email_events (key, kind) values ('x', 'receipt')$$, '42501', 'A cannot write the email log');
 select rls_test.throws(
   $$update public.price_settings set amount = 100$$,
   '42501', 'A cannot change prices');

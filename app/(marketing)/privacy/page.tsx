@@ -147,8 +147,10 @@ export default function PrivacyPage() {
           privacy policy.
         </li>
         <li>
-          <strong>Our email provider (Mailtrap):</strong> sending account emails such as sign-up
-          confirmations and password resets, and one welcome email after you confirm your address.
+          <strong>Our email provider (Mailtrap):</strong> sending emails about your account: sign-up
+          confirmations and password resets, one welcome email, payment receipts and billing notices,
+          a note when you&apos;ve used your practice sessions, and security notices such as a password
+          change or a change to your account&apos;s status.
         </li>
       </ul>
       <p>We also share data:</p>

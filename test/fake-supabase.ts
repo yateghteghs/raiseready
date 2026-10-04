@@ -66,7 +66,9 @@ export function createFakeDb() {
         for (const row of (Array.isArray(payload) ? payload : [payload]) as Row[]) {
           const existing = (tables[table] ?? []).find((r) => conflict.every((c) => r[c] === row[c]));
           if (existing) {
-            if (!ignoreDuplicates) Object.assign(existing, row);
+            // Like PostgREST, an ignored duplicate is not returned.
+            if (ignoreDuplicates) continue;
+            Object.assign(existing, row);
             affected.push(existing);
           } else {
             (tables[table] ??= []).push({ ...row });

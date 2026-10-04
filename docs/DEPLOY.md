@@ -82,6 +82,15 @@ Two kinds of email go out:
   their first login, if they confirmed in another browser). Founders who
   signed up before this email existed don't get it. The text is in
   `lib/email/templates.ts` (`welcomeEmail`).
+- **Event emails**, each sent at most once per event (table `email_events`):
+  - from RaiseReady (no-reply): payment **receipts** (purchases and
+    renewals), **renewal failed** (update your card), **plan ended** (back on
+    Free), **password changed**, account **suspended / reactivated / closed**
+    by staff, and **account deleted**;
+  - from Mhenuter: **out of practice sessions** (once a month on a paid plan,
+    once on Free), with the options to keep practising.
+  None of these block the action that triggers them; without
+  `MAILTRAP_API_TOKEN` nothing is sent.
 
 To turn on the second kind:
 1. In Mailtrap, verify `indexprima.com` under **Sending Domains** (add the DNS

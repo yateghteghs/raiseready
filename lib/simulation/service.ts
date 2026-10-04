@@ -23,7 +23,8 @@ import {
 } from "@/lib/ai/schemas/simulation";
 import { AiCallError, callStructured } from "@/lib/ai/structured";
 import { withinRateLimit } from "@/lib/ai/usage";
-import { simulationAccess } from "@/lib/billing/entitlements";
+import { paidPlanOf, simulationAccess, usedLastSession } from "@/lib/billing/entitlements";
+import { notifyOutOfPractice } from "@/lib/email/notify";
 import { PlanLimitError } from "@/lib/billing/limits";
 import { consumeCredit, getUsage, refundCredit } from "@/lib/billing/service";
 import { DOCUMENT_KINDS, type UploadableKind } from "@/lib/documents/rules";
@@ -179,6 +180,9 @@ export async function startSimulation(
     await refund();
     throw new Error(`Could not start simulation: ${turnError.message}`);
   }
+
+  // Was that their last session? Tell them once, with their options.
+  if (usedLastSession(usage, access.via)) notifyOutOfPractice(userId, paidPlanOf(usage) ?? "free");
   return sim.id;
 }
 

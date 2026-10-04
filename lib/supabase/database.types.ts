@@ -499,6 +499,7 @@ export type Database = {
       team_members: PlainTable<TeamMemberRow, "joined_at">;
       team_enquiries: PlainTable<TeamEnquiryRow, "id" | "cohort_size" | "message" | "status" | "created_at">;
       plan_settings: PlainTable<{ plan: Plan; config: Json; updated_by: string | null; updated_at: string }, "updated_by" | "updated_at">;
+      email_events: PlainTable<{ key: string; user_id: string | null; kind: string; created_at: string }, "user_id" | "created_at">;
       fx_rates: PlainTable<{ currency: string; per_usd: number; updated_by: string | null; updated_at: string }, "updated_by" | "updated_at">;
       price_settings: PlainTable<{ product: PaymentProduct; currency: PaymentCurrency; amount: number; updated_by: string | null; updated_at: string }, "updated_by" | "updated_at">;
       pitch_decks: Table<PitchDeckRow, "id" | "status" | "title" | "content" | "rewrites_used" | "unlocked_at" | "error">;

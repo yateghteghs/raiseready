@@ -9,6 +9,7 @@ import { REFERRAL_COOKIE } from "@/lib/referrals/code";
 import { linkReferral } from "@/lib/referrals/service";
 import { authErrorCode, friendlyAuthError, logAuthError } from "@/lib/auth/errors";
 import { isStaffProfile } from "@/lib/admin/auth";
+import { notifyPasswordChanged } from "@/lib/email/notify";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { DEFAULT_AFTER_LOGIN, safeNextPath } from "@/lib/auth/redirect";
 import {
@@ -203,8 +204,10 @@ async function resetPasswordInEnglish(_prev: FormState, formData: FormData): Pro
   if (error) logAuthError("password update", error);
   if (error) return { status: "error", message: friendlyAuthError(error) };
 
-  // Staff setting their first password continue to the admin area.
+  // Staff setting their first password continue to the admin area; that
+  // isn't a change worth warning about, every other password change is.
   const next = safeNextPath(formData.get("next"));
+  if (!next.startsWith("/admin")) notifyPasswordChanged(claims.claims.sub);
   redirect(next.startsWith("/admin") ? "/admin" : "/app");
 }
 

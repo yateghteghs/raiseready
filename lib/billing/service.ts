@@ -26,6 +26,7 @@ import {
 import { getPrices } from "@/lib/billing/price-settings";
 import { getReferralSettings } from "@/lib/billing/referral-settings";
 import { hasUnlockedReferralCredits, releaseLockedRewards } from "@/lib/referrals/rewards";
+import { notifyPlanEnded, notifyReceipt, notifyRenewalFailed } from "@/lib/email/notify";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Json, PaidPlan, PaymentProduct, SubscriptionStatus, Tables } from "@/lib/supabase/database.types";
 
@@ -335,6 +336,16 @@ export async function applyChargeSuccess(tx: PaystackTransaction, raw: unknown):
     await audit("billing.credits_added", payment.user_id, { reference: tx.reference, credits });
   }
 
+  notifyReceipt({
+    userId: payment.user_id,
+    reference: tx.reference,
+    product: payment.product,
+    amountMinor: payment.amount_kobo,
+    currency: payment.currency,
+    paidAt: tx.paid_at,
+    renewal: false,
+  });
+
   if (payment.amount_kobo > 0) {
     await rewardReferrer(payment.user_id, tx.reference);
     // This founder may be an inviter whose locked credits this payment unlocks.
@@ -451,6 +462,15 @@ async function applyRenewal(tx: PaystackTransaction, raw: unknown): Promise<bool
     await admin.from("subscriptions").update({ status: "active", current_period_end: plusOneMonth(tx.paid_at) }).eq("id", existing.id);
   }
   await audit(plan === "pro" ? "billing.pro_renewed" : "billing.pro_plus_renewed", profile.id, { reference: tx.reference });
+  notifyReceipt({
+    userId: profile.id,
+    reference: tx.reference,
+    product: PLAN_PRODUCTS[plan],
+    amountMinor: tx.amount,
+    currency: tx.currency,
+    paidAt: tx.paid_at,
+    renewal: true,
+  });
   await releaseLockedRewards(profile.id);
   return true;
 }
@@ -479,11 +499,14 @@ export async function applySubscriptionEvent(event: string, data: Record<string,
   if (!code || !customerCode) return;
 
   const admin = createAdminClient();
-  const { data: profile } = await admin.from("profiles").select("id").eq("paystack_customer_code", customerCode).maybeSingle();
+  const { data: profile } = await admin.from("profiles").select("id, plan").eq("paystack_customer_code", customerCode).maybeSingle();
   if (!profile) return;
 
   let status = STATUS_MAP[sub.status ?? ""] ?? "active";
-  if (event === "invoice.payment_failed") status = "attention";
+  if (event === "invoice.payment_failed") {
+    status = "attention";
+    notifyRenewalFailed(profile.id, code, profile.plan);
+  }
   if (event === "subscription.disable") status = sub.status === "complete" || sub.status === "completed" ? "completed" : "cancelled";
   if (event === "subscription.not_renew") status = "non_renewing";
 
@@ -521,6 +544,7 @@ export async function applySubscriptionEvent(event: string, data: Record<string,
     if (!current || current.provider_subscription_code === code || current.status === "cancelled" || current.status === "completed") {
       await admin.from("profiles").update({ plan: "free" }).eq("id", profile.id);
       await audit("billing.pro_ended", profile.id, { event, subscription_code: code });
+      if (profile.plan !== "free") notifyPlanEnded(profile.id, code, profile.plan);
     }
   }
 }

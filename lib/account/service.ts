@@ -2,6 +2,7 @@ import { disableSubscription } from "@/lib/billing/paystack";
 import { DOCUMENTS_BUCKET } from "@/lib/documents/service";
 import { IMAGES_BUCKET } from "@/lib/images/rules";
 import { REPORTS_BUCKET } from "@/lib/reports/service";
+import { deletedAccountContact, notifyAccountDeleted } from "@/lib/email/notify";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -87,6 +88,8 @@ export async function cancelSubscriptions(userId: string): Promise<number> {
  */
 export async function deleteAccount(userId: string, options: { actorId?: string | null } = {}): Promise<void> {
   const admin = createAdminClient();
+  // Who to tell, looked up before the account (and its email) is gone.
+  const farewell = await deletedAccountContact(userId);
   const cancelled = await cancelSubscriptions(userId);
 
   const { data: payments, error: paymentsError } = await admin
@@ -120,4 +123,5 @@ export async function deleteAccount(userId: string, options: { actorId?: string 
     },
   });
   if (auditError) console.error(`Account ${userId} deleted but the audit log failed: ${auditError.message}`);
+  notifyAccountDeleted(farewell);
 }

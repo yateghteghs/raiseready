@@ -114,3 +114,108 @@ export function welcomeEmail(input: { name?: string; appUrl: string }): Built {
     html: layout([hello, intro, "Here's how to get the most from it:", ...steps], { label: "Start with your pitch deck", href: link }, [reply, "Mhenuter", SITE.name]),
   };
 }
+
+const greet = (name?: string) => (name?.trim() ? `Hi ${name.trim().split(/\s+/)[0]},` : "Hi,");
+const url = (appUrl: string, path: string) => `${appUrl.replace(/\/+$/, "")}${path}`;
+
+/** Receipt for a successful payment (first purchase or renewal). */
+export function receiptEmail(input: { name?: string; item: string; amount: string; date: string; reference: string; renewal: boolean; appUrl: string }): Built {
+  const hello = greet(input.name);
+  const what = input.renewal
+    ? `Your ${input.item} subscription has renewed. Thank you for staying with ${SITE.name}.`
+    : `Thank you for your payment. ${input.item} is now on your account.`;
+  const details = [`Item: ${input.item}`, `Amount: ${input.amount}`, `Date: ${input.date}`, `Reference: ${input.reference}`];
+  const note = `Payments are processed by Paystack and appear on your statement as ${SITE.company.name}. Keep this email as your receipt.`;
+  const link = url(input.appUrl, "/app/billing");
+  return {
+    subject: input.renewal ? `Your ${SITE.name} ${input.item} renewal receipt` : `Your ${SITE.name} receipt`,
+    text: [hello, what, details.join("\n"), note, `Billing: ${link}`].join("\n\n"),
+    html: layout([hello, what, ...details], { label: "View billing", href: link }, [note]),
+  };
+}
+
+/** Paystack couldn't charge a renewal. */
+export function renewalFailedEmail(input: { name?: string; plan: string; appUrl: string }): Built {
+  const hello = greet(input.name);
+  const what = `We couldn't charge your card for your ${input.plan} renewal. Paystack will try again, but to keep ${input.plan} without interruption, check your card or update it from the Billing page.`;
+  const link = url(input.appUrl, "/app/billing");
+  return {
+    subject: `Action needed: your ${SITE.name} ${input.plan} payment didn't go through`,
+    text: [hello, what, link].join("\n\n"),
+    html: layout([hello, what], { label: "Update payment details", href: link }),
+  };
+}
+
+/** A subscription ended and the founder is back on the free plan. */
+export function planEndedEmail(input: { name?: string; plan: string; appUrl: string }): Built {
+  const hello = greet(input.name);
+  const what = `Your ${input.plan} plan has ended, so your account is now on the free plan. Your startup profile, documents, assessments and reports are all still there.`;
+  const next = `You can subscribe again or buy credits for individual practice sessions at any time from the Billing page.`;
+  const link = url(input.appUrl, "/app/billing");
+  return {
+    subject: `Your ${SITE.name} ${input.plan} plan has ended`,
+    text: [hello, what, next, link].join("\n\n"),
+    html: layout([hello, what, next], { label: "See plans", href: link }),
+  };
+}
+
+/** The founder has just used their last practice session (from Mhenuter). */
+export function outOfPracticeEmail(input: { name?: string; paid: boolean; plan: string; appUrl: string }): Built {
+  const hello = greet(input.name);
+  const what = input.paid
+    ? `You've just used the last Investor Room session included in ${input.plan} this month. That's a lot of practice; well done.`
+    : "You've just used your free Investor Room session. I hope it showed you which questions to prepare for.";
+  const options = input.paid
+    ? "To keep practising before your allowance resets next month, you can buy a pack of credits for any investor and difficulty."
+    : "To keep practising, you can buy a pack of credits for any investor and difficulty, or upgrade to Pro for sessions every month.";
+  const reply = "If you have an investor meeting coming up and need help deciding, just reply to this email.";
+  const link = url(input.appUrl, "/app/billing");
+  return {
+    subject: input.paid ? `You've used this month's ${input.plan} sessions` : "You've used your free practice session",
+    text: [hello, what, options, link, reply, `Mhenuter\n${SITE.name}`].join("\n\n"),
+    html: layout([hello, what, options], { label: "Keep practising", href: link }, [reply, "Mhenuter", SITE.name]),
+  };
+}
+
+/** Security notice after the password was changed. */
+export function passwordChangedEmail(input: { name?: string; appUrl: string }): Built {
+  const hello = greet(input.name);
+  const what = `The password for your ${SITE.name} account was just changed.`;
+  const warn = "If this wasn't you, reset your password straight away using the link below, and reply to let us know.";
+  const link = url(input.appUrl, "/forgot-password");
+  return {
+    subject: `Your ${SITE.name} password was changed`,
+    text: [hello, what, warn, link].join("\n\n"),
+    html: layout([hello, what, warn], { label: "Reset my password", href: link }),
+  };
+}
+
+/** Staff suspended, reactivated or closed the account. */
+export function accountStatusEmail(input: { name?: string; status: "suspended" | "reactivated" | "terminated"; reason?: string | null; appUrl: string }): Built {
+  const hello = greet(input.name);
+  const reason = input.reason?.trim() ? `Reason: ${input.reason.trim()}` : null;
+  if (input.status === "reactivated") {
+    const what = `Your ${SITE.name} account has been reactivated. You can sign in again, and everything is as you left it.`;
+    const link = url(input.appUrl, "/login");
+    return { subject: `Your ${SITE.name} account is active again`, text: [hello, what, link].join("\n\n"), html: layout([hello, what], { label: "Sign in", href: link }) };
+  }
+  const what =
+    input.status === "suspended"
+      ? `Your ${SITE.name} account has been suspended, so you can't sign in for now. Your data is kept.`
+      : `Your ${SITE.name} account has been closed and can no longer be used. Any subscription has been cancelled.`;
+  const contact = "If you think this is a mistake, reply to this email or contact us through the website.";
+  const body = [hello, what, ...(reason ? [reason] : []), contact];
+  return {
+    subject: input.status === "suspended" ? `Your ${SITE.name} account has been suspended` : `Your ${SITE.name} account has been closed`,
+    text: body.join("\n\n"),
+    html: layout(body),
+  };
+}
+
+/** Confirmation that an account and its data were deleted. */
+export function accountDeletedEmail(input: { name?: string }): Built {
+  const hello = greet(input.name);
+  const what = `Your ${SITE.name} account has been deleted, along with your startup profile, documents, assessments, practice sessions, reports and pitch decks. Any subscription was cancelled first.`;
+  const bye = `Thank you for trying ${SITE.name}. You're welcome back any time.`;
+  return { subject: `Your ${SITE.name} account has been deleted`, text: [hello, what, bye].join("\n\n"), html: layout([hello, what, bye]) };
+}
