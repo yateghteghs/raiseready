@@ -258,6 +258,7 @@ export async function userDetail(userId: string) {
     profile,
     email: authUser.data.user?.email ?? "",
     lastSignIn: authUser.data.user?.last_sign_in_at ?? null,
+    emailConfirmed: Boolean(authUser.data.user?.email_confirmed_at),
     startup,
     avatarUrl: profile.avatar_path ? (links[profile.avatar_path] ?? null) : null,
     logoUrl: startup?.logo_path ? (links[startup.logo_path] ?? null) : null,
@@ -369,4 +370,15 @@ export async function recentErrors(reference?: string) {
     .limit(100);
   if (reference) query = query.eq("digest", reference);
   return rowsOf(await query, "errors");
+}
+
+/** The last 100 emails handed to Mailtrap, optionally for one address. */
+export async function recentEmails(address?: string) {
+  let query = createAdminClient()
+    .from("email_log")
+    .select("id, to_email, category, sender, accepted, message_id, reason, created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (address) query = query.ilike("to_email", address.replace(/[%_\\]/g, ""));
+  return rowsOf(await query, "emails");
 }

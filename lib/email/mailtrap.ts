@@ -1,5 +1,6 @@
 import { serverEnv } from "@/lib/env";
 import { SITE } from "@/lib/site";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /** Mailtrap's transactional Email API (the "Transactional Stream"). */
 export const MAILTRAP_SEND_URL = "https://send.api.mailtrap.io/api/send";
@@ -29,6 +30,34 @@ export function emailConfigured(): boolean {
  */
 export async function sendEmail(message: EmailMessage, fetcher: typeof fetch = fetch): Promise<SendResult> {
   if (!emailConfigured()) return { ok: false, reason: "not_configured" };
+  const result = await deliver(message, fetcher);
+  await logEmail(message, result);
+  return result;
+}
+
+/** Records what was handed to Mailtrap (Admin → Emails). Best-effort. */
+async function logEmail(message: EmailMessage, result: SendResult): Promise<void> {
+  try {
+    const sender = SITE.email[message.sender ?? "system"].email;
+    const { error } = await createAdminClient()
+      .from("email_log")
+      .insert(
+        message.to.map((to) => ({
+          to_email: to.email.slice(0, 320),
+          category: message.category.slice(0, 80),
+          sender,
+          accepted: result.ok,
+          message_id: result.ok ? (result.ids[0] ?? null) : null,
+          reason: result.ok ? null : result.reason.slice(0, 500),
+        })),
+      );
+    if (error) throw new Error(error.message);
+  } catch (error) {
+    console.error(`[email] couldn't record "${message.category}" in the email log: ${error instanceof Error ? error.message : error}`);
+  }
+}
+
+async function deliver(message: EmailMessage, fetcher: typeof fetch): Promise<SendResult> {
   const { MAILTRAP_API_TOKEN } = serverEnv("MAILTRAP_API_TOKEN");
   try {
     const response = await fetcher(MAILTRAP_SEND_URL, {

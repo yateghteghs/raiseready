@@ -143,11 +143,11 @@ export function notifyPasswordChanged(userId: string) {
   );
 }
 
-/** Staff suspended, reactivated or closed the account. */
-export function notifyAccountStatus(userId: string, status: "suspended" | "reactivated" | "terminated", reason?: string | null) {
+/** Staff suspended, reactivated or closed the account. The reason staff typed stays internal. */
+export function notifyAccountStatus(userId: string, status: "suspended" | "reactivated" | "terminated") {
   runLater(() =>
     sendOnce(`account_${status}:${userId}:${Date.now()}`, `account_${status}`, userId, (to, app) => ({
-      ...accountStatusEmail({ name: to.name, status, reason, appUrl: app }),
+      ...accountStatusEmail({ name: to.name, status, appUrl: app }),
       category: "Account status",
     })),
   );

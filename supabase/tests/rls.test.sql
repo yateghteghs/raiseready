@@ -482,6 +482,7 @@ select rls_test.throws('select * from public.price_settings', '42501', 'A cannot
 select rls_test.throws('select * from public.plan_settings', '42501', 'A cannot read plan settings directly');
 select rls_test.throws($$insert into public.fx_rates (currency, per_usd) values ('KES', 1)$$, '42501', 'A cannot set exchange rates');
 select rls_test.throws('select * from public.email_events', '42501', 'A cannot read the email log, even their own rows');
+select rls_test.throws('select * from public.email_log', '42501', 'A cannot read what was emailed');
 select rls_test.throws($$insert into public.email_events (key, kind) values ('x', 'receipt')$$, '42501', 'A cannot write the email log');
 select rls_test.throws(
   $$update public.price_settings set amount = 100$$,

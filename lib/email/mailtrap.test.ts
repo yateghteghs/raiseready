@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { MAILTRAP_SEND_URL, sendEmail } from "@/lib/email/mailtrap";
+import { createFakeDb } from "../../test/fake-supabase";
+
+const fake = createFakeDb();
+vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => fake.client }));
+
+const { MAILTRAP_SEND_URL, sendEmail } = await import("@/lib/email/mailtrap");
 
 const message = { to: [{ email: "kemi@x.example", name: "Kemi" }], subject: "Hi", text: "Hello", html: "<p>Hello</p>", category: "Test" };
 
@@ -10,6 +15,7 @@ function fakeFetch(status: number, body: unknown) {
 
 describe("Mailtrap sending", () => {
   beforeEach(() => {
+    fake.tables.email_log = [];
     vi.stubEnv("MAILTRAP_API_TOKEN", "test-token");
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
@@ -38,6 +44,15 @@ describe("Mailtrap sending", () => {
     const fetcher = fakeFetch(200, { success: true, message_ids: ["m2"] });
     await sendEmail({ ...message, sender: "personal" }, fetcher as never);
     expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).from).toEqual({ email: "raiseready@indexprima.com", name: "Mhenuter from RaiseReady" });
+  });
+
+  it("records each email and whether Mailtrap accepted it", async () => {
+    await sendEmail(message, fakeFetch(200, { success: true, message_ids: ["m1"] }) as never);
+    await sendEmail(message, fakeFetch(403, { success: false, errors: ["Domain not verified"] }) as never);
+    expect(fake.tables.email_log).toEqual([
+      expect.objectContaining({ to_email: "kemi@x.example", category: "Test", sender: "no-reply@indexprima.com", accepted: true, message_id: "m1", reason: null }),
+      expect.objectContaining({ to_email: "kemi@x.example", accepted: false, message_id: null, reason: "Domain not verified" }),
+    ]);
   });
 
   it("returns Mailtrap's reason instead of throwing", async () => {

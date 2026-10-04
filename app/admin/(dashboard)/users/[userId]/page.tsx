@@ -54,6 +54,8 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
     change_role: ROLES.some((r) => check({ type: "change_role", role: r.value })),
     reset_password: check({ type: "reset_password" }),
     grant_credits: check({ type: "grant_credits", amount: 1 }),
+    confirm_email: !user.emailConfirmed && check({ type: "confirm_email" }),
+    resend_confirmation: !user.emailConfirmed && check({ type: "resend_confirmation" }),
   };
   // Only offer the roles this staff member may actually give.
   const roles = ROLES.filter((r) => r.value === profile.role || check({ type: "change_role", role: r.value }));
@@ -101,6 +103,11 @@ export default async function AdminUserPage({ params }: PageProps<"/admin/users/
       <StatGrid>
         <Stat label="Joined" value={adminDate.format(new Date(profile.created_at))} />
         <Stat label="Last sign-in" value={user.lastSignIn ? adminDate.format(new Date(user.lastSignIn)) : "Never"} />
+        <Stat
+          label="Email"
+          value={user.emailConfirmed ? "Confirmed" : <span className="text-destructive">Not confirmed</span>}
+          hint={user.emailConfirmed ? undefined : "See Admin → Emails for what was sent"}
+        />
         <Stat
           label="Last seen"
           value={profile.last_seen_at ? adminDate.format(new Date(profile.last_seen_at)) : "–"}

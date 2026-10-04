@@ -72,7 +72,9 @@ export type UserAction =
   | { type: "delete" }
   | { type: "change_role"; role: UserRole }
   | { type: "reset_password" }
-  | { type: "grant_credits"; amount: number };
+  | { type: "grant_credits"; amount: number }
+  | { type: "confirm_email" }
+  | { type: "resend_confirmation" };
 
 type Person = { id: string; role: UserRole; status: AccountStatus };
 
@@ -81,7 +83,9 @@ type Person = { id: string; role: UserRole; status: AccountStatus };
  * otherwise the reason, in words an admin can act on.
  */
 export function userActionProblem(actor: Person, target: Person, action: UserAction): string | null {
-  const needs: StaffAction = action.type === "reactivate" ? "suspend" : action.type;
+  // Helping someone who can't confirm their email is a support task.
+  const needs: StaffAction =
+    action.type === "reactivate" || action.type === "confirm_email" || action.type === "resend_confirmation" ? "suspend" : action.type;
   if (!can(actor.role, needs)) return "Your role doesn't allow this.";
   if (actor.id === target.id) return "You can't do this to your own account.";
   // Staff can only be managed from above: support never touches staff,
@@ -105,6 +109,8 @@ export function userActionProblem(actor: Person, target: Person, action: UserAct
       if (target.status !== "active" && action.role !== "founder") return "Only active accounts can be given a staff role.";
       return null;
     case "reset_password":
+    case "confirm_email":
+    case "resend_confirmation":
       return target.status === "terminated" ? "This account is terminated." : null;
     case "grant_credits":
       if (target.status === "terminated") return "This account is terminated.";

@@ -23,6 +23,8 @@ const actionSchema = z.discriminatedUnion("type", [
     role: z.enum(["founder", "viewer", "support", "admin", "super_admin"], { error: "Choose a role." }),
   }),
   z.object({ type: z.literal("reset_password") }),
+  z.object({ type: z.literal("confirm_email") }),
+  z.object({ type: z.literal("resend_confirmation") }),
   z.object({
     type: z.literal("grant_credits"),
     amount: z.coerce.number({ error: "Enter a number." }).int({ error: "Use a whole number." }).min(1).max(MAX_GRANT, { error: `At most ${MAX_GRANT} at a time.` }),

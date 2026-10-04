@@ -10,7 +10,16 @@ import { userAdminAction } from "@/lib/admin/user-actions";
 import { initialFormState } from "@/lib/forms";
 import { cn } from "@/lib/utils";
 
-export type ActionKey = "suspend" | "reactivate" | "terminate" | "delete" | "change_role" | "reset_password" | "grant_credits";
+export type ActionKey =
+  | "suspend"
+  | "reactivate"
+  | "terminate"
+  | "delete"
+  | "change_role"
+  | "reset_password"
+  | "grant_credits"
+  | "confirm_email"
+  | "resend_confirmation";
 
 function ActionCard({
   userId,
@@ -78,6 +87,26 @@ export function UserActions({
             </NativeSelect>
           </div>
         </ActionCard>
+      ) : null}
+      {allowed.resend_confirmation ? (
+        <ActionCard
+          userId={userId}
+          type="resend_confirmation"
+          title="Confirmation email"
+          description="They haven't confirmed their email yet. Send the confirmation link again (ask them to check spam too)."
+          submit="Resend confirmation email"
+          pending="Sending…"
+        />
+      ) : null}
+      {allowed.confirm_email ? (
+        <ActionCard
+          userId={userId}
+          type="confirm_email"
+          title="Confirm email for them"
+          description="If the email never arrives and you're sure the address is theirs, confirm it here. They can then log in straight away."
+          submit="Confirm their email"
+          pending="Confirming…"
+        />
       ) : null}
       {allowed.grant_credits ? (
         <ActionCard

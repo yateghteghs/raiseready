@@ -55,7 +55,7 @@ export async function applyUserAction(staff: Staff, targetId: string, action: Us
       await setStatus("suspended");
       await setBan(targetId, BAN_FOREVER);
       await audit(staff.id, "admin.user_suspended", targetId, { reason: reason ?? null });
-      notifyAccountStatus(targetId, "suspended", reason);
+      notifyAccountStatus(targetId, "suspended");
       return;
     case "reactivate":
       await setBan(targetId, "none");
@@ -77,7 +77,7 @@ export async function applyUserAction(staff: Staff, targetId: string, action: Us
       await admin.from("profiles").update({ role: "founder" }).eq("id", targetId);
       await setBan(targetId, BAN_FOREVER);
       await audit(staff.id, "admin.user_terminated", targetId, { reason: reason ?? null, subscriptions_cancelled: cancelled });
-      notifyAccountStatus(targetId, "terminated", reason);
+      notifyAccountStatus(targetId, "terminated");
       return;
     }
     case "delete":
@@ -102,6 +102,31 @@ export async function applyUserAction(staff: Staff, targetId: string, action: Us
       }
       if (resetError) throw new Error(`Could not send reset email: ${resetError.message}`);
       await audit(staff.id, "admin.password_reset_sent", targetId, {});
+      return;
+    }
+    case "confirm_email": {
+      // For founders whose confirmation email didn't reach them.
+      const { error: confirmError } = await admin.auth.admin.updateUserById(targetId, { email_confirm: true });
+      if (confirmError) throw new Error(`Could not confirm email: ${confirmError.message}`);
+      await audit(staff.id, "admin.email_confirmed", targetId, {});
+      return;
+    }
+    case "resend_confirmation": {
+      const { data: authUser } = await admin.auth.admin.getUserById(targetId);
+      const email = authUser.user?.email;
+      if (!email) throw new AdminActionError("This account has no email address.");
+      if (authUser.user?.email_confirmed_at) throw new AdminActionError("Their email is already confirmed.");
+      const siteUrl = await getSiteUrl();
+      const { error: resendError } = await admin.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: `${siteUrl}/auth/callback?next=/app/onboarding` },
+      });
+      if (resendError?.code === "over_email_send_rate_limit" || resendError?.code === "over_request_rate_limit") {
+        throw new AdminActionError("Too many emails sent recently. Wait a few minutes and try again.");
+      }
+      if (resendError) throw new Error(`Could not resend the confirmation: ${resendError.message}`);
+      await audit(staff.id, "admin.confirmation_resent", targetId, {});
       return;
     }
     case "grant_credits": {

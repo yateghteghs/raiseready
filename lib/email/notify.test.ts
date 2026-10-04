@@ -83,7 +83,7 @@ describe("event emails", () => {
 
   it("sends security and account notices", async () => {
     notify.notifyPasswordChanged("u1");
-    notify.notifyAccountStatus("u1", "suspended", "Unpaid chargeback");
+    notify.notifyAccountStatus("u1", "suspended");
     notify.notifyAccountDeleted({ email: "gone@x.example", name: "Gone" });
     await flush();
     expect(sent.map((m) => m.subject).sort()).toEqual([
@@ -91,7 +91,8 @@ describe("event emails", () => {
       "Your RaiseReady account has been suspended",
       "Your RaiseReady password was changed",
     ]);
-    expect(sent.find((m) => m.subject.includes("suspended"))?.text).toContain("Reason: Unpaid chargeback");
+    // The reason staff record is internal, so it's never in the email.
+    expect(sent.find((m) => m.subject.includes("suspended"))?.text).not.toContain("Reason");
   });
 });
 

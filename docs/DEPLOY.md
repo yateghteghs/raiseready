@@ -91,6 +91,15 @@ Two kinds of email go out:
     once on Free), with the options to keep practising.
   None of these block the action that triggers them; without
   `MAILTRAP_API_TOKEN` nothing is sent.
+- **Admin → Emails** lists every email RaiseReady handed to Mailtrap (kept 90
+  days) and whether Mailtrap accepted it. A founder's page under Users shows
+  whether their email is confirmed, with **Resend confirmation email** and
+  **Confirm their email** for people whose email never arrives.
+
+**If sign-up emails don't arrive and don't show in Mailtrap's logs,**
+Supabase isn't sending them through Mailtrap. Supabase's built-in sender only
+delivers to members of your Supabase team, so other people never receive it.
+Turn on the Send Email hook (above) or custom SMTP.
 
 To turn on the second kind:
 1. In Mailtrap, verify `indexprima.com` under **Sending Domains** (add the DNS
