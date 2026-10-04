@@ -16,8 +16,8 @@ export function Operator() {
   const c = SITE.company;
   return (
     <>
-      <strong>{c.name}</strong>, a business name registered with the Corporate Affairs Commission of Nigeria ({c.registration}),{" "}
-      {c.address ? `of ${c.address}` : <strong>[registered address to be added]</strong>}
+      <strong>{c.name}</strong>, a business name registered with the Corporate Affairs Commission of Nigeria ({c.registration})
+      {c.address ? `, of ${c.address}` : null}
     </>
   );
 }

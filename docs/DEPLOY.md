@@ -403,8 +403,8 @@ E2E_BASE_URL=https://<your-site> E2E_SUPABASE_URL=… E2E_SUPABASE_SERVICE_ROLE_
       sender (below) removes this limit.
 - [x] Contact email: `raiseready@indexprima.com` (`SITE.contactEmail` in
       `lib/site.ts`), shown on the legal and Partners pages.
-- [ ] Add Index Prima's registered address (`SITE.company.address` in
-      `lib/site.ts`). The legal pages show a placeholder until then.
+- [x] Registered address: not shown on the legal pages (optional:
+      `SITE.company.address` in `lib/site.ts` adds it if ever needed).
 - [ ] Custom email sender: Supabase's built-in one is rate-limited and meant
       for testing. Add your own SMTP provider under **Authentication → Emails
       → SMTP Settings**.

@@ -19,7 +19,7 @@ export const SITE = {
   company: {
     name: "Index Prima",
     registration: "BN 9430651",
-    /** Registered business address for the legal pages. Not yet given. */
+    /** Registered business address; optional, shown on the legal pages only if set. */
     address: null as string | null,
   },
 };
