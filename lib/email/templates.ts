@@ -4,6 +4,16 @@ type Built = { subject: string; text: string; html: string };
 
 const escape = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
+/**
+ * The logo at the top, loaded from the website (email apps can't use files
+ * attached to the code). Where images are blocked, the alt text shows the name.
+ */
+function header(): string {
+  const site = process.env.APP_URL?.trim().replace(/\/+$/, "");
+  if (!site) return `<p style="margin:0 0 24px;font-size:20px;font-weight:700;color:#0b6b47">${escape(SITE.name)}</p>`;
+  return `<p style="margin:0 0 24px"><img src="${escape(`${site}/brand/raiseready-logo.png`)}" width="180" height="34" alt="${escape(SITE.name)}" style="display:block;border:0;width:180px;height:auto;font-size:20px;font-weight:700;color:#0b6b47"></p>`;
+}
+
 /** A simple, readable email: paragraphs plus one button. Plain text is always sent too. */
 function layout(paragraphs: string[], button?: { label: string; href: string }, after: string[] = []): string {
   const para = (list: string[]) => list.map((p) => `<p style="margin:0 0 16px">${escape(p)}</p>`).join("");
@@ -14,7 +24,7 @@ function layout(paragraphs: string[], button?: { label: string; href: string }, 
     : "";
   return `<!doctype html><html><body style="margin:0;background:#f6f7f6;font-family:Arial,Helvetica,sans-serif;color:#1a1a1a">
 <div style="max-width:560px;margin:0 auto;padding:32px 24px;background:#fff">
-<p style="margin:0 0 24px;font-size:20px;font-weight:700;color:#0b6b47">${escape(SITE.name)}</p>
+${header()}
 ${body}${cta}${para(after)}
 <p style="margin:32px 0 0;font-size:12px;color:#777">${escape(SITE.name)} is a product of ${escape(SITE.company.name)}.</p>
 </div></body></html>`;
@@ -123,7 +133,7 @@ export function receiptEmail(input: { name?: string; item: string; amount: strin
   const hello = greet(input.name);
   const what = input.renewal
     ? `Your ${input.item} subscription has renewed. Thank you for staying with ${SITE.name}.`
-    : `Thank you for your payment. ${input.item} is now on your account.`;
+    : `Thank you for your payment. It's been added to your account: ${input.item}.`;
   const details = [`Item: ${input.item}`, `Amount: ${input.amount}`, `Date: ${input.date}`, `Reference: ${input.reference}`];
   const note = `Payments are processed by Paystack and appear on your statement as ${SITE.company.name}. Keep this email as your receipt.`;
   const link = url(input.appUrl, "/app/billing");

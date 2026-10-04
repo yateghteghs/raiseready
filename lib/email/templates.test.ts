@@ -12,3 +12,15 @@ describe("email templates", () => {
     expect(email.html).not.toContain("<b>Kemi</b>");
   });
 });
+
+describe("email logo", () => {
+  it("shows the logo from the website, with the name as fallback text", async () => {
+    const { vi } = await import("vitest");
+    vi.stubEnv("APP_URL", "https://raiseready.example/");
+    const { testEmail } = await import("@/lib/email/templates");
+    expect(testEmail({ sentBy: "a@b.c" }).html).toContain('<img src="https://raiseready.example/brand/raiseready-logo.png" width="180" height="34" alt="RaiseReady"');
+    vi.stubEnv("APP_URL", "");
+    expect(testEmail({ sentBy: "a@b.c" }).html).not.toContain("<img");
+    vi.unstubAllEnvs();
+  });
+});
