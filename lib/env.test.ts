@@ -9,7 +9,6 @@ const validServer = {
   ANTHROPIC_API_KEY: "sk-ant",
   ANTHROPIC_MODEL: "model-id",
   PAYSTACK_SECRET_KEY: "sk_test",
-  NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: "pk_test",
   APP_URL: "http://localhost:3000",
 };
 

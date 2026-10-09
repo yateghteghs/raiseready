@@ -19,7 +19,6 @@ const serverSchema = publicSchema.extend({
   ANTHROPIC_API_KEY: z.string().min(1),
   ANTHROPIC_MODEL: z.string().min(1).optional(),
   PAYSTACK_SECRET_KEY: z.string().min(1),
-  NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: z.string().min(1),
   APP_URL: z.url(),
   /** Mailtrap Email API token (Sending Domains → Integration → API). Optional: without it, nothing is emailed. */
   MAILTRAP_API_TOKEN: z.string().min(1).optional(),

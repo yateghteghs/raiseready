@@ -227,7 +227,7 @@ SUPABASE_SERVICE_ROLE_KEY=
 ANTHROPIC_API_KEY=
 ANTHROPIC_MODEL=
 PAYSTACK_SECRET_KEY=
-NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=
+NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=   (not needed: payments use Paystack's hosted checkout)
 APP_URL=
 ```
 Provide `.env.example`. Never commit real values.

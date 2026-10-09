@@ -59,7 +59,6 @@ below says where to click. After any change to environment variables, redeploy
    | `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys |
    | `ANTHROPIC_MODEL` | `claude-opus-5-5` |
    | `PAYSTACK_SECRET_KEY` | Paystack secret key (`sk_test_…` until launch) |
-   | `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` | Paystack public key (`pk_test_…` until launch) |
    | `APP_URL` | Your site address, no trailing slash |
    | `MAILTRAP_API_TOKEN` | Optional. Mailtrap Email API token (see "Email" below) |
    | `SEND_EMAIL_HOOK_SECRET` | Optional. Supabase Send Email hook secret (see "Email" below) |
@@ -168,7 +167,9 @@ on customers' statements as Index Prima. Before going live:
   technology or software services; CAC can update it if not.
 
 After Paystack approves:
-1. Replace both keys in Vercel with the live ones (`sk_live_…`, `pk_live_…`).
+1. Replace `PAYSTACK_SECRET_KEY` in Vercel (Production) with the live secret key
+   (`sk_live_…`). The public key isn't needed: payments use Paystack's own
+   checkout page.
 2. Set the **Live Webhook URL** to the same address.
 3. Redeploy.
 
