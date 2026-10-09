@@ -27,6 +27,7 @@ const HISTORY_LABELS: Record<string, string> = {
   "billing.pro_renewed": "Pro renewed",
   "billing.credits_added": "Credits bought",
   "billing.amount_mismatch": "Payment amount mismatch",
+  "billing.payment_rechecked": "Payment checked with Paystack",
   "admin.password_reset_sent": "Password reset email sent",
   "admin.credits_granted": "Free credits added",
   "billing.referral_rewarded": "Referral credits earned",

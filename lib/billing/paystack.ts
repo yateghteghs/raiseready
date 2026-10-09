@@ -32,6 +32,8 @@ export type PaystackTransaction = {
   status: string;
   reference: string;
   amount: number;
+  /** What we asked for. Differs from `amount` when the customer pays Paystack's fees. */
+  requested_amount?: number | null;
   currency: string;
   paid_at?: string | null;
   metadata?: Record<string, unknown> | string | null;

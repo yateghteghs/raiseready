@@ -42,7 +42,9 @@ milestone at a time (spec section 11) and stop for review after each.
   are checked server-side before every AI operation. Paystack's webhook
   (`app/api/paystack/webhook`, HMAC-verified) is the source of truth;
   `applyChargeSuccess` is idempotent so the return-page verification and the
-  webhook can both run. Credits change only via the `add_credits` /
+  webhook can both run. Amounts are checked with `chargeMatches`, which accepts
+  `requested_amount` (customer pays Paystack's fees). Admin → Payments has
+  "Check with Paystack" (`recheckPayment`) for charged-but-not-paid payments. Credits change only via the `add_credits` /
   `consume_credit` SQL functions.
 - Prices: defaults and discount maths in `lib/billing/prices.ts`; the live
   prices come from `getPrices()` (`lib/billing/price-settings.ts`, table

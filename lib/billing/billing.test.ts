@@ -133,6 +133,27 @@ describe("payments via webhook", () => {
     expect(db.payments[0].status).toBe("failed");
   });
 
+  it("accepts a charge that includes Paystack's fee when the customer pays the fees", async () => {
+    await handlePaystackEvent(charge("rr_credits", 507_500, { requested_amount: 500_000 }));
+    expect(db.profiles[0].credits).toBe(3);
+    expect(db.payments[0].status).toBe("success");
+  });
+
+  it("still refuses an underpayment, even with a requested amount", async () => {
+    await handlePaystackEvent(charge("rr_credits", 100, { requested_amount: 100 }));
+    expect(db.profiles[0].credits).toBe(0);
+    expect(db.payments[0].status).toBe("failed");
+  });
+
+  it("recovers a payment wrongly marked failed once Paystack confirms it, once", async () => {
+    db.payments[0].status = "failed";
+    const event = charge("rr_credits", 507_500, { requested_amount: 500_000 });
+    expect(await applyChargeSuccess(event.data as never, event)).toBe(true);
+    expect(await applyChargeSuccess(event.data as never, event)).toBe(false);
+    expect(db.profiles[0].credits).toBe(3);
+    expect(db.payments[0].status).toBe("success");
+  });
+
   it("ignores failed charges and unknown references without a plan", async () => {
     await handlePaystackEvent({ event: "charge.success", data: { ...charge("rr_credits", 500_000).data, status: "failed" } });
     await handlePaystackEvent(charge("someone-elses-ref", 500_000));

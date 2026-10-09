@@ -9,6 +9,7 @@ import {
   metadataOf,
   planCodeOf,
   subscriptionManageLink,
+  verifyTransaction,
   type PaystackTransaction,
 } from "@/lib/billing/paystack";
 import { PLAN_NAMES, type PlanRules } from "@/lib/billing/plan-rules";
@@ -254,6 +255,47 @@ export async function startCheckout(
   return tx.authorization_url;
 }
 
+/**
+ * Whether Paystack charged what we asked for. When the business passes
+ * Paystack's fees on to customers, `amount` includes the fee and
+ * `requested_amount` is the price we set.
+ */
+export function chargeMatches(tx: Pick<PaystackTransaction, "amount" | "requested_amount" | "currency">, expected: number, currency: string): boolean {
+  if (tx.currency !== currency) return false;
+  return tx.amount === expected || tx.requested_amount === expected;
+}
+
+/**
+ * Staff "Check with Paystack": asks Paystack about a payment that isn't marked
+ * paid and applies it if Paystack says it succeeded. Safe to run repeatedly.
+ */
+export async function recheckPayment(
+  reference: string,
+  staffId: string,
+): Promise<"granted" | "already_paid" | "not_paid" | "mismatch" | "unknown"> {
+  const admin = createAdminClient();
+  const { data: payment } = await admin.from("payments").select("id, user_id, status, amount_kobo, currency").eq("reference", reference).maybeSingle();
+  if (!payment) return "unknown";
+  if (payment.status === "success") return "already_paid";
+  const tx = await verifyTransaction(reference);
+  const outcome =
+    tx.status !== "success"
+      ? "not_paid"
+      : !chargeMatches(tx, payment.amount_kobo, payment.currency)
+        ? "mismatch"
+        : (await applyChargeSuccess(tx, { event: "staff_recheck", data: tx }))
+          ? "granted"
+          : "already_paid";
+  await admin.from("audit_logs").insert({
+    actor_id: staffId,
+    action: "billing.payment_rechecked",
+    target_type: "profile",
+    target_id: payment.user_id,
+    metadata: { reference, outcome, paystack_status: tx.status, amount: tx.amount, requested_amount: tx.requested_amount ?? null } as Json,
+  });
+  return outcome;
+}
+
 function plusOneMonth(iso: string | null | undefined): string {
   const d = iso ? new Date(iso) : new Date();
   d.setUTCMonth(d.getUTCMonth() + 1);
@@ -273,18 +315,20 @@ export async function applyChargeSuccess(tx: PaystackTransaction, raw: unknown):
 
   if (!payment) return applyRenewal(tx, raw);
 
-  if (tx.amount !== payment.amount_kobo || tx.currency !== payment.currency) {
+  if (!chargeMatches(tx, payment.amount_kobo, payment.currency)) {
     await admin.from("payments").update({ status: "failed", raw_event: raw as Json }).eq("id", payment.id).eq("status", "pending");
     await audit("billing.amount_mismatch", payment.user_id, { reference: tx.reference, amount: tx.amount, currency: tx.currency });
     return false;
   }
 
-  // Only the call that flips pending -> success grants the purchase.
+  // Only the call that flips the payment to success grants the purchase. A
+  // payment wrongly marked failed can still be recovered once Paystack
+  // confirms it (see recheckPayment).
   const { data: flipped } = await admin
     .from("payments")
     .update({ status: "success", raw_event: raw as Json })
     .eq("id", payment.id)
-    .eq("status", "pending")
+    .in("status", ["pending", "failed"])
     .select("id");
   if (!flipped || flipped.length === 0) return false;
 
@@ -439,17 +483,19 @@ async function applyRenewal(tx: PaystackTransaction, raw: unknown): Promise<bool
   const { data: profile } = await admin.from("profiles").select("id").eq("paystack_customer_code", customerCode).maybeSingle();
   if (!profile) return false;
 
+  // The plan's price; Paystack's fee is on top when customers pay the fees.
+  const price = tx.requested_amount ?? tx.amount;
   // Which plan renewed: the founder's current subscription, or the price paid.
   const existing = await getSubscription(profile.id);
   const plan: PaidPlan =
     existing?.plan ??
-    (isCurrency(tx.currency) && tx.amount === priceOf("pro_plus_monthly", tx.currency, await getPrices()) ? "pro_plus" : "pro");
+    (isCurrency(tx.currency) && price === priceOf("pro_plus_monthly", tx.currency, await getPrices()) ? "pro_plus" : "pro");
 
   const { error } = await admin.from("payments").insert({
     user_id: profile.id,
     provider: "paystack",
     reference: tx.reference,
-    amount_kobo: tx.amount,
+    amount_kobo: price,
     currency: tx.currency,
     product: PLAN_PRODUCTS[plan],
     status: "success",

@@ -1,4 +1,5 @@
 import { ExportButton } from "@/components/admin/export-button";
+import { RecheckPayment } from "@/components/admin/recheck-payment";
 import { Pager, pageParam } from "@/components/admin/pager";
 import { adminDate, num, PageTitle, Stat, StatGrid, Table } from "@/components/admin/ui";
 import { requireStaff } from "@/lib/admin/auth";
@@ -15,10 +16,11 @@ export default async function AdminPayments({ searchParams }: PageProps<"/admin/
   const staff = await requireStaff("view", "/admin/payments");
   const page = pageParam((await searchParams).page);
   const { rows, total, summary, summaryUsd } = await paymentsList({ page });
+  const canRecheck = can(staff.profile.role, "grant_credits");
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">
-        <PageTitle title="Payments" description="Successful Paystack payments count towards revenue. Newest first." />
+        <PageTitle title="Payments" description="Successful Paystack payments count towards revenue. Newest first. If a founder was charged but the payment isn't marked Paid, use Check with Paystack." />
         {can(staff.profile.role, "export") ? <ExportButton kind="payments" /> : null}
       </div>
       <StatGrid>
@@ -45,6 +47,9 @@ export default async function AdminPayments({ searchParams }: PageProps<"/admin/
           { header: "Amount", cell: (p) => formatMoney(koboToNaira(p.amount_kobo), p.currency), align: "right" },
           { header: "Status", cell: (p) => STATUS[p.status] ?? p.status },
           { header: "Reference", cell: (p) => <code className="text-xs">{p.reference}</code> },
+          ...(canRecheck
+            ? [{ header: "", cell: (p: (typeof rows)[number]) => (p.status === "success" ? null : <RecheckPayment reference={p.reference} />) }]
+            : []),
         ]}
       />
       <Pager page={page} total={total} pageSize={PAGE_SIZE} path="/admin/payments" />
